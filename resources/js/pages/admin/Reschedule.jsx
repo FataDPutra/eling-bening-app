@@ -1,23 +1,42 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Clock, Eye, Calendar, User, FileText, Hash, ArrowLeft, ArrowRight, MoreVertical, MessageSquare, AlertCircle } from 'lucide-react';
-import { getReschedules, saveReschedules, formatRupiah } from '../../utils/data';
+import { Check, X, Clock, Eye, Calendar, User, Hash, ArrowRight, MessageSquare, AlertCircle } from 'lucide-react';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Reschedule() {
     const [requests, setRequests] = useState([]);
     const [selectedReq, setSelectedReq] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchReschedules = async () => {
+        try {
+            const res = await axios.get('/api/reschedules');
+            setRequests(res.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch reschedules", error);
+            toast.error("Gagal memuat data reschedule");
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setRequests(getReschedules());
+        fetchReschedules();
     }, []);
 
-    const handleAction = (id, newStatus) => {
-        const updated = requests.map(r => r.id === id ? { ...r, status: newStatus } : r);
-        setRequests(updated);
-        saveReschedules(updated);
-        toast.success(`Permintaan ${newStatus === 'approved' ? 'disetujui' : 'ditolak'}`);
-        if (selectedReq && selectedReq.id === id) {
-            setSelectedReq({ ...selectedReq, status: newStatus });
+    const handleAction = async (id, newStatus) => {
+        try {
+            const res = await axios.put(`/api/reschedules/${id}`, { status: newStatus });
+            const updatedItem = res.data;
+            setRequests(requests.map(r => r.id === id ? updatedItem : r));
+            toast.success(`Permintaan ${newStatus === 'approved' ? 'disetujui' : 'ditolak'}`);
+            if (selectedReq && selectedReq.id === id) {
+                setSelectedReq(updatedItem);
+            }
+        } catch (error) {
+            console.error("Failed to update reschedule status", error);
+            toast.error("Gagal memperbarui status");
         }
     };
 
@@ -38,7 +57,7 @@ export default function Reschedule() {
                     <X size={12} className="mr-1.5" /> Rejected
                 </span>
             );
-            default: return <span className="badge-status">{status}</span>;
+            default: return <span className="badge-status font-bold uppercase">{status}</span>;
         }
     };
 
@@ -64,45 +83,53 @@ export default function Reschedule() {
                         </tr>
                     </thead>
                     <tbody>
-                        {requests.map(req => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                    Fetching schedule revision requests...
+                                </td>
+                            </tr>
+                        ) : requests.map(req => (
                             <tr key={req.id}>
                                 <td>
-                                    <span className="font-black text-admin-primary font-mono text-sm uppercase tracking-widest">{req.bookingId}</span>
+                                    <span className="font-black text-admin-primary font-mono text-xs uppercase tracking-widest leading-none block">#{req.transaction_id}</span>
                                 </td>
                                 <td>
                                     <div className="flex flex-col gap-0.5">
-                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{req.customerName}</span>
+                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{req.transaction?.user?.name || 'Guest'}</span>
                                         <span className="text-[10px] font-bold text-admin-text-muted flex items-center gap-1 uppercase">
-                                            <User size={10} /> Customer
+                                            <User size={10} /> {req.transaction?.user?.email || 'Customer'}
                                         </span>
                                     </div>
                                 </td>
                                 <td>
-                                    <div className="flex flex-col gap-0.5 text-xs font-bold text-admin-text-muted italic">
-                                        {req.itemName}
+                                    <div className="flex flex-col gap-0.5 text-[11px] font-bold text-admin-text-muted italic leading-tight">
+                                        {req.transaction?.item?.name || 'Unknown Item'}
                                     </div>
                                 </td>
                                 <td>
                                     <div className="flex items-center gap-2 text-xs font-black text-admin-text-main">
                                         <Calendar size={14} className="text-admin-primary" />
-                                        {new Date(req.newDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        {new Date(req.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                     </div>
                                 </td>
                                 <td>{getStatusBadge(req.status)}</td>
                                 <td>
-                                    <div className="flex bg-admin-bg p-1 rounded-xl border border-admin-border">
+                                    <div className="flex bg-admin-bg p-1 rounded-xl border border-admin-border w-fit">
                                         <button className="btn-icon" title="View Detail" onClick={() => setSelectedReq(req)}>
                                             <Eye size={18} />
                                         </button>
                                         <button
                                             className={`p-2 rounded-lg transition-all ${req.status === 'approved' ? 'bg-white shadow-sm text-success' : 'text-admin-text-light hover:text-admin-text-main'}`}
                                             onClick={() => handleAction(req.id, 'approved')} title="Approve"
+                                            disabled={req.status !== 'pending'}
                                         >
                                             <Check size={16} />
                                         </button>
                                         <button
                                             className={`p-2 rounded-lg transition-all ${req.status === 'rejected' ? 'bg-white shadow-sm text-danger' : 'text-admin-text-light hover:text-admin-text-main'}`}
                                             onClick={() => handleAction(req.id, 'rejected')} title="Reject"
+                                            disabled={req.status !== 'pending'}
                                         >
                                             <X size={16} />
                                         </button>
@@ -110,7 +137,7 @@ export default function Reschedule() {
                                 </td>
                             </tr>
                         ))}
-                        {requests.length === 0 && (
+                        {!isLoading && requests.length === 0 && (
                             <tr>
                                 <td colSpan="6" className="py-24 text-center">
                                     <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
@@ -156,7 +183,7 @@ export default function Reschedule() {
                                 <div className="flex-1 text-center space-y-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Previous Schedule</p>
                                     <p className="text-lg font-black text-admin-text-light line-through decoration-danger/40 uppercase tracking-tighter">
-                                        {new Date(selectedReq.oldDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                        {new Date(selectedReq.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
 
@@ -169,7 +196,7 @@ export default function Reschedule() {
                                 <div className="flex-1 text-center space-y-2">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-admin-primary">Requested Date</p>
                                     <p className="text-xl font-black text-admin-text-main uppercase tracking-tighter">
-                                        {new Date(selectedReq.newDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                        {new Date(selectedReq.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
                             </div>
@@ -180,13 +207,13 @@ export default function Reschedule() {
                                     <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
                                         <User size={10} className="text-admin-primary" /> Customer Identity
                                     </label>
-                                    <p className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedReq.customerName}</p>
+                                    <p className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedReq.transaction?.user?.name || 'Guest User'}</p>
                                 </div>
                                 <div className="space-y-1.5">
                                     <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
                                         <Hash size={10} className="text-admin-primary" /> Booking ID
                                     </label>
-                                    <p className="text-sm font-black text-admin-primary font-mono tracking-widest">{selectedReq.bookingId}</p>
+                                    <p className="text-sm font-black text-admin-primary font-mono tracking-widest">#{selectedReq.transaction_id}</p>
                                 </div>
                                 <div className="col-span-2 space-y-2.5">
                                     <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
@@ -194,7 +221,7 @@ export default function Reschedule() {
                                     </label>
                                     <div className="p-6 rounded-2xl bg-white border border-admin-border italic text-xs font-bold text-admin-text-muted leading-relaxed flex items-start gap-4 shadow-sm">
                                         <AlertCircle size={16} className="text-admin-primary/40 mt-0.5" />
-                                        "{selectedReq.reason}"
+                                        "{selectedReq.reason || 'Tidak ada alasan khusus.'}"
                                     </div>
                                 </div>
                             </div>

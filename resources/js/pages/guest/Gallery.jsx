@@ -1,10 +1,18 @@
 import { useState } from 'react';
-import { X, Calendar } from 'lucide-react';
+import { X, Calendar, Loader2 } from 'lucide-react';
+import { useContent } from '../../context/ContentContext';
 
 export default function Gallery() {
+    const { content, isLoading } = useContent();
     const [selectedImage, setSelectedImage] = useState(null);
 
-    const images = [
+    if (isLoading) return (
+        <div className="h-screen flex items-center justify-center bg-white">
+            <Loader2 className="animate-spin text-eling-green" size={48} />
+        </div>
+    );
+
+    const images = content.gallery || [
         { src: "/images/hero-bg.png", title: "Kolam Renang Utama", date: "12 Okt 2023", desc: "Fasilitas kolam renang infinity pool dengan pemandangan langsung ke Rawa Pening dan pegunungan sekitarnya." },
         { src: "/images/resort-room.png", title: "Villa & Resort Exclusive", date: "05 Nov 2023", desc: "Tipe kamar family suite yang menghadap ke matahari terbit, dilengkapi dengan balkon privat." },
         { src: "/images/hero-bg.png", title: "Restoran View", date: "22 Des 2023", desc: "Suasana senja di area restoran utama. Menyajikan hidangan nusantara dengan bahan lokal berkualitas." },
@@ -15,8 +23,8 @@ export default function Gallery() {
 
     return (
         <div className="animate-fade-in bg-white pb-24">
-            <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-                <img src="/images/hero-bg.png" alt="Gallery Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+                <img src={content.galleryHeroImage || "/images/hero-bg.png"} alt="Gallery Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 text-white max-w-4xl px-4">
                     <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Galeri Foto</h1>

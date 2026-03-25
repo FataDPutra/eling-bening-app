@@ -28,7 +28,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
                 <style>{styles}</style>
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
-                    <img src="/images/generated/hero.png" alt="Hero" className="absolute inset-0 w-full h-full object-cover scale-105" />
+                    <img src={h.heroImage || "/images/generated/hero.png"} alt="Hero" className="absolute inset-0 w-full h-full object-cover scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60"></div>
                     <div className="relative z-10 text-white max-w-5xl px-4 flex flex-col items-center">
                         <div className="flex justify-center mb-6 animate-slide-up">
@@ -44,10 +44,10 @@ const PreviewRenderer = ({ activeTab, content }) => {
                             {h.heroSubtitle}
                         </p>
                         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-slide-up">
-                            <div className="w-full sm:w-auto bg-eling-red text-white font-bold py-5 px-12 rounded-full text-lg shadow-2xl flex items-center justify-center gap-3">
+                            <div className="w-full sm:w-auto bg-eling-red text-white font-bold py-5 px-12 rounded-full text-lg shadow-2xl flex items-center justify-center gap-3 text-center">
                                 {h.ctaPrimary} <ArrowRight size={20} />
                             </div>
-                            <div className="w-full sm:w-auto backdrop-blur-md bg-white/10 text-white border border-white/30 font-bold py-5 px-12 rounded-full text-lg shadow-2xl flex items-center justify-center gap-3">
+                            <div className="w-full sm:w-auto backdrop-blur-md bg-white/10 text-white border border-white/30 font-bold py-5 px-12 rounded-full text-lg shadow-2xl flex items-center justify-center gap-3 text-center">
                                 {h.ctaSecondary}
                             </div>
                         </div>
@@ -86,110 +86,22 @@ const PreviewRenderer = ({ activeTab, content }) => {
                 {/* About Section */}
                 <section className="section-container bg-white">
                     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 md:gap-24">
-                        <div className="lg:w-1/2 relative">
+                        <div className="lg:w-1/2 relative text-left">
                             <div className="absolute -top-10 -left-10 w-40 h-40 bg-eling-green opacity-5 rounded-full blur-3xl"></div>
-                            <img src="/images/generated/resort.png" alt="Landscape" className="rounded-3xl shadow-2xl w-full aspect-[4/3] object-cover relative z-10" />
+                            <img src={content.about.storyImage || "/images/generated/resort.png"} alt="Landscape" className="rounded-3xl shadow-2xl w-full aspect-[4/3] object-cover relative z-10" />
                             <div className="absolute -bottom-8 -right-8 glass-card p-8 rounded-2xl shadow-xl z-20 max-w-[240px]">
                                 <p className="text-eling-green font-bold text-3xl mb-1">100%</p>
                                 <p className="text-gray-800 font-bold uppercase tracking-widest text-xs">Pemandangan Alamiah</p>
                             </div>
                         </div>
-                        <div className="lg:w-1/2">
+                        <div className="lg:w-1/2 text-left">
                             <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-6">Discovery</span>
                             <h2 className="text-4xl md:text-6xl font-bold mb-8 font-serif leading-tight text-gray-900">Eling Bening: Harmoni <br /> Keindahan Alam & Kemewahan</h2>
-                            <p className="text-gray-600 text-lg lg:text-xl font-light leading-relaxed mb-8 italic">Eling Bening menghadirkan harmoni antara arsitektur modern yang elegan dengan ketenangan alam pegunungan Ambarawa. Destinasi yang dirancang untuk membangkitkan panca indera dan menenangkan jiwa.</p>
+                            <p className="text-gray-600 text-lg lg:text-xl font-light leading-relaxed mb-8 italic">{content.about.storyP1}</p>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="flex items-center gap-3 text-sm font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl border border-gray-100"><Mountain size={18} className="text-eling-green" /> Natural Vibes</div>
                                 <div className="flex items-center gap-3 text-sm font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl border border-gray-100"><Utensils size={18} className="text-eling-green" /> Fine Dining</div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Highlights Section */}
-                <section className="section-container bg-gray-50">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-                            <div>
-                                <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">Activities</span>
-                                <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">Pengalaman Menarik</h2>
-                            </div>
-                            <p className="text-gray-500 max-w-md">Berbagai fasilitas dan aktivitas yang siap melengkapi hari libur Anda bersama keluarga.</p>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {[
-                                { icon: <Mountain size={32} />, title: "Panorama Alam", desc: "Nikmati pemandangan 360 derajat Danau Rawa Pening dari spot terbaik." },
-                                { icon: <Utensils size={32} />, title: "Restoran & Cafe", desc: "Sajian kuliner khas Nusantara dan Internasional dengan view pegunungan." },
-                                { icon: <Waves size={32} />, title: "Kolam Renang Infinity", desc: "Kolam renang mewah yang seolah menyatu dengan cakrawala pegunungan." }
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col items-start gap-6">
-                                    <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-eling-green">{item.icon}</div>
-                                    <h3 className="font-bold text-2xl text-gray-900 font-serif">{item.title}</h3>
-                                    <p className="text-gray-500 leading-relaxed font-light">{item.desc}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Gallery Preview */}
-                <section className="section-container bg-white">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-16">
-                            <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">Gallery</span>
-                            <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-6">Momen Indah di Eling Bening</h2>
-                            <div className="w-24 h-1 bg-eling-green mx-auto rounded-full"></div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:h-[600px]">
-                            <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-3xl">
-                                <img src="/images/generated/hero.png" className="w-full h-full object-cover" alt="Gallery" />
-                            </div>
-                            <div className="relative overflow-hidden rounded-3xl">
-                                <img src="/images/generated/restaurant.png" className="w-full h-full object-cover" alt="Gallery" />
-                            </div>
-                            <div className="relative overflow-hidden rounded-3xl">
-                                <img src="/images/generated/event.png" className="w-full h-full object-cover" alt="Gallery" />
-                            </div>
-                            <div className="md:col-span-2 relative overflow-hidden rounded-3xl">
-                                <img src="/images/generated/resort.png" className="w-full h-full object-cover" alt="Gallery" />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* Testimonials */}
-                <section className="section-container bg-gray-50">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-16">
-                            <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">Guest Reviews</span>
-                            <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">Apa Kata Mereka?</h2>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {[
-                                { name: "Andi Saputra", quote: "Pemandangannya luar biasa, sangat cocok untuk liburan keluarga.", rating: 5 },
-                                { name: "Siti Rahma", quote: "Tempat favorit saya di Semarang. Makanannya enak dan viewnya bagus.", rating: 5 },
-                                { name: "Jessica Lim", quote: "Kolam renangnya keren banget, view-nya nggak kalah sama di Bali.", rating: 4 }
-                            ].map((item, i) => (
-                                <div key={i} className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100">
-                                    <div className="flex gap-1 mb-4">
-                                        {[...Array(item.rating)].map((_, r) => <Star key={r} size={16} fill="#FACC15" className="text-yellow-400" />)}
-                                    </div>
-                                    <p className="text-gray-600 italic font-light leading-relaxed mb-6">"{item.quote}"</p>
-                                    <p className="font-bold text-gray-900">{item.name}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Final CTA */}
-                <section className="relative py-32 px-6 flex items-center justify-center text-center">
-                    <img src="/images/generated/hero.png" className="absolute inset-0 w-full h-full object-cover grayscale opacity-20" alt="CTA BG" />
-                    <div className="absolute inset-0 bg-eling-green/90 mix-blend-multiply"></div>
-                    <div className="relative z-10 max-w-4xl">
-                        <h2 className="text-4xl md:text-7xl font-bold text-white mb-8 font-serif leading-tight">Siap Mengunjungi <br /> Eling Bening?</h2>
-                        <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                            <div className="bg-white text-eling-green font-bold py-5 px-12 rounded-full text-xl shadow-2xl">Beli Tiket Sekarang</div>
                         </div>
                     </div>
                 </section>
@@ -203,9 +115,9 @@ const PreviewRenderer = ({ activeTab, content }) => {
             <div className="preview-container font-sans text-gray-900 bg-gray-50">
                 <style>{styles}</style>
                 <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-                    <img src="/images/hero-bg.png" alt="Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={a.heroImage || "/images/hero-bg.png"} alt="Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50"></div>
-                    <div className="relative z-10 text-white max-w-4xl px-4">
+                    <div className="relative z-10 text-white max-w-4xl px-4 text-center">
                         <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">{a.heroTitle}</h1>
                         <p className="text-lg lg:text-xl font-light tracking-wide italic opacity-90">{a.heroDesc}</p>
                     </div>
@@ -213,15 +125,15 @@ const PreviewRenderer = ({ activeTab, content }) => {
 
                 <section className="py-24 px-6 lg:px-24 bg-white">
                     <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-                        <div className="lg:w-1/2 relative">
+                        <div className="lg:w-1/2 relative text-left">
                             <div className="absolute -top-8 -left-8 w-32 h-32 bg-eling-green opacity-10 rounded-full"></div>
-                            <img src="/images/hero-bg.png" alt="About" className="rounded-2xl shadow-2xl relative z-10 w-full object-cover aspect-[4/3] transition duration-700 hover:scale-[1.02]" />
+                            <img src={a.storyImage || "/images/hero-bg.png"} alt="About" className="rounded-2xl shadow-2xl relative z-10 w-full object-cover aspect-[4/3] transition duration-700 hover:scale-[1.02]" />
                             <div className="absolute -bottom-6 -right-6 bg-white/80 backdrop-blur-md p-6 rounded-xl border-eling-green/30 border-2 z-20 shadow-xl">
                                 <p className="text-eling-green font-bold text-xl">100% Alamiah</p>
                                 <p className="text-gray-800 font-medium text-sm">Pesona Pegunungan</p>
                             </div>
                         </div>
-                        <div className="lg:w-1/2">
+                        <div className="lg:w-1/2 text-left">
                             <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">Sejarah & Visi</span>
                             <h2 className="text-4xl lg:text-5xl font-bold mb-8 leading-tight font-serif text-gray-900">{a.storyTitle}</h2>
                             <div className="space-y-6 text-gray-600 leading-relaxed text-lg italic">
@@ -231,32 +143,37 @@ const PreviewRenderer = ({ activeTab, content }) => {
                         </div>
                     </div>
                 </section>
+            </div>
+        );
+    }
 
-                <section className="py-24 px-6 lg:px-24 bg-gray-50">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="text-center mb-16">
-                            <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">Nilai-Nilai Kami</span>
-                            <h2 className="text-4xl lg:text-5xl font-bold mb-4 font-serif text-gray-900">Apa yang Membuat Kami Berbeda</h2>
-                            <div className="w-24 h-1 bg-eling-green mx-auto"></div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {[
-                                { icon: <Mountain size={32} />, title: "Pemandangan Megah", desc: "Berada di dataran tinggi memberi kami keuntungan panorama alam yang tidak tertandingi." },
-                                { icon: <Utensils size={32} />, title: "Kuliner Nusantara", desc: "Matahari terbenam paling indah dinikmati bersama makanan lezat." },
-                                { icon: <BedDouble size={32} />, title: "Resort Berbintang", desc: "Kami menawarkan akomodasi premium bagi keluarga yang ingin menginap." },
-                                { icon: <Waves size={32} />, title: "Rekreasi Segala Usia", desc: "Kolam renang infinity, outbound, dan playland anak." }
-                            ].map((v, i) => (
-                                <div key={i} className="flex items-start gap-6 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-                                    <div className="bg-green-50 p-4 rounded-xl text-eling-green shrink-0">{v.icon}</div>
-                                    <div>
-                                        <h3 className="text-2xl font-bold text-gray-900 mb-3 font-serif">{v.title}</h3>
-                                        <p className="text-gray-600 leading-relaxed">{v.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+    if (activeTab === 'gallery') {
+        const g = content.gallery || [];
+        return (
+            <div className="preview-container font-sans text-gray-900 bg-white pb-24 text-center">
+                <style>{styles}</style>
+                <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center text-center overflow-hidden mb-16">
+                    <img src="/images/hero-bg.png" alt="Gallery Hero" className="absolute inset-0 w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/60"></div>
+                    <div className="relative z-10 text-white max-w-4xl px-4 text-center">
+                        <h1 className="text-5xl font-bold mb-4 font-serif">Koleksi Foto</h1>
+                        <p className="text-lg font-light tracking-wide italic opacity-90">Momen terbaik di Eling Bening Ambarawa.</p>
                     </div>
                 </section>
+
+                <div className="max-w-6xl mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {g.map((img, idx) => (
+                            <div key={idx} className="group relative overflow-hidden rounded-3xl aspect-[4/5] shadow-lg text-left">
+                                <img src={img.src || "/images/hero-bg.png"} className="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110" alt={img.title} />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent flex flex-col justify-end p-6">
+                                    <h3 className="text-white font-serif text-xl font-bold">{img.title}</h3>
+                                    <p className="text-white/70 text-xs line-clamp-2">{img.desc}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
         );
     }
@@ -267,21 +184,21 @@ const PreviewRenderer = ({ activeTab, content }) => {
             <div className="preview-container font-sans text-gray-900 bg-white pb-24">
                 <style>{styles}</style>
                 <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-                    <img src="/images/hero-bg.png" alt="Contact Hero" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={c.heroImage || "/images/hero-bg.png"} alt="Contact Hero" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60"></div>
-                    <div className="relative z-10 text-white max-w-4xl px-4">
+                    <div className="relative z-10 text-white max-w-4xl px-4 text-center">
                         <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">{c.title}</h1>
-                        <p className="text-lg lg:text-xl font-light tracking-wide italic opacity-90">{c.subtitle}</p>
+                        <p className="text-lg lg:text-xl font-light tracking-wide italic opacity-90 text-center">{c.subtitle}</p>
                     </div>
                 </section>
 
-                <section className="max-w-7xl mx-auto px-6 lg:px-24 py-24">
+                <section className="max-w-7xl mx-auto px-6 lg:px-24 py-24 text-left">
                     <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
                         <div className="lg:w-1/2">
                             <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">Informasi Kontak</span>
                             <h2 className="text-4xl lg:text-5xl font-bold mb-8 font-serif text-gray-900">Sapa Kami Kapan Saja</h2>
                             <p className="text-gray-600 leading-relaxed mb-12 text-lg italic">
-                                Apakah Anda memiliki pertanyaan mengenai reservasi resort, pembelian tiket grup, atau acara pernikahan? Jangan ragu untuk menghubungi tim layanan pelanggan kami.
+                                Apakah Anda memiliki pertanyaan? Jangan ragu untuk menghubungi tim layanan pelanggan kami.
                             </p>
                             <div className="space-y-6">
                                 <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
@@ -307,11 +224,6 @@ const PreviewRenderer = ({ activeTab, content }) => {
                             </div>
                         </div>
                     </div>
-
-                    <div className="mt-24 h-[400px] w-full bg-gray-200 rounded-3xl overflow-hidden shadow-inner flex items-center justify-center relative">
-                        <MapPin size={48} className="text-gray-400 mb-4" />
-                        <span className="absolute bottom-6 bg-white/80 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest backdrop-blur-sm">Peta Interaktif Eling Bening</span>
-                    </div>
                 </section>
             </div>
         );
@@ -320,14 +232,14 @@ const PreviewRenderer = ({ activeTab, content }) => {
     if (activeTab === 'facilities') {
         const f = content.facilities || [];
         return (
-            <div className="preview-container font-sans text-gray-900 bg-gray-50 pb-24">
+            <div className="preview-container font-sans text-gray-900 bg-gray-50 pb-24 text-center">
                 <style>{styles}</style>
                 <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
                     <img src="/images/hero-bg.png" alt="Facilities Hero" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60"></div>
-                    <div className="relative z-10 text-white max-w-4xl px-4">
+                    <div className="relative z-10 text-white max-w-4xl px-4 text-center">
                         <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Fasilitas Premium</h1>
-                        <p className="text-lg lg:text-xl font-light tracking-wide italic">Kenyamanan dan kepuasan Anda adalah prioritas utama kami.</p>
+                        <p className="text-lg lg:text-xl font-light tracking-wide italic text-center">Kenyamanan dan kepuasan Anda adalah prioritas utama kami.</p>
                     </div>
                 </section>
 
@@ -340,20 +252,24 @@ const PreviewRenderer = ({ activeTab, content }) => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {f.map((item, idx) => (
-                            <div key={idx} className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:border-eling-green hover:-translate-y-2 transition duration-500 group relative overflow-hidden text-left">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -z-10 transition duration-500 group-hover:scale-150 group-hover:bg-eling-green/5"></div>
-                                <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-eling-green transition duration-500 shadow-sm text-eling-green group-hover:text-white">
-                                    <i className={`fas fa-${item.icon} text-2xl`}></i>
+                            <div key={idx} className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:border-eling-green transition duration-500 group relative overflow-hidden text-left h-full flex flex-col">
+                                {item.image && (
+                                    <div className="h-40 -mx-8 -mt-8 mb-6 overflow-hidden">
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                                <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center mb-6 text-eling-green shrink-0">
+                                    <i className={`fas fa-${item.icon} text-xl`}></i>
                                 </div>
-                                <h3 className="font-bold text-xl mb-4 text-gray-900 font-serif leading-tight">{item.title || item.name}</h3>
-                                <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
+                                <h3 className="font-bold text-lg mb-3 text-gray-900 font-serif leading-tight">{item.title || item.name}</h3>
+                                <p className="text-gray-500 text-xs leading-relaxed flex-1">{item.desc}</p>
                             </div>
                         ))}
                     </div>
                 </section>
 
                 {/* Peta Wisata Section */}
-                <section className="bg-white py-24 px-6 lg:px-24 mt-24">
+                <section className="bg-white py-24 px-6 lg:px-24 mt-24 text-left">
                     <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-12 bg-green-50 rounded-3xl p-8 lg:p-12 border border-green-100">
                         <div className="flex-1 text-left">
                             <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">Lokasi & Panduan</span>
@@ -383,7 +299,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
 };
 
 export default function AdminContent() {
-    const { content, updateContent } = useContent();
+    const { content, updateContent, saveToBackend } = useContent();
     const [activeTab, setActiveTab] = useState('home');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [previewDevice, setPreviewDevice] = useState('desktop');
@@ -392,61 +308,223 @@ export default function AdminContent() {
         updateContent(activeTab, key, value);
     };
 
-    const handleSave = () => {
-        toast.success('Website berhasil dipublikasikan!');
+    const handleSave = async () => {
+        await saveToBackend();
     };
 
     const tabs = [
         { id: 'home', label: 'Landpage', icon: HomeIcon },
         { id: 'about', label: 'Identity', icon: Info },
+        { id: 'gallery', label: 'Showcase', icon: Camera },
         { id: 'facilities', label: 'Fasilitas', icon: Sparkles },
         { id: 'contact', label: 'Connect', icon: PhoneIcon },
     ];
+
+    const ImageUpload = ({ label, value, onChange, placeholder = "Input URL atau upload gambar" }) => {
+        const handleFileChange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    onChange(reader.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        return (
+            <div className="form-group space-y-3">
+                <label className="form-label !text-xs !font-black uppercase tracking-tighter">{label}</label>
+                <div className="space-y-4">
+                    {/* Preview Area */}
+                    <div className="relative group aspect-video rounded-2xl overflow-hidden bg-gray-100 border-2 border-dashed border-admin-border flex items-center justify-center">
+                        {value ? (
+                            <>
+                                <img src={value} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button onClick={() => onChange('')} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600">
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-center p-6">
+                                <Camera className="mx-auto text-admin-text-muted mb-2" size={32} />
+                                <p className="text-[10px] font-bold text-admin-text-muted uppercase">Belum ada gambar</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Inputs */}
+                    <div className="flex gap-3">
+                        <div className="flex-1 relative">
+                            <input
+                                className="admin-input !bg-white !pr-10"
+                                value={value && !value.startsWith('data:') ? value : ''}
+                                onChange={e => onChange(e.target.value)}
+                                placeholder={placeholder}
+                            />
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-admin-text-muted">
+                                <ArrowUpRight size={14} />
+                            </div>
+                        </div>
+                        <label className="bg-admin-primary/10 text-admin-primary px-4 py-2 rounded-xl border border-admin-primary/20 cursor-pointer hover:bg-admin-primary/20 transition-all font-black text-[10px] uppercase flex items-center whitespace-nowrap">
+                            Upload
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const getFormFields = () => {
         switch (activeTab) {
             case 'home':
                 return (
-                    <div className="space-y-8">
+                    <div className="space-y-8 animate-fade-in">
+                        {/* 1. Hero Section */}
                         <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
                             <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
-                                <Sparkles size={14} /> Hero Section
+                                <Sparkles size={14} /> Hero Section (Above the Fold)
                             </h4>
-                            <p className="text-[11px] text-admin-text-muted leading-relaxed font-medium">
-                                Gunakan copy yang kuat untuk memikat pengunjung dalam hitungan detik.
-                            </p>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div className="form-group">
-                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hero Badge Text</label>
-                                <input className="admin-input !bg-white" value={content.home.heroBadge} onChange={e => handleChange('heroBadge', e.target.value)} placeholder="misal: WELCOME TO" />
+                            <ImageUpload
+                                label="Hero Background Image"
+                                value={content.home.heroImage || "/images/hero-bg.png"}
+                                onChange={val => handleChange('heroImage', val)}
+                            />
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hero Greeting Badge</label>
+                                <input className="admin-input !bg-white" value={content.home.heroBadge} onChange={e => handleChange('heroBadge', e.target.value)} />
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="form-group">
-                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Headline Line 1</label>
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Headline Row 1</label>
                                     <input className="admin-input !bg-white" value={content.home.heroTitleLine1} onChange={e => handleChange('heroTitleLine1', e.target.value)} />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter text-admin-primary">Headline Line 2 (Highlighted)</label>
-                                    <input className="admin-input font-black !bg-white !border-admin-primary/30" value={content.home.heroTitleLine2} onChange={e => handleChange('heroTitleLine2', e.target.value)} />
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Headline Row 2</label>
+                                    <input className="admin-input !bg-white" value={content.home.heroTitleLine2} onChange={e => handleChange('heroTitleLine2', e.target.value)} />
                                 </div>
                             </div>
-
                             <div className="form-group">
-                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hero Subtitle / Catchphrase</label>
-                                <textarea className="admin-textarea !bg-white" rows={4} value={content.home.heroSubtitle} onChange={e => handleChange('heroSubtitle', e.target.value)} />
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Welcome Subtitle</label>
+                                <textarea className="admin-textarea !bg-white" rows={2} value={content.home.heroSubtitle} onChange={e => handleChange('heroSubtitle', e.target.value)} />
                             </div>
-
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="form-group">
-                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter text-admin-primary">Button Primary</label>
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Primary CTA Label</label>
                                     <input className="admin-input !bg-white" value={content.home.ctaPrimary} onChange={e => handleChange('ctaPrimary', e.target.value)} />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Button Ghost</label>
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Secondary CTA Label</label>
                                     <input className="admin-input !bg-white" value={content.home.ctaSecondary} onChange={e => handleChange('ctaSecondary', e.target.value)} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. Discovery Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Users size={14} /> Discovery Section
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Badge Label</label>
+                                <input className="admin-input !bg-white" value={content.home.discoveryBadge} onChange={e => handleChange('discoveryBadge', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Main Title</label>
+                                <input className="admin-input !bg-white" value={content.home.discoveryTitle} onChange={e => handleChange('discoveryTitle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Catchphrase / Text</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.home.discoveryText} onChange={e => handleChange('discoveryText', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* 3. Testimonials Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Star size={14} /> Testimonial Pengunjung
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Section Badge</label>
+                                <input className="admin-input !bg-white" value={content.home.testimonialBadge} onChange={e => handleChange('testimonialBadge', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Section Title</label>
+                                <input className="admin-input !bg-white" value={content.home.testimonialTitle} onChange={e => handleChange('testimonialTitle', e.target.value)} />
+                            </div>
+
+                            <div className="space-y-4 mt-6">
+                                {(content.home.testimonials || []).map((t, idx) => (
+                                    <div key={idx} className="p-4 bg-white border border-admin-border rounded-xl space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-admin-primary tracking-widest">Review #{idx + 1}</span>
+                                            <button 
+                                                onClick={() => {
+                                                    const updated = content.home.testimonials.filter((_, i) => i !== idx);
+                                                    handleChange('testimonials', updated);
+                                                }}
+                                                className="text-red-500 hover:text-red-700 text-[10px] font-black uppercase"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input className="admin-input !text-xs !py-2" placeholder="Nama Reviewer" value={t.name} onChange={e => {
+                                                const updated = content.home.testimonials.map((item, i) => i === idx ? { ...item, name: e.target.value } : item);
+                                                handleChange('testimonials', updated);
+                                            }} />
+                                            <input type="number" min="1" max="5" className="admin-input !text-xs !py-2" placeholder="Rating (1-5)" value={t.rating} onChange={e => {
+                                                const updated = content.home.testimonials.map((item, i) => i === idx ? { ...item, rating: parseInt(e.target.value) } : item);
+                                                handleChange('testimonials', updated);
+                                            }} />
+                                        </div>
+                                        <textarea className="admin-textarea !text-xs !py-2" rows={2} placeholder="Kutipan Review" value={t.quote} onChange={e => {
+                                            const updated = content.home.testimonials.map((item, i) => i === idx ? { ...item, quote: e.target.value } : item);
+                                            handleChange('testimonials', updated);
+                                        }} />
+                                    </div>
+                                ))}
+                                <button 
+                                    onClick={() => {
+                                        const updated = [...(content.home.testimonials || []), { name: '', quote: '', rating: 5 }];
+                                        handleChange('testimonials', updated);
+                                    }}
+                                    className="w-full py-2 border-2 border-dashed border-admin-border rounded-xl text-admin-text-muted text-[10px] font-bold hover:border-admin-primary hover:text-admin-primary transition-all"
+                                >
+                                    + Tambah Review
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 4. Final CTA Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <ArrowRight size={14} /> Sticky Footer CTA
+                            </h4>
+                            <ImageUpload
+                                label="CTA Background Image"
+                                value={content.home.finalCtaImage || "/images/hero-bg.png"}
+                                onChange={val => handleChange('finalCtaImage', val)}
+                            />
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">CTA Main Title</label>
+                                <input className="admin-input !bg-white" value={content.home.finalCtaTitle} onChange={e => handleChange('finalCtaTitle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">CTA Description</label>
+                                <textarea className="admin-textarea !bg-white" rows={2} value={content.home.finalCtaSubtitle} onChange={e => handleChange('finalCtaSubtitle', e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="form-group">
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Primary Btn Label</label>
+                                    <input className="admin-input !bg-white" value={content.home.finalCtaPrimary} onChange={e => handleChange('finalCtaPrimary', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Secondary Btn Label</label>
+                                    <input className="admin-input !bg-white" value={content.home.finalCtaSecondary} onChange={e => handleChange('finalCtaSecondary', e.target.value)} />
                                 </div>
                             </div>
                         </div>
@@ -454,50 +532,261 @@ export default function AdminContent() {
                 );
             case 'about':
                 return (
+                    <div className="space-y-8 animate-fade-in">
+                        {/* Hero Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Mountain size={14} /> Hero Section
+                            </h4>
+                            <ImageUpload
+                                label="Hero Background Image"
+                                value={content.about.heroImage || "/images/hero-bg.png"}
+                                onChange={val => handleChange('heroImage', val)}
+                            />
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">About Page Headline</label>
+                                <input className="admin-input !bg-white" value={content.about.heroTitle} onChange={e => handleChange('heroTitle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hero Subtitle / Pitch</label>
+                                <textarea className="admin-textarea !bg-white" rows={2} value={content.about.heroDesc} onChange={e => handleChange('heroDesc', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Story Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Sparkles size={14} /> Brand Story
+                            </h4>
+                            <ImageUpload
+                                label="Story Showcase Image"
+                                value={content.about.storyImage || "/images/hero-bg.png"}
+                                onChange={val => handleChange('storyImage', val)}
+                            />
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Section Title</label>
+                                <input className="admin-input !bg-white" value={content.about.storyTitle} onChange={e => handleChange('storyTitle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Paragraph 1</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.about.storyP1} onChange={e => handleChange('storyP1', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Paragraph 2</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.about.storyP2} onChange={e => handleChange('storyP2', e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Values Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Waves size={14} /> Keunggulan Kami (Values)
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Section Badge</label>
+                                <input className="admin-input !bg-white" value={content.about.valuesBadge} onChange={e => handleChange('valuesBadge', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Section Title</label>
+                                <input className="admin-input !bg-white" value={content.about.valuesTitle} onChange={e => handleChange('valuesTitle', e.target.value)} />
+                            </div>
+
+                            <div className="space-y-4 mt-6">
+                                {(content.about.values || []).map((v, idx) => (
+                                    <div key={idx} className="p-4 bg-white border border-admin-border rounded-xl space-y-3">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-[10px] font-black uppercase text-admin-primary tracking-widest">Value #{idx + 1}</span>
+                                            <button 
+                                                onClick={() => {
+                                                    const updated = content.about.values.filter((_, i) => i !== idx);
+                                                    handleChange('values', updated);
+                                                }}
+                                                className="text-red-500 hover:text-red-700 text-[10px] font-black uppercase"
+                                            >
+                                                Hapus
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input className="admin-input !text-xs !py-2" placeholder="Icon Name" value={v.icon} onChange={e => {
+                                                const updated = content.about.values.map((item, i) => i === idx ? { ...item, icon: e.target.value } : item);
+                                                handleChange('values', updated);
+                                            }} />
+                                            <input className="admin-input !text-xs !py-2" placeholder="Value Title" value={v.title} onChange={e => {
+                                                const updated = content.about.values.map((item, i) => i === idx ? { ...item, title: e.target.value } : item);
+                                                handleChange('values', updated);
+                                            }} />
+                                        </div>
+                                        <textarea className="admin-textarea !text-xs !py-2" rows={2} placeholder="Description" value={v.desc} onChange={e => {
+                                            const updated = content.about.values.map((item, i) => i === idx ? { ...item, desc: e.target.value } : item);
+                                            handleChange('values', updated);
+                                        }} />
+                                    </div>
+                                ))}
+                                <button 
+                                    onClick={() => {
+                                        const updated = [...(content.about.values || []), { icon: 'star', title: 'Judul Baru', desc: 'Deskripsi singkat...' }];
+                                        handleChange('values', updated);
+                                    }}
+                                    className="w-full py-2 border-2 border-dashed border-admin-border rounded-xl text-admin-text-muted text-[10px] font-bold hover:border-admin-primary hover:text-admin-primary transition-all"
+                                >
+                                    + Tambah Nilai
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'gallery':
+                return (
                     <div className="space-y-8">
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter text-admin-primary">About Hero Title</label>
-                            <input className="admin-input !bg-white font-black" value={content.about.heroTitle} onChange={e => handleChange('heroTitle', e.target.value)} />
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Sparkles size={14} /> Hero Section
+                            </h4>
+                            <ImageUpload
+                                label="Gallery Hero Background"
+                                value={content.galleryHeroImage || "/images/hero-bg.png"}
+                                onChange={val => updateContent(null, 'galleryHeroImage', val)}
+                            />
                         </div>
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Small Description Text</label>
-                            <textarea className="admin-textarea !bg-white" rows={3} value={content.about.heroDesc} onChange={e => handleChange('heroDesc', e.target.value)} />
+
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Sparkles size={14} /> Events Page Hero
+                            </h4>
+                            <ImageUpload
+                                label="Events Page Hero Background"
+                                value={content.eventHeroImage || "/images/hero-bg.png"}
+                                onChange={val => updateContent(null, 'eventHeroImage', val)}
+                            />
                         </div>
-                        <div className="h-px bg-admin-border" />
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Article Section Title</label>
-                            <input className="admin-input !bg-white" value={content.about.storyTitle} onChange={e => handleChange('storyTitle', e.target.value)} />
+
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Camera size={14} /> Kelola Galeri
+                            </h4>
+                            <p className="text-[11px] text-admin-text-muted leading-relaxed font-medium">
+                                Tambahkan foto-foto terbaik Eling Bening untuk ditampilkan kepada publik.
+                            </p>
                         </div>
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Main Story Content</label>
-                            <textarea className="admin-textarea !bg-white" rows={6} value={content.about.storyP1} onChange={e => handleChange('storyP1', e.target.value)} />
+
+                        <div className="space-y-6">
+                            {(content.gallery || []).map((img, idx) => (
+                                <div key={idx} className="p-6 bg-white border border-admin-border rounded-3xl space-y-6">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[10px] font-black text-admin-primary uppercase tracking-widest">Foto #{idx + 1}</span>
+                                        <button
+                                            onClick={() => {
+                                                const updated = content.gallery.filter((_, i) => i !== idx);
+                                                updateContent(null, 'gallery', updated);
+                                            }}
+                                            className="text-red-500 hover:text-red-700 text-[10px] font-black uppercase"
+                                        >
+                                            Hapus
+                                        </button>
+                                    </div>
+
+                                    <ImageUpload
+                                        label="Pilih Gambar"
+                                        value={img.src}
+                                        onChange={val => {
+                                            const updated = content.gallery.map((item, i) => i === idx ? { ...item, src: val } : item);
+                                            updateContent(null, 'gallery', updated);
+                                        }}
+                                    />
+
+                                    <div className="form-group">
+                                        <label className="form-label !text-[10px] uppercase">Judul Foto</label>
+                                        <input
+                                            className="admin-input !text-sm"
+                                            value={img.title}
+                                            onChange={e => {
+                                                const updated = content.gallery.map((item, i) => i === idx ? { ...item, title: e.target.value } : item);
+                                                updateContent(null, 'gallery', updated);
+                                            }}
+                                        />
+                                    </div>
+
+                                    <div className="form-group">
+                                        <label className="form-label !text-[10px] uppercase">Deskripsi / Story</label>
+                                        <textarea
+                                            className="admin-textarea !text-sm"
+                                            rows={2}
+                                            value={img.desc}
+                                            onChange={e => {
+                                                const updated = content.gallery.map((item, i) => i === idx ? { ...item, desc: e.target.value } : item);
+                                                updateContent(null, 'gallery', updated);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+
+                            <button
+                                onClick={() => {
+                                    const updated = [...(content.gallery || []), { src: '', title: 'Momen Baru', desc: 'Deskripsi singkat foto...', date: new Date().toLocaleDateString('id-ID') }];
+                                    updateContent(null, 'gallery', updated);
+                                }}
+                                className="w-full py-4 border-2 border-dashed border-admin-border rounded-3xl text-admin-text-muted font-bold text-xs hover:border-admin-primary hover:text-admin-primary transition-all flex items-center justify-center gap-2"
+                            >
+                                <Camera size={16} /> + Tambah Foto Baru
+                            </button>
                         </div>
                     </div>
                 );
             case 'contact':
                 return (
-                    <div className="space-y-8">
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Contact Page Headline</label>
-                            <input className="admin-input !bg-white" value={content.contact.title} onChange={e => handleChange('title', e.target.value)} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Support Caption</label>
-                            <textarea className="admin-textarea !bg-white" rows={2} value={content.contact.subtitle} onChange={e => handleChange('subtitle', e.target.value)} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="form-group">
-                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Support Email</label>
-                                <input className="admin-input !bg-white" value={content.contact.email} onChange={e => handleChange('email', e.target.value)} />
+                    <div className="space-y-8 animate-fade-in">
+                        {/* Info Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Phone size={14} /> Informasi Kontak Utama
+                            </h4>
+                            <ImageUpload
+                                label="Contact Hero Background"
+                                value={content.contact.heroImage || "/images/hero-bg.png"}
+                                onChange={val => handleChange('heroImage', val)}
+                            />
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Contact Page Headline</label>
+                                <input className="admin-input !bg-white" value={content.contact.title} onChange={e => handleChange('title', e.target.value)} />
                             </div>
                             <div className="form-group">
-                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hotline / WA</label>
-                                <input className="admin-input !bg-white" value={content.contact.phone} onChange={e => handleChange('phone', e.target.value)} />
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hero Subtitle</label>
+                                <textarea className="admin-textarea !bg-white" rows={2} value={content.contact.subtitle} onChange={e => handleChange('subtitle', e.target.value)} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="form-group">
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Support Email</label>
+                                    <input className="admin-input !bg-white" value={content.contact.email} onChange={e => handleChange('email', e.target.value)} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label !text-xs !font-black uppercase tracking-tighter">Hotline / WA</label>
+                                    <input className="admin-input !bg-white" value={content.contact.phone} onChange={e => handleChange('phone', e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Full Business Address</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.contact.address} onChange={e => handleChange('address', e.target.value)} />
                             </div>
                         </div>
-                        <div className="form-group">
-                            <label className="form-label !text-xs !font-black uppercase tracking-tighter">Full Business Address</label>
-                            <textarea className="admin-textarea !bg-white" rows={4} value={content.contact.address} onChange={e => handleChange('address', e.target.value)} />
+
+                        {/* Support Caption Section */}
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Mail size={14} /> Support Messaging
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Badge Info</label>
+                                <input className="admin-input !bg-white" value={content.contact.supportBadge} onChange={e => handleChange('supportBadge', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Box Title</label>
+                                <input className="admin-input !bg-white" value={content.contact.supportTitle} onChange={e => handleChange('supportTitle', e.target.value)} />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Short Description</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.contact.supportDesc} onChange={e => handleChange('supportDesc', e.target.value)} />
+                            </div>
                         </div>
                     </div>
                 );
@@ -508,15 +797,11 @@ export default function AdminContent() {
                             <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
                                 <MapPin size={14} /> Peta Wisata
                             </h4>
-                            <div className="form-group mb-0">
-                                <label className="form-label !text-[10px] uppercase">Image URL (Peta Area)</label>
-                                <input
-                                    className="admin-input !bg-white !text-sm"
-                                    value={content.mapImage}
-                                    onChange={e => updateContent(null, 'mapImage', e.target.value)}
-                                    placeholder="/images/peta.png"
-                                />
-                            </div>
+                            <ImageUpload
+                                label="Peta Area Eling Bening"
+                                value={content.mapImage}
+                                onChange={val => updateContent(null, 'mapImage', val)}
+                            />
                         </div>
 
                         <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
@@ -543,6 +828,16 @@ export default function AdminContent() {
                                             Hapus
                                         </button>
                                     </div>
+
+                                    <ImageUpload
+                                        label="Gambar Fasilitas"
+                                        value={f.image}
+                                        onChange={val => {
+                                            const updated = content.facilities.map((item, i) => i === idx ? { ...item, image: val } : item);
+                                            updateContent(null, 'facilities', updated);
+                                        }}
+                                    />
+
                                     <div className="form-group">
                                         <label className="form-label !text-[10px] uppercase">Nama Fasilitas</label>
                                         <input
@@ -566,19 +861,17 @@ export default function AdminContent() {
                                             }}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="form-group">
-                                            <label className="form-label !text-[10px] uppercase">FontAwesome Icon</label>
-                                            <input
-                                                className="admin-input !text-sm"
-                                                value={f.icon}
-                                                onChange={e => {
-                                                    const updated = content.facilities.map((item, i) => i === idx ? { ...item, icon: e.target.value } : item);
-                                                    updateContent(null, 'facilities', updated);
-                                                }}
-                                                placeholder="swimming-pool"
-                                            />
-                                        </div>
+                                    <div className="form-group">
+                                        <label className="form-label !text-[10px] uppercase">FontAwesome Icon</label>
+                                        <input
+                                            className="admin-input !text-sm"
+                                            value={f.icon}
+                                            onChange={e => {
+                                                const updated = content.facilities.map((item, i) => i === idx ? { ...item, icon: e.target.value } : item);
+                                                updateContent(null, 'facilities', updated);
+                                            }}
+                                            placeholder="swimming-pool"
+                                        />
                                     </div>
                                 </div>
                             ))}
@@ -586,7 +879,7 @@ export default function AdminContent() {
                             <button
                                 onClick={() => {
                                     const nextId = content.facilities.length > 0 ? Math.max(...content.facilities.map(f => f.id || 0)) + 1 : 1;
-                                    const updated = [...(content.facilities || []), { id: nextId, name: 'Fasilitas Baru', title: 'Fasilitas Baru', desc: 'Deskripsi fasilitas baru...', icon: 'star', image: '/images/hero-bg.png' }];
+                                    const updated = [...(content.facilities || []), { id: nextId, name: 'Fasilitas Baru', title: 'Fasilitas Baru', desc: 'Deskripsi fasilitas baru...', icon: 'star', image: '' }];
                                     updateContent(null, 'facilities', updated);
                                 }}
                                 className="w-full py-3 border-2 border-dashed border-admin-border rounded-2xl text-admin-text-muted font-bold text-xs hover:border-admin-primary hover:text-admin-primary transition-all"

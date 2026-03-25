@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, DollarSign, Users, LayoutGrid, FileText, Download } from 'lucide-react';
-import { getBookings, formatRupiah } from '../../utils/data';
+import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, DollarSign, LayoutGrid, Download } from 'lucide-react';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Bookings() {
@@ -8,31 +9,43 @@ export default function Bookings() {
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchBookings = async () => {
+        try {
+            const res = await axios.get('/api/transactions');
+            setBookings(res.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch bookings", error);
+            toast.error("Gagal memuat data transaksi");
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setBookings(getBookings().reverse());
+        fetchBookings();
     }, []);
 
     const filteredBookings = bookings.filter(b => {
         const matchesSearch = b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            b.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'confirmed' && b.status === 'success') ||
-            (statusFilter === 'pending' && b.status !== 'success');
+            (b.user && b.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
         return matchesSearch && matchesStatus;
     });
 
     const getStatusStyles = (status) => {
-        return status === 'success'
-            ? 'bg-success/10 text-success border-success/20'
-            : 'bg-warning/10 text-warning border-warning/20';
+        if (status === 'paid' || status === 'success') return 'bg-success/10 text-success border-success/20';
+        if (status === 'pending') return 'bg-warning/10 text-warning border-warning/20';
+        return 'bg-danger/10 text-danger border-danger/20';
     };
 
     const stats = [
         { label: 'Total Volume', value: bookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
-        { label: 'Confirmed', value: bookings.filter(b => b.status === 'success').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
-        { label: 'Awaiting', value: bookings.filter(b => b.status !== 'success').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
-        { label: 'Success Rate', value: bookings.length ? Math.round((bookings.filter(b => b.status === 'success').length / bookings.length) * 100) + '%' : '0%', icon: ArrowUpRight, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
+        { label: 'Confirmed', value: bookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
+        { label: 'Awaiting', value: bookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
+        { label: 'Revenue', value: formatRupiah(bookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + Number(curr.total_price), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
     ];
 
     return (
@@ -90,8 +103,10 @@ export default function Bookings() {
                             className="px-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all cursor-pointer"
                         >
                             <option value="all">All Status</option>
-                            <option value="confirmed">Confirmed</option>
+                            <option value="success">Confirmed</option>
+                            <option value="paid">Paid</option>
                             <option value="pending">Pending</option>
+                            <option value="failed">Failed/Cancelled</option>
                         </select>
                     </div>
                 </div>
@@ -108,10 +123,16 @@ export default function Bookings() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredBookings.map(booking => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                    Auditing registry records...
+                                </td>
+                            </tr>
+                        ) : filteredBookings.map(booking => (
                             <tr key={booking.id} className="group">
                                 <td>
-                                    <div className="font-black text-admin-primary text-xs uppercase tracking-widest">#{booking.id}</div>
+                                    <div className="font-black text-admin-primary text-[10px] uppercase tracking-widest">#{booking.id}</div>
                                 </td>
                                 <td>
                                     <div className="flex items-center gap-3">
@@ -119,8 +140,8 @@ export default function Bookings() {
                                             <User size={16} />
                                         </div>
                                         <div className="flex flex-col">
-                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.name}</div>
-                                            <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.phone}</span>
+                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.user?.name || 'Guest User'}</div>
+                                            <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.user?.email || 'No Email'}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -129,19 +150,19 @@ export default function Bookings() {
                                         <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
                                             <Calendar size={14} />
                                         </div>
-                                        {new Date(booking.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        {new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </div>
                                 </td>
                                 <td>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-text-main">{formatRupiah(booking.total)}</span>
+                                        <span className="text-sm font-black text-admin-text-main">{formatRupiah(booking.total_price)}</span>
                                         <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Payment Final</span>
                                     </div>
                                 </td>
                                 <td>
                                     <span className={`badge-status ${getStatusStyles(booking.status)}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${booking.status === 'success' ? 'bg-success' : 'bg-warning'}`} />
-                                        {booking.status === 'success' ? 'Confirmed' : 'Pending'}
+                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusStyles(booking.status).includes('success') ? 'bg-success' : 'bg-warning'}`} />
+                                        <span className="uppercase">{booking.status}</span>
                                     </span>
                                 </td>
                                 <td>
@@ -209,7 +230,7 @@ export default function Bookings() {
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <User size={18} />
                                             </div>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedBooking.name}</span>
+                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedBooking.user?.name || 'Guest User'}</span>
                                         </div>
                                     </div>
                                     <div>
@@ -218,7 +239,7 @@ export default function Bookings() {
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <Calendar size={18} />
                                             </div>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{new Date(selectedBooking.date).toLocaleDateString('id-ID')}</span>
+                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{new Date(selectedBooking.check_in_date).toLocaleDateString('id-ID')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -228,7 +249,7 @@ export default function Bookings() {
                                         <div className="flex items-center gap-4 p-6 rounded-3xl bg-admin-primary text-white shadow-xl shadow-admin-primary/20">
                                             <DollarSign size={24} />
                                             <div className="flex flex-col">
-                                                <span className="text-xl font-black leading-none">{formatRupiah(selectedBooking.total)}</span>
+                                                <span className="text-xl font-black leading-none">{formatRupiah(selectedBooking.total_price)}</span>
                                                 <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1">Net Valuation</span>
                                             </div>
                                         </div>
@@ -248,7 +269,9 @@ export default function Bookings() {
                                         </div>
                                         <div>
                                             <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1">Service Item</span>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedBooking.itemName}</span>
+                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">
+                                                {selectedBooking.item?.name || 'Item Not Found'}
+                                            </span>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -256,8 +279,10 @@ export default function Bookings() {
                                             <CreditCard size={20} />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1">Payment Method</span>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">Virtual Account Transfer</span>
+                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1">Payment Status</span>
+                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">
+                                                {selectedBooking.status.toUpperCase()}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

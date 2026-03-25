@@ -1,32 +1,53 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Plus, Edit, Trash2, Calendar, Tag, Search, Info, ExternalLink, Filter, MoreHorizontal, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getEvents, saveEvents } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function AdminEvents() {
     const [events, setEvents] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
-        setEvents(getEvents());
-    }, []);
-
-    const handleDelete = (id) => {
-        if (confirm('Yakin ingin menghapus event ini?')) {
-            const updated = events.filter(e => e.id !== id);
-            setEvents(updated);
-            saveEvents(updated);
-            toast.success('Event berhasil dihapus');
+    const fetchEvents = async () => {
+        try {
+            setIsLoading(true);
+            const { data } = await axios.get('/api/events');
+            setEvents(data);
+        } catch (error) {
+            toast.error('Gagal mengambil data event');
+            console.error(error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const toggleStatus = (id) => {
-        const updated = events.map(e => e.id === id ? { ...e, status: e.status === 'active' ? 'inactive' : 'active' } : e);
-        setEvents(updated);
-        saveEvents(updated);
-        toast.success(`Event dipindahkan ke ${updated.find(e => e.id === id).status === 'active' ? 'Publish' : 'Draft'}`);
+    useEffect(() => {
+        fetchEvents();
+    }, []);
+
+    const handleDelete = async (id) => {
+        if (confirm('Yakin ingin menghapus event ini?')) {
+            try {
+                await axios.delete(`/api/events/${id}`);
+                setEvents(events.filter(e => e.id !== id));
+                toast.success('Event berhasil dihapus');
+            } catch (error) {
+                toast.error('Gagal menghapus event');
+            }
+        }
+    };
+
+    const toggleStatus = async (id, currentStatus) => {
+        const newStatus = currentStatus === 'active' || currentStatus === 1 ? false : true;
+        try {
+            await axios.put(`/api/events/${id}`, { is_active: newStatus });
+            setEvents(events.map(e => e.id === id ? { ...e, is_active: newStatus } : e));
+            toast.success(`Event dipindahkan ke ${newStatus ? 'Publish' : 'Draft'}`);
+        } catch (error) {
+            toast.error('Gagal mengubah status event');
+        }
     };
 
     const filteredEvents = events.filter(e =>
@@ -83,7 +104,15 @@ export default function AdminEvents() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredEvents.map(event => (
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <tr key={i} className="animate-pulse">
+                                    <td colSpan="6" className="py-4">
+                                        <div className="h-10 bg-admin-bg rounded-xl w-full"></div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : filteredEvents.map(event => (
                             <tr key={event.id} className="group">
                                 <td className="w-28">
                                     <div className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm">
@@ -107,26 +136,25 @@ export default function AdminEvents() {
                                         <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
                                             <Calendar size={14} />
                                         </div>
-                                        {event.date}
+                                        {event.date_info}
                                     </div>
                                 </td>
                                 <td>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-text-main">{event.price}</span>
+                                        <span className="text-sm font-black text-admin-text-main">{event.price_info}</span>
                                         <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Display Rate</span>
                                     </div>
                                 </td>
                                 <td>
                                     <button
-                                        onClick={() => toggleStatus(event.id)}
-                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${event.status === 'active' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
+                                        onClick={() => toggleStatus(event.id, event.is_active)}
+                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${event.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${event.status === 'active' ? 'bg-success' : 'bg-warning'}`} />
-                                        {event.status === 'active' ? 'Live on Site' : 'Locked (Draft)'}
+                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${event.is_active ? 'bg-success' : 'bg-warning'}`} />
+                                        {event.is_active ? 'Live on Site' : 'Locked (Draft)'}
                                     </button>
                                 </td>
                                 <td className="flex justify-start gap-2">
-                                    <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Open Preview" onClick={() => navigate(`/events/${event.id}`)}><ExternalLink size={16} /></button>
                                     <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/events/edit/${event.id}`)}><Edit size={16} /></button>
                                     <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-danger flex items-center justify-center hover:bg-danger hover:text-white hover:border-danger transition-all shadow-sm" title="Archive" onClick={() => handleDelete(event.id)}><Trash2 size={16} /></button>
                                 </td>
@@ -135,7 +163,7 @@ export default function AdminEvents() {
                     </tbody>
                 </table>
 
-                {filteredEvents.length === 0 && (
+                {!isLoading && filteredEvents.length === 0 && (
                     <div className="py-24 text-center">
                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
                             <LayoutGrid size={40} />

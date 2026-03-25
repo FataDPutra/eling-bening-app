@@ -1,49 +1,65 @@
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, FileText, Tag, CircleDollarSign, Filter, Search, X, MoreVertical, CreditCard, Receipt, ArrowDownCircle, Edit } from 'lucide-react';
-import { getExpenses, saveExpenses, formatRupiah } from '../../utils/data';
+import { Plus, Trash2, Calendar, FileText, CircleDollarSign, Filter, Search, X, Receipt, ArrowDownCircle, Edit } from 'lucide-react';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Expenses() {
     const [expenses, setExpenses] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
-    const [formData, setFormData] = useState({ title: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
+    const [formData, setFormData] = useState({ name: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const fetchExpenses = async () => {
+        try {
+            const res = await axios.get('/api/expenses');
+            setExpenses(res.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch expenses", error);
+            toast.error("Gagal memuat data pengeluaran");
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        setExpenses(getExpenses());
+        fetchExpenses();
     }, []);
 
     const resetForm = () => {
-        setFormData({ title: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
+        setFormData({ name: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
         setIsEditing(false);
         setEditId(null);
         setShowForm(false);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (isEditing) {
-            const updated = expenses.map(exp => 
-                exp.id === editId ? { ...formData, id: editId, amount: Number(formData.amount) } : exp
-            );
-            setExpenses(updated);
-            saveExpenses(updated);
-            toast.success('Pengeluaran berhasil diperbarui');
-        } else {
-            const newExpense = { ...formData, id: Date.now(), amount: Number(formData.amount) };
-            const updated = [newExpense, ...expenses];
-            setExpenses(updated);
-            saveExpenses(updated);
-            toast.success('Pengeluaran berhasil dicatat');
+        try {
+            const payload = { ...formData, amount: Number(formData.amount) };
+            if (isEditing) {
+                const res = await axios.put(`/api/expenses/${editId}`, payload);
+                setExpenses(expenses.map(exp => exp.id === editId ? res.data : exp));
+                toast.success('Pengeluaran berhasil diperbarui');
+            } else {
+                const res = await axios.post('/api/expenses', payload);
+                setExpenses([res.data, ...expenses]);
+                toast.success('Pengeluaran berhasil dicatat');
+            }
+            resetForm();
+        } catch (error) {
+            console.error("Failed to save expense", error);
+            toast.error("Gagal menyimpan data pengeluaran");
         }
-        resetForm();
     };
 
     const handleEdit = (exp) => {
         setFormData({
-            title: exp.title,
+            name: exp.name,
             amount: exp.amount,
             category: exp.category,
             date: exp.date,
@@ -55,14 +71,23 @@ export default function Expenses() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('Hapus catatan pengeluaran ini?')) {
-            const updated = expenses.filter(e => e.id !== id);
-            setExpenses(updated);
-            saveExpenses(updated);
-            toast.success('Catatan dihapus');
+            try {
+                await axios.delete(`/api/expenses/${id}`);
+                setExpenses(expenses.filter(e => e.id !== id));
+                toast.success('Catatan dihapus');
+            } catch (error) {
+                console.error("Failed to delete expense", error);
+                toast.error("Gagal menghapus catatan");
+            }
         }
     };
+
+    const filteredExpenses = expenses.filter(e => 
+        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.note && e.note.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
 
     return (
         <div className="animate-fade-in space-y-6">
@@ -93,7 +118,7 @@ export default function Expenses() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="form-group">
                                 <label className="form-label">Nama Pengeluaran / Keperluan</label>
-                                <input required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} type="text" className="admin-input" placeholder="misal: Pembelian Inventaris Resto" />
+                                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" className="admin-input" placeholder="misal: Pembelian Inventaris Resto" />
                             </div>
                             <div className="form-group">
                                 <label className="form-label">Kategori Biaya</label>
@@ -143,7 +168,12 @@ export default function Expenses() {
                 <div className="table-header-actions">
                     <div className="topbar-search !w-full md:!w-96">
                         <Search className="search-icon" size={16} />
-                        <input type="text" placeholder="Cari transaksi..." />
+                        <input
+                            type="text"
+                            placeholder="Cari transaksi..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 
@@ -158,7 +188,22 @@ export default function Expenses() {
                         </tr>
                     </thead>
                     <tbody>
-                        {expenses.map(exp => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="5" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                    Syncing financial logs...
+                                </td>
+                            </tr>
+                        ) : filteredExpenses.length === 0 ? (
+                            <tr>
+                                <td colSpan="5" className="py-24 text-center">
+                                    <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
+                                        <Receipt size={40} />
+                                    </div>
+                                    <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Data pengeluaran masih kosong</p>
+                                </td>
+                            </tr>
+                        ) : filteredExpenses.map(exp => (
                             <tr key={exp.id}>
                                 <td>
                                     <div className="flex items-center gap-3">
@@ -172,7 +217,7 @@ export default function Expenses() {
                                 </td>
                                 <td>
                                     <div className="flex flex-col gap-0.5">
-                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{exp.title}</span>
+                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{exp.name}</span>
                                         <span className="text-[10px] font-bold text-admin-text-muted flex items-center gap-1">
                                             <FileText size={10} /> {exp.note || 'Tidak ada catatan'}
                                         </span>
@@ -201,16 +246,6 @@ export default function Expenses() {
                                 </td>
                             </tr>
                         ))}
-                        {expenses.length === 0 && (
-                            <tr>
-                                <td colSpan="5" className="py-24 text-center">
-                                    <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
-                                        <CreditCard size={40} />
-                                    </div>
-                                    <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Data pengeluaran masih kosong</p>
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
             </div>

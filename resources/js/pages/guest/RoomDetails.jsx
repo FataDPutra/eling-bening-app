@@ -1,22 +1,44 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getRooms, formatRupiah } from '../../utils/data';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 
 export default function RoomDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const rooms = getRooms();
+    
+    const [room, setRoom] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Find room by name (converted to URL friendly) or fallback to first room
-    const room = rooms.find(r => r.name.replace(/\s+/g, '-').toLowerCase() === id) || rooms[0];
+    useEffect(() => {
+        axios.get(`/api/resorts/${id}`)
+            .then(res => {
+                setRoom(res.data);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch room details", err);
+                setIsLoading(false);
+            });
+    }, [id]);
 
     const handleBooking = () => {
-        navigate('/booking'); // Proceed to booking form
+        // Here we could store room details in context or state before navigating
+        navigate('/booking'); 
     };
+
+    if (isLoading) {
+        return <div className="pt-32 text-center text-xl text-gray-500 font-bold min-h-screen">Memuat data kamar...</div>;
+    }
+
+    if (!room) {
+        return <div className="pt-32 text-center text-xl text-gray-500 font-bold min-h-screen">Kamar tidak ditemukan.</div>;
+    }
 
     // Dynamic Pricing Logic
     const today = new Date().getDay();
     const isWeekend = today === 0 || today === 5 || today === 6; // 0=Sun, 5=Fri, 6=Sat
-    const currentPrice = isWeekend && room.priceWeekend ? room.priceWeekend : room.price;
+    const currentPrice = isWeekend && room.price_weekend ? room.price_weekend : room.price;
 
     return (
         <main className="pt-24 pb-20 px-6 max-w-7xl mx-auto animate-fade-in">
@@ -41,19 +63,19 @@ export default function RoomDetails() {
             {/* Image Gallery Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[400px] mb-10 overflow-hidden rounded-3xl">
                 <div className="md:col-span-2 md:row-span-2">
-                    <img src={(Array.isArray(room.images) && room.images.length > 0 ? room.images[0] : room.image) || "/images/resort-room.png"} alt="Main Room" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer" />
+                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : "/images/resort-room.png")} alt="Main Room" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer" />
                 </div>
                 <div className="md:col-span-1 md:row-span-1 hidden md:block">
-                    <img src={(Array.isArray(room.images) && room.images.length > 1 ? room.images[1] : (room.image || "/images/resort-room.png"))} alt="Room Detail 1" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-110" />
+                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 1 ? room.gallery[1] : "/images/resort-room.png")} alt="Room Detail 1" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-110" />
                 </div>
                 <div className="md:col-span-1 md:row-span-1 hidden md:block">
-                    <img src={(Array.isArray(room.images) && room.images.length > 2 ? room.images[2] : (room.image || "/images/resort-room.png"))} alt="Room Detail 2" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-90" />
+                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 2 ? room.gallery[2] : "/images/resort-room.png")} alt="Room Detail 2" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-90" />
                 </div>
                 <div className="md:col-span-2 md:row-span-1 hidden md:block relative">
-                    <img src={(Array.isArray(room.images) && room.images.length > 3 ? room.images[3] : (room.image || "/images/resort-room.png"))} alt="Room Detail 3" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer saturate-50" />
-                    {Array.isArray(room.images) && room.images.length > 4 && (
+                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 3 ? room.gallery[3] : "/images/resort-room.png")} alt="Room Detail 3" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer saturate-50" />
+                    {Array.isArray(room.gallery) && room.gallery.length > 4 && (
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                            <span className="text-white font-bold text-2xl">+{room.images.length - 4}</span>
+                            <span className="text-white font-bold text-2xl">+{room.gallery.length - 4}</span>
                         </div>
                     )}
                     <button className="absolute bottom-4 right-4 bg-white text-gray-900 px-6 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 flex items-center gap-2">
@@ -74,7 +96,7 @@ export default function RoomDetails() {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Kapasitas</p>
-                                <p className="font-medium text-gray-900">{room.capacity} Tamu</p>
+                                <p className="font-medium text-gray-900">{room.capacity || 2} Tamu</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -83,7 +105,7 @@ export default function RoomDetails() {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Tipe Ranjang</p>
-                                <p className="font-medium text-gray-900">{room.bed || '1 King Bed'}</p>
+                                <p className="font-medium text-gray-900">{room.bed_type || '1 Queen Bed'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -92,7 +114,7 @@ export default function RoomDetails() {
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Ukuran Kamar</p>
-                                <p className="font-medium text-gray-900">{room.size || 32} m&sup2;</p>
+                                <p className="font-medium text-gray-900">{room.room_size || '24'} m&sup2;</p>
                             </div>
                         </div>
                     </div>
@@ -101,10 +123,7 @@ export default function RoomDetails() {
                     <div>
                         <h2 className="text-2xl font-bold mb-4 font-serif text-gray-900">Tentang Kamar Ini</h2>
                         <p className="text-gray-600 leading-relaxed mb-4 text-justify">
-                            Nikmati pemandangan spektakuler Rawa Pening dan pegunungan sekitarnya langsung dari balkon pribadi Anda. {room.name} menawarkan keseimbangan sempurna antara kemewahan modern dan sentuhan alam yang menenangkan. Dilengkapi dengan ranjang kualitas premium, kamar mandi luas dengan fitur air panas, serta area duduk santai yang nyaman.
-                        </p>
-                        <p className="text-gray-600 leading-relaxed text-justify">
-                            Desain interior kamar ini menggunakan material alami seperti kayu dan batu untuk memberikan kesan hangat, cocok untuk pasangan yang sedang bulan madu atau sekadar mencari ketenangan dari hiruk pikuk perkotaan.
+                            {room.description || `Nikmati pemandangan spektakuler Rawa Pening dan pegunungan sekitarnya langsung dari balkon pribadi Anda. ${room.name} menawarkan keseimbangan sempurna antara kemewahan modern dan sentuhan alam yang menenangkan.`}
                         </p>
                     </div>
 
@@ -112,46 +131,16 @@ export default function RoomDetails() {
                     <div>
                         <h2 className="text-2xl font-bold mb-6 font-serif text-gray-900">Fasilitas Lengkap</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-wifi text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">WiFi Kecepatan Tinggi Gratis</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-tv text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Smart TV 43" (Netflix, YouTube)</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-coffee text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Pembuat Kopi & Teh</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-snowflake text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">AC (Air Conditioning)</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-bath text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Kamar Mandi Pribadi & Air Panas</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-utensils text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Termasuk Sarapan untuk 2 Orang</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-swimming-pool text-xl text-gray-300 w-6"></i>
-                                <span className="text-gray-500 text-sm line-through">Akses Kolam Renang Privat</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-smoking-ban text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Area Bebas Asap Rokok</span>
-                            </div>
-                            <div className="flex items-start gap-4">
-                                <i className="fas fa-wind text-xl text-eling-green w-6"></i>
-                                <span className="text-gray-700 text-sm">Balkon Pribadi</span>
-                            </div>
+                            {(room.facilities || []).map((a, i) => (
+                                <div key={i} className="flex items-start gap-4">
+                                    <i className="fas fa-check text-xl text-eling-green w-6"></i>
+                                    <span className="text-gray-700 text-sm">{a}</span>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Reviews */}
+                    {/* Reviews Dummy Content */}
                     <div className="pt-6 border-t border-gray-100">
                         <div className="flex items-center justify-between mb-8">
                             <h2 className="text-2xl font-bold font-serif text-gray-900">Penilaian Tamu</h2>
@@ -174,29 +163,10 @@ export default function RoomDetails() {
                                         <i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i>
                                     </div>
                                 </div>
-                                <p className="text-gray-600 text-sm leading-relaxed text-justify">"Kamarnya sangat bersih dan wangi! Pemandangannya langsung ke danau dan gunung sangat luar biasa untuk dinikmati saat pagi hari sambil minum kopi. Pelayanan staf sangat ramah dan responsif. Akan kembali lagi kesini."</p>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-lg">
-                                            B
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-gray-900">Budi Santoso</h4>
-                                            <p className="text-xs text-gray-500">1 minggu yang lalu</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex text-yellow-400 text-sm">
-                                        <i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star-half-alt"></i>
-                                    </div>
-                                </div>
-                                <p className="text-gray-600 text-sm leading-relaxed text-justify">"Harga sepadan dengan fasilitas dan pemandangan yang didapat. Sarapannya bervariasi dan enak. Kekurangannya hanya sinyal seluler agak susah, tapi untungnya WiFi hotel sangat kencang."</p>
+                                <p className="text-gray-600 text-sm leading-relaxed text-justify">"Kamarnya sangat bersih dan wangi! Pemandangannya langsung ke danau dan gunung sangat luar biasa untuk dinikmati saat pagi hari."</p>
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 {/* Right Widget: Sticky Booking */}
@@ -275,4 +245,3 @@ export default function RoomDetails() {
         </main>
     );
 }
-

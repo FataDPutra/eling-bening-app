@@ -1,37 +1,61 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Info, Ticket, CalendarDays, ShoppingBag, Filter, LayoutGrid } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Ticket, CalendarDays, ShoppingBag, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getTickets, saveTickets, formatRupiah } from '../../utils/data';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Tickets() {
     const [tickets, setTickets] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        setTickets(getTickets());
-    }, []);
-
-    const handleDelete = (id) => {
-        if (confirm('Yakin ingin menghapus tiket ini?')) {
-            const updated = tickets.filter(t => t.id !== id);
-            setTickets(updated);
-            saveTickets(updated);
-            toast.success('Tiket berhasil dihapus');
+    const fetchTickets = async () => {
+        try {
+            const res = await axios.get('/api/tickets');
+            setTickets(res.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch tickets", error);
+            toast.error("Gagal memuat data tiket");
+            setIsLoading(false);
         }
     };
 
-    const toggleStatus = (id) => {
-        const updated = tickets.map(t => t.id === id ? { ...t, status: t.status === 'active' ? 'inactive' : 'active' } : t);
-        setTickets(updated);
-        saveTickets(updated);
-        toast.success(`Tiket ${updated.find(t => t.id === id).status === 'active' ? 'diaktifkan' : 'dinonaktifkan'}`);
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const handleDelete = async (id) => {
+        if (confirm('Yakin ingin menghapus tiket ini?')) {
+            try {
+                await axios.delete(`/api/tickets/${id}`);
+                setTickets(tickets.filter(t => t.id !== id));
+                toast.success('Tiket berhasil dihapus');
+            } catch (error) {
+                console.error("Failed to delete ticket", error);
+                toast.error("Gagal menghapus tiket");
+            }
+        }
+    };
+
+    const toggleStatus = async (id) => {
+        const ticket = tickets.find(t => t.id === id);
+        const newStatus = !ticket.is_active;
+        try {
+            const res = await axios.put(`/api/tickets/${id}`, { is_active: newStatus });
+            setTickets(tickets.map(t => t.id === id ? res.data : t));
+            toast.success(`Tiket ${newStatus ? 'diaktifkan' : 'dinonaktifkan'}`);
+        } catch (error) {
+            console.error("Failed to toggle status", error);
+            toast.error("Gagal mengubah status tiket");
+        }
     };
 
     const filteredTickets = tickets.filter(t =>
         t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.desc.toLowerCase().includes(searchTerm.toLowerCase())
+        (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -84,7 +108,13 @@ export default function Tickets() {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTickets.map(ticket => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan="5" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                    Syncing ticket catalog...
+                                </td>
+                            </tr>
+                        ) : filteredTickets.map(ticket => (
                             <tr key={ticket.id} className="group">
                                 <td>
                                     <div className="flex items-center gap-4">
@@ -93,16 +123,18 @@ export default function Tickets() {
                                         </div>
                                         <div className="max-w-[280px]">
                                             <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{ticket.name}</div>
-                                            <p className="text-[10px] text-admin-text-muted font-bold mt-1 line-clamp-1 italic">"{ticket.desc}"</p>
+                                            <p className="text-[10px] text-admin-text-muted font-bold mt-1 line-clamp-1 italic">"{ticket.description}"</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
                                     <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
-                                        <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
-                                            <CalendarDays size={14} />
+                                        <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary text-xs uppercase">
+                                            {ticket.validity_day === 'all_days' ? 'ALL' : ticket.validity_day === 'weekend' ? 'WND' : 'WKD'}
                                         </div>
-                                        {ticket.days}
+                                        <span className="uppercase tracking-wider">
+                                            {ticket.validity_day.replace('_', ' ')}
+                                        </span>
                                     </div>
                                 </td>
                                 <td>
@@ -114,10 +146,10 @@ export default function Tickets() {
                                 <td>
                                     <button
                                         onClick={() => toggleStatus(ticket.id)}
-                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${ticket.status === 'active' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
+                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${ticket.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${ticket.status === 'active' ? 'bg-success' : 'bg-warning'}`} />
-                                        {ticket.status === 'active' ? 'Online' : 'Disabled'}
+                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${ticket.is_active ? 'bg-success' : 'bg-warning'}`} />
+                                        {ticket.is_active ? 'Online' : 'Disabled'}
                                     </button>
                                 </td>
                                 <td>
@@ -131,7 +163,7 @@ export default function Tickets() {
                     </tbody>
                 </table>
 
-                {filteredTickets.length === 0 && (
+                {!isLoading && filteredTickets.length === 0 && (
                     <div className="py-24 text-center">
                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
                             <LayoutGrid size={40} />

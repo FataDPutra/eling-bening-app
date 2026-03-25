@@ -1,15 +1,21 @@
 import { useState } from 'react';
-import { Utensils, BedDouble, Waves, MapPin, Phone, Mail, X } from 'lucide-react';
+import { Utensils, BedDouble, Waves, MapPin, Phone, Mail, X, Loader2 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 
 export default function Facilities() {
-    const { content } = useContent();
+    const { content, isLoading } = useContent();
     const [showMap, setShowMap] = useState(false);
     const facilities = content.facilities || [];
 
+    if (isLoading) return (
+        <div className="h-screen flex items-center justify-center bg-white">
+            <Loader2 className="animate-spin text-eling-green" size={48} />
+        </div>
+    );
+
     return (
         <div className="animate-fade-in bg-gray-50 pb-24">
-            <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
+            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
                 <img src="/images/hero-bg.png" alt="Facilities Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 text-white max-w-4xl px-4">

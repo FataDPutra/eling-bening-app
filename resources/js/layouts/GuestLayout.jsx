@@ -60,17 +60,18 @@ export default function GuestLayout() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // isHome determines if we use the transparent glass nav initially
-    const isHome = location.pathname === '/';
+    // Determine if the current page features a full-bleed hero that goes behind the navbar
+    const transparentCapablePages = ['/', '/about', '/events', '/gallery', '/facilities', '/contact'];
+    const isHeroPage = transparentCapablePages.includes(location.pathname);
 
     return (
         <div className="bg-white text-gray-900 min-h-screen flex flex-col">
             <style>{`
                 .glass {
                     background: rgba(255, 255, 255, 0.1);
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
-                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(20px);
+                    -webkit-backdrop-filter: blur(20px);
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 }
                 .text-eling-green { color: #2E7D32; }
                 .bg-eling-green { background-color: #2E7D32; }
@@ -83,18 +84,18 @@ export default function GuestLayout() {
                     opacity: 1;
                 }
                 
-                /* Responsive handling for main content spacing when not on home */
+                /* Layout spacing logic */
                 .pt-offset { padding-top: 80px; }
             `}</style>
 
             {/* Header / Navbar */}
-            <nav className={`fixed w-full z-50 transition-all duration-300 py-4 px-6 lg:px-12 flex justify-between items-center ${isHome && !scrolled ? 'glass text-white' : 'bg-white/90 text-gray-900 shadow-lg'}`}>
-                <Link to="/" className="flex items-center gap-2">
-                    <img src="/images/logo.png" alt="Logo" className={`h-10 ${isHome && !scrolled ? '' : ''}`} />
-                    <span className={`text-xl font-serif font-bold tracking-wider ${isHome && !scrolled ? '' : 'text-eling-green'}`}>Eling Bening</span>
+            <nav className={`fixed w-full z-50 transition-all duration-500 py-4 px-6 lg:px-12 flex justify-between items-center ${isHeroPage && !scrolled ? 'glass text-white' : 'bg-white/95 text-gray-900 shadow-xl backdrop-blur-md'}`}>
+                <Link to="/" className="flex items-center gap-2 group">
+                    <img src="/images/logo.png" alt="Logo" className={`h-10 transition-transform group-hover:scale-110 duration-500`} />
+                    <span className={`text-xl font-serif font-black tracking-wider ${isHeroPage && !scrolled ? 'text-white drop-shadow-sm' : 'text-eling-green'}`}>Eling Bening</span>
                 </Link>
 
-                <div className="hidden lg:flex gap-8 font-semibold tracking-wide uppercase text-sm">
+                <div className="hidden lg:flex gap-8 font-black tracking-[0.05em] uppercase text-[11px]">
                     {[
                         { name: 'Home', path: '/' },
                         { name: 'Tentang Kami', path: '/about' },
@@ -107,10 +108,10 @@ export default function GuestLayout() {
                         <Link
                             key={item.path}
                             to={item.path}
-                            className={`transition duration-300 ${
+                            className={`transition-all duration-300 relative py-1 ${
                                 location.pathname === item.path
-                                    ? 'text-eling-green'
-                                    : `hover:text-eling-green ${isHome && !scrolled ? 'text-white' : 'text-gray-900'}`
+                                    ? 'text-eling-green font-black'
+                                    : `hover:text-eling-green ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
                             }`}
                         >
                             {item.name}
@@ -120,37 +121,37 @@ export default function GuestLayout() {
 
                 <div className="flex items-center gap-6">
                     <div className="relative group">
-                        <button className="w-10 h-10 rounded-full bg-eling-red flex items-center justify-center text-white shadow-lg hover:bg-red-800 transition">
+                        <button className="w-10 h-10 rounded-full bg-eling-red flex items-center justify-center text-white shadow-xl hover:bg-red-800 transition-all duration-500 hover:rotate-[360deg]">
                             <UserCircle size={24} />
                         </button>
                         {/* Dropdown */}
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl py-4 text-gray-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right border border-gray-100">
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl py-4 text-gray-800 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right border border-gray-100 scale-95 group-hover:scale-100 translate-y-2 group-hover:translate-y-0">
                             <div className="px-6 py-2 border-b border-gray-100 mb-2">
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Akun Saya</p>
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Akun Saya</p>
                             </div>
                             {user ? (
                                 <>
-                                    <div className="px-6 py-2 mb-2 bg-green-50">
-                                        <p className="text-sm font-bold text-eling-green">{user.name}</p>
-                                        <p className="text-xs text-gray-500">{user.email}</p>
+                                    <div className="px-6 py-2 mb-2 bg-green-50/50">
+                                        <p className="text-sm font-black text-eling-green uppercase tracking-tight">{user.name}</p>
+                                        <p className="text-[10px] text-gray-400 font-bold">{user.email}</p>
                                     </div>
-                                    <button onClick={handleLogout} className="w-full text-left px-6 py-2 hover:bg-gray-50 hover:text-eling-red transition text-sm font-semibold">Logout</button>
+                                    <button onClick={handleLogout} className="w-full text-left px-6 py-2 hover:bg-gray-50 hover:text-eling-red transition text-xs font-black uppercase tracking-widest">Logout</button>
                                 </>
                             ) : (
                                 <>
-                                    <Link to="/login" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-sm font-semibold">Login</Link>
-                                    <Link to="/register" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-sm font-semibold">Register</Link>
+                                    <Link to="/login" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Login</Link>
+                                    <Link to="/register" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Register</Link>
                                 </>
                             )}
                             <div className="h-px bg-gray-100 my-2 mx-4"></div>
-                            {user && <Link to="/profile" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-sm font-semibold">Profil & Riwayat</Link>}
-                            <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-sm font-semibold text-eling-red">Panel Admin</Link>
+                            {user && <Link to="/profile" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Profil & Riwayat</Link>}
+                            <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-eling-red">Panel Admin</Link>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <main className={`flex-grow ${!isHome ? 'pt-offset' : ''}`}>
+            <main className={`flex-grow ${!isHeroPage ? 'pt-offset' : ''}`}>
                 <Outlet />
             </main>
 

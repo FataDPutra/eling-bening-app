@@ -1,25 +1,43 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, X, Check, Building, Maximize, BedDouble, Info, Search, Users, ShieldCheck, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { getRooms, saveRooms, formatRupiah } from '../../utils/data';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
 
+    const fetchRooms = async () => {
+        try {
+            const res = await axios.get('/api/resorts');
+            setRooms(res.data);
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch resorts", error);
+            toast.error("Gagal memuat data kamar");
+            setIsLoading(false);
+        }
+    };
+
     useEffect(() => {
-        setRooms(getRooms());
+        fetchRooms();
     }, []);
 
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('Yakin ingin menghapus kamar tipe ini? Semua pemesanan terkait mungkin terdampak.')) {
-            const updated = rooms.filter(r => r.id !== id);
-            setRooms(updated);
-            saveRooms(updated);
-            toast.success('Kamar berhasil dihapus');
+            try {
+                await axios.delete(`/api/resorts/${id}`);
+                setRooms(rooms.filter(r => r.id !== id));
+                toast.success('Kamar berhasil dihapus');
+            } catch (error) {
+                console.error("Failed to delete room", error);
+                toast.error("Gagal menghapus kamar");
+            }
         }
     };
 

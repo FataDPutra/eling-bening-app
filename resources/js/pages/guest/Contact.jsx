@@ -1,15 +1,24 @@
-import { MapPin, Phone, Mail } from 'lucide-react';
+import { MapPin, Phone, Mail, Loader2 } from 'lucide-react';
+import { useContent } from '../../context/ContentContext';
 
 export default function Contact() {
+    const { content, isLoading } = useContent();
+
+    if (isLoading) return (
+        <div className="h-screen flex items-center justify-center bg-white">
+            <Loader2 className="animate-spin text-eling-green" size={48} />
+        </div>
+    );
+
     return (
         <div className="animate-fade-in bg-white pb-24">
-            <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-                <img src="/images/hero-bg.png" alt="Contact Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+                <img src={content.contact.heroImage || "/images/hero-bg.png"} alt="Contact Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 text-white max-w-4xl px-4">
-                    <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Hubungi Kami</h1>
+                    <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">{content.contact.title}</h1>
                     <p className="text-lg lg:text-xl font-light tracking-wide italic">
-                        Kami siap membantu merencanakan liburan sempurna Anda.
+                        {content.contact.subtitle}
                     </p>
                 </div>
             </section>
@@ -17,11 +26,11 @@ export default function Contact() {
             <section className="max-w-7xl mx-auto px-6 lg:px-24 pt-24">
                 <div className="flex flex-col lg:flex-row gap-16 lg:gap-24">
                     <div className="lg:w-1/2">
-                        <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">Informasi Kontak</span>
-                        <h2 className="text-4xl lg:text-5xl font-bold mb-8 font-serif text-gray-900">Sapa Kami Kapan Saja</h2>
+                        <span className="text-eling-red uppercase tracking-widest font-bold text-sm block mb-4">{content.contact.supportBadge}</span>
+                        <h2 className="text-4xl lg:text-5xl font-bold mb-8 font-serif text-gray-900">{content.contact.supportTitle}</h2>
 
                         <p className="text-gray-600 leading-relaxed mb-12 text-lg">
-                            Apakah Anda memiliki pertanyaan mengenai reservasi resort, pembelian tiket grup, atau acara pernikahan? Jangan ragu untuk menghubungi tim layanan pelanggan kami.
+                            {content.contact.supportDesc}
                         </p>
 
                         <div className="space-y-8 mb-12">
@@ -31,7 +40,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-900 text-lg mb-1">Lokasi</p>
-                                    <p className="text-gray-600 text-sm leading-relaxed">Jl. Sarjono, Bauman, Ambarawa, Kec. Ambarawa,<br />Kabupaten Semarang, Jawa Tengah 50614</p>
+                                    <p className="text-gray-600 text-sm leading-relaxed">{content.contact.address}</p>
                                 </div>
                             </div>
 
@@ -41,8 +50,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-900 text-lg mb-1">Telepon</p>
-                                    <p className="text-gray-600 text-sm">+62 811-2345-6789</p>
-                                    <p className="text-gray-600 text-sm">+62 24-1234-5678 (Office)</p>
+                                    <p className="text-gray-600 text-sm">{content.contact.phone}</p>
                                 </div>
                             </div>
 
@@ -52,8 +60,7 @@ export default function Contact() {
                                 </div>
                                 <div>
                                     <p className="font-bold text-gray-900 text-lg mb-1">Email</p>
-                                    <p className="text-gray-600 text-sm">info@elingbening.com</p>
-                                    <p className="text-gray-600 text-sm">sales@elingbening.com</p>
+                                    <p className="text-gray-600 text-sm">{content.contact.email}</p>
                                 </div>
                             </div>
                         </div>

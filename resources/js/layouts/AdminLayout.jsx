@@ -61,6 +61,39 @@ export default function AdminLayout() {
         setIsSidebarCollapsed(!isSidebarCollapsed);
     };
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+
+    const adminMenus = [
+        { label: 'Dashboard', to: '/admin' },
+        { label: 'Statistik', to: '/admin/stats' },
+        { label: 'Pemesanan Kamar', to: '/admin/bookings' },
+        { label: 'Kelola Kamar', to: '/admin/rooms' },
+        { label: 'Reschedule', to: '/admin/reschedule' },
+        { label: 'Pemesanan Tiket', to: '/admin/tickets/orders' },
+        { label: 'Kelola Tiket', to: '/admin/tickets' },
+        { label: 'Scan Tiket', to: '/admin/scanner' },
+        { label: 'Kelola Event', to: '/admin/events' },
+        { label: 'Promo & Banner', to: '/admin/promos' },
+        { label: 'Konten CMS', to: '/admin/content' },
+        { label: 'Profil Saya', to: '/admin/profile' },
+        { label: 'System Settings', to: '/admin/settings' },
+        { label: 'Laporan Keuangan', to: '/admin/finance' },
+    ];
+
+    const handleSearch = (e) => {
+        const query = e.target.value;
+        setSearchTerm(query);
+        if (query.trim()) {
+            const filtered = adminMenus.filter(m => 
+                m.label.toLowerCase().includes(query.toLowerCase())
+            );
+            setSearchResults(filtered);
+        } else {
+            setSearchResults([]);
+        }
+    };
+
     const NavItem = ({ to, icon: Icon, label, end = false }) => (
         <li>
             <NavLink
@@ -174,28 +207,40 @@ export default function AdminLayout() {
             <div className="admin-main-wrapper">
                 <header className="admin-topbar">
                     <div className="topbar-left">
-                        <button className="menu-toggle lg:flex hidden" onClick={toggleSidebar}>
-                            {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                        </button>
-                        <button className="menu-toggle lg:hidden flex" onClick={() => setIsMobileMenuOpen(true)}>
-                            <Menu size={20} />
-                        </button>
-
-                        <div className="topbar-search hidden md:block">
+                        <div className="topbar-search relative group">
                             <Search className="search-icon" size={18} />
-                            <input type="text" placeholder="Cari data, pesanan, atau fitur..." />
+                            <input 
+                                type="text" 
+                                placeholder="Cari fitur atau halaman..." 
+                                value={searchTerm}
+                                onChange={handleSearch}
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-10 py-2.5 focus:ring-2 focus:ring-admin-primary/20 transition-all"
+                            />
+                            
+                            {searchResults.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[1100] animate-fade-in">
+                                    <div className="p-2">
+                                        {searchResults.map((res, i) => (
+                                            <Link 
+                                                key={i} 
+                                                to={res.to} 
+                                                onClick={() => setSearchResults([])}
+                                                className="flex items-center gap-3 p-3 hover:bg-admin-bg rounded-xl transition-colors group"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-admin-primary/10 flex items-center justify-center text-admin-primary group-hover:bg-admin-primary group-hover:text-white transition-all">
+                                                    <Search size={14} />
+                                                </div>
+                                                <span className="text-sm font-bold text-gray-700">{res.label}</span>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     <div className="topbar-right">
                         <div className="topbar-actions hidden sm:flex">
-                            <button className="action-btn" title="Notifications">
-                                <Bell size={20} />
-                                <span className="notification-badge"></span>
-                            </button>
-                            <button className="action-btn" title="Settings">
-                                <Settings size={20} />
-                            </button>
                         </div>
 
                         <Link to="/admin/profile" className="admin-profile hover:bg-gray-50 transition-colors p-1 rounded-xl cursor-pointer">

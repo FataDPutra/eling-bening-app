@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Ticket, Building, CircleDollarSign, TrendingUp, Download, ArrowUpRight, ArrowDownRight, MoreVertical, Wallet, Calendar, Bell, Activity } from 'lucide-react';
-import { getTickets, getRooms, getBookings, formatRupiah } from '../../utils/data';
+import { Users, Ticket, Building, TrendingUp, Download, MoreVertical, Wallet, Calendar, Bell, Activity } from 'lucide-react';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
@@ -12,24 +13,42 @@ export default function Dashboard() {
         todayRevenue: 0
     });
     const [bookings, setBookings] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = async () => {
+        try {
+            const [resortsRes, ticketsRes, transactionsRes] = await Promise.all([
+                axios.get('/api/resorts'),
+                axios.get('/api/tickets'),
+                axios.get('/api/transactions')
+            ]);
+
+            const tickets = ticketsRes.data;
+            const rooms = resortsRes.data;
+            const allBookings = transactionsRes.data;
+            setBookings(allBookings);
+
+            const today = new Date().toISOString().split('T')[0];
+            const todayRev = allBookings
+                .filter(b => b.check_in_date && b.check_in_date.startsWith(today) && (b.status === 'success' || b.status === 'paid'))
+                .reduce((sum, b) => sum + Number(b.total_price), 0);
+
+            setStats({
+                activeTickets: tickets.filter(t => t.is_active).length,
+                totalRooms: rooms.length,
+                availableRooms: rooms.filter(r => r.stock > 0).length,
+                todayRevenue: todayRev
+            });
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch dashboard data", error);
+            toast.error("Gagal sinkronisasi data dashboard");
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const tickets = getTickets();
-        const rooms = getRooms();
-        const allBookings = getBookings();
-        setBookings(allBookings);
-
-        const today = new Date().toISOString().split('T')[0];
-        const todayRev = allBookings
-            .filter(b => b.date.startsWith(today) && b.status === 'success')
-            .reduce((sum, b) => sum + b.total, 0);
-
-        setStats({
-            activeTickets: tickets.filter(t => t.status === 'active').length,
-            totalRooms: rooms.length,
-            availableRooms: rooms.filter(r => r.stock > 0).length,
-            todayRevenue: todayRev || 15250000
-        });
+        fetchData();
     }, []);
 
     const downloadReport = () => {
@@ -38,10 +57,10 @@ export default function Dashboard() {
             headers.join(','),
             ...bookings.map(b => [
                 b.id,
-                b.name,
-                `"${b.itemName}"`,
-                new Date(b.date).toLocaleDateString('id-ID'),
-                b.total,
+                b.user?.name || 'Guest',
+                `"${b.item?.name || 'Unknown Item'}"`,
+                new Date(b.check_in_date).toLocaleDateString('id-ID'),
+                b.total_price,
                 b.status
             ].join(','))
         ];
@@ -215,25 +234,37 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="flex-1 space-y-8 overflow-y-auto pr-2 custom-scrollbar">
-                        {bookings.slice(0, 8).map((b, i) => (
+                        {isLoading ? (
+                            <div className="flex flex-col gap-6">
+                                {[1, 2, 3, 4].map(i => (
+                                    <div key={i} className="flex gap-5 animate-pulse">
+                                        <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg" />
+                                        <div className="flex-1 space-y-2">
+                                            <div className="h-4 bg-admin-bg rounded w-3/4" />
+                                            <div className="h-3 bg-admin-bg rounded w-1/2" />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : bookings.slice(0, 8).map((b, i) => (
                             <div key={i} className="flex gap-5 items-start">
                                 <div className="relative">
-                                    <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs">
-                                        {b.name.charAt(0)}
+                                    <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs uppercase shadow-inner">
+                                        {b.user?.name?.charAt(0) || '?'}
                                     </div>
-                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${b.status === 'success' ? 'bg-success' : 'bg-warning'}`} />
+                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${b.status === 'success' || b.status === 'paid' ? 'bg-success' : 'bg-warning'}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.name}</h4>
-                                    <p className="text-[11px] text-admin-text-muted font-bold leading-tight">
-                                        Ordered <span className="text-admin-text-main">{b.itemName}</span>
+                                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.user?.name || 'Guest User'}</h4>
+                                    <p className="text-[11px] text-admin-text-muted font-bold leading-tight truncate">
+                                        Pesan <span className="text-admin-text-main">{b.item?.name || 'Item'}</span>
                                     </p>
                                     <p className="text-[9px] text-admin-text-light font-black uppercase tracking-widest mt-1">
-                                        {new Date(b.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • WEBPORTAL
+                                        {new Date(b.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • CLOUD SYNC
                                     </p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-black text-admin-primary">+{formatRupiah(b.total / 1000)}k</p>
+                                    <p className="text-sm font-black text-admin-primary">+{formatRupiah(b.total_price / 1000)}k</p>
                                 </div>
                             </div>
                         ))}

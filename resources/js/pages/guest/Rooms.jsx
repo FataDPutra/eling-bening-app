@@ -1,19 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getRooms, formatRupiah } from '../../utils/data';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [showReschedule, setShowReschedule] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        setRooms(getRooms());
+        axios.get('/api/resorts')
+            .then(res => {
+                setRooms(res.data);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch resorts", err);
+                setIsLoading(false);
+            });
     }, []);
 
-    const handleRoomSelect = (roomName) => {
-        const slug = roomName.replace(/\s+/g, '-').toLowerCase();
-        navigate(`/rooms/${slug}`);
+    const handleRoomSelect = (roomId) => {
+        navigate(`/rooms/${roomId}`);
     };
 
     return (
@@ -87,7 +96,7 @@ export default function Rooms() {
                                     {unavailable ? (
                                         <button disabled className="bg-gray-200 text-gray-400 font-bold py-3 px-6 rounded-xl cursor-not-allowed">Habis</button>
                                     ) : (
-                                        <button onClick={() => handleRoomSelect(r.name)} className="bg-eling-red text-white font-bold py-3 px-6 rounded-xl hover:bg-red-800 transition">Pilih</button>
+                                        <button onClick={() => handleRoomSelect(r.id)} className="bg-eling-red text-white font-bold py-3 px-6 rounded-xl hover:bg-red-800 transition">Pilih</button>
                                     )}
                                 </div>
                             </div>

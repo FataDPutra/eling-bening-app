@@ -1,23 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTickets, formatRupiah } from '../../utils/data';
+import axios from 'axios';
+import { formatRupiah } from '../../utils/data';
 import '../../styles/guest.css';
 
 export default function Ticketing() {
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Define initial promo codes from HTML logic
-    const PROMO_CODES = [
-        { code: 'ELINGBENING10', discount: 10, type: 'percent', desc: 'Diskon 10%' },
-        { code: 'HEBAT50K', discount: 50000, type: 'flat', desc: 'Potongan Rp 50.000' },
-    ];
-
-    const [qtys, setQtys] = useState({
-        'ticket-main': 0,
-        'ticket-pool': 0
-    });
-
+    const [qtys, setQtys] = useState({});
     const [promoInput, setPromoInput] = useState('');
     const [activePromo, setActivePromo] = useState(null);
     const [promoMsg, setPromoMsg] = useState({ show: false, success: false, text: '' });
@@ -31,8 +23,21 @@ export default function Ticketing() {
     const [ticketDate, setTicketDate] = useState('');
 
     useEffect(() => {
-        const activeTickets = getTickets().filter(t => t.status === 'active');
-        setTickets(activeTickets);
+        axios.get('/api/tickets')
+            .then(res => {
+                const activeTickets = res.data.filter(t => t.is_active);
+                setTickets(activeTickets);
+                
+                // Initialize qtys state
+                const initialQtys = {};
+                activeTickets.forEach(t => initialQtys[t.id] = 0);
+                setQtys(initialQtys);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch tickets", err);
+                setIsLoading(false);
+            });
     }, []);
 
     const updateQty = (id, delta) => {
@@ -42,73 +47,65 @@ export default function Ticketing() {
         }));
     };
 
-    // Calculate Dynamic Prices
-    const today = new Date().getDay();
-    const isWeekend = today === 0 || today === 5 || today === 6;
-
-    const getTicketPrice = (name) => {
-        const ticket = tickets.find(t => t.name.includes(name));
-        if (!ticket) return name.includes('Utama') ? 25000 : 20000;
-        return isWeekend && ticket.priceWeekend ? ticket.priceWeekend : ticket.price;
-    };
-
-    const currentPrices = {
-        'ticket-main': getTicketPrice('Utama'),
-        'ticket-pool': getTicketPrice('Kolam')
-    };
-
-    const applyPromo = () => {
+    const applyPromo = async () => {
         const code = promoInput.trim().toUpperCase();
-        const promo = PROMO_CODES.find(p => p.code === code);
+        if(!code) return;
 
-        if (!promo) {
+        try {
+            const res = await axios.post('/api/promos/validate', { promo_code: code });
+            setActivePromo(res.data);
+            setPromoMsg({
+                show: true,
+                success: true,
+                text: `Promo berhasil! ${res.data.name} diterapkan.`
+            });
+        } catch (error) {
             setActivePromo(null);
             setPromoMsg({
                 show: true,
                 success: false,
-                text: 'Kode promo tidak valid.'
+                text: error.response?.data?.message || 'Kode promo tidak valid.'
             });
-            return;
         }
-
-        setActivePromo(promo);
-        setPromoMsg({
-            show: true,
-            success: true,
-            text: `Promo berhasil! ${promo.desc} diterapkan.`
-        });
     };
 
     // Calculate totals
     let subtotal = 0;
     const orderItems = [];
 
-    if (qtys['ticket-main'] > 0) {
-        const amount = qtys['ticket-main'] * currentPrices['ticket-main'];
-        subtotal += amount;
-        orderItems.push({ name: 'Tiket Masuk Utama', qty: qtys['ticket-main'], price: currentPrices['ticket-main'], amount });
-    }
-    if (qtys['ticket-pool'] > 0) {
-        const amount = qtys['ticket-pool'] * currentPrices['ticket-pool'];
-        subtotal += amount;
-        orderItems.push({ name: 'Akses Kolam Renang', qty: qtys['ticket-pool'], price: currentPrices['ticket-pool'], amount });
-    }
+    tickets.forEach(t => {
+        const qty = qtys[t.id] || 0;
+        if (qty > 0) {
+            const amount = qty * t.price;
+            subtotal += amount;
+            orderItems.push({ id: t.id, name: t.name, qty, price: t.price, amount });
+        }
+    });
 
     const hasItems = orderItems.length > 0;
     const adminFee = hasItems ? 2500 : 0;
     let promoDiscountAmt = 0;
 
     if (activePromo && hasItems) {
-        if (activePromo.type === 'percent') {
-            promoDiscountAmt = subtotal * (activePromo.discount / 100);
-        } else {
-            promoDiscountAmt = activePromo.discount;
+        if (subtotal >= activePromo.min_purchase) {
+            if (activePromo.discount_type === 'percentage') {
+                promoDiscountAmt = subtotal * (activePromo.discount_value / 100);
+            } else {
+                promoDiscountAmt = parseFloat(activePromo.discount_value);
+            }
         }
     }
 
     const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
 
     const simulatePayment = (method) => {
+        if (!hasItems) return;
+
+        // Note: For real integration, we should post trans to backend.
+        // For guest, let's assume they must login first to hit transactions.
+        // We'll simulate here, then direct to profile.
+        // Real logic: axios.post('/api/transactions', { items, promo, etc... })
+
         setShowPayment(false);
         setIsProcessing(true);
         setTimeout(() => {
@@ -131,60 +128,49 @@ export default function Ticketing() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Left: Ticket Selection */}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Ticket Card 1 */}
-                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green transition group">
-                            <div className="md:w-1/3 h-48 bg-gray-200 rounded-2xl overflow-hidden relative">
-                                <img src="/images/hero-bg.png" className="w-full h-full object-cover" alt="Tiket Utama" />
+                        {isLoading ? (
+                            <div className="text-center py-20 text-gray-500 text-xl font-bold">Memuat tiket...</div>
+                        ) : tickets.length === 0 ? (
+                            <div className="bg-white rounded-3xl p-8 text-center text-gray-500 shadow-sm border border-gray-100">
+                                Saat ini tidak ada tiket yang tersedia.
                             </div>
-                            <div className="flex-1 flex flex-col justify-between">
-                                <div>
-                                    <h3 className="font-bold text-2xl mb-2 font-serif">Tiket Masuk Utama</h3>
-                                    <p className="text-gray-500 text-sm mb-6">Akses ke area taman, spot foto skydeck, musholla, dan seluruh area publik Eling Bening.</p>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        {isWeekend && <p className="text-gray-400 line-through text-sm">{formatRupiah(getTicketPrice('Utama') / 1.2)}</p>}
-                                        <p className="text-3xl font-bold text-eling-green">{formatRupiah(currentPrices['ticket-main'])}<span className="text-sm text-gray-400 ml-1">/org</span></p>
+                        ) : (
+                            tickets.map(ticket => (
+                                <div key={ticket.id} className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green transition group">
+                                    <div className="md:w-1/3 h-48 bg-gray-200 rounded-2xl overflow-hidden relative">
+                                        <img src="/images/hero-bg.png" className="w-full h-full object-cover" alt={ticket.name} />
                                     </div>
-                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl">
-                                        <button onClick={() => updateQty('ticket-main', -1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
-                                            <i className="fas fa-minus"></i>
-                                        </button>
-                                        <span className="font-bold text-xl w-6 text-center">{qtys['ticket-main']}</span>
-                                        <button onClick={() => updateQty('ticket-main', 1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
-                                            <i className="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Ticket Card 2 */}
-                        <div className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green transition group">
-                            <div className="md:w-1/3 h-48 bg-gray-200 rounded-2xl overflow-hidden relative">
-                                <img src="/images/hero-bg.png" className="w-full h-full object-cover brightness-75" alt="Akses Kolam" />
-                            </div>
-                            <div className="flex-1 flex flex-col justify-between">
-                                <div>
-                                    <h3 className="font-bold text-2xl mb-2 font-serif">Akses Kolam Renang</h3>
-                                    <p className="text-gray-500 text-sm mb-6">Nikmati pengalaman berenang di infinity pool dengan pemandangan pegunungan yang menakjubkan.</p>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <p className="text-3xl font-bold text-eling-green">{formatRupiah(currentPrices['ticket-pool'])}<span className="text-sm text-gray-400 ml-1">/org</span></p>
-                                    </div>
-                                    <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl">
-                                        <button onClick={() => updateQty('ticket-pool', -1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
-                                            <i className="fas fa-minus"></i>
-                                        </button>
-                                        <span className="font-bold text-xl w-6 text-center">{qtys['ticket-pool']}</span>
-                                        <button onClick={() => updateQty('ticket-pool', 1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
-                                            <i className="fas fa-plus"></i>
-                                        </button>
+                                    <div className="flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h3 className="font-bold text-2xl font-serif">{ticket.name}</h3>
+                                                {ticket.validity_day === 'weekend' && (
+                                                    <span className="bg-green-100 text-eling-green text-[10px] uppercase font-bold px-2 py-1 rounded">Weekend</span>
+                                                )}
+                                                {ticket.validity_day === 'weekday' && (
+                                                    <span className="bg-blue-100 text-blue-600 text-[10px] uppercase font-bold px-2 py-1 rounded">Weekday</span>
+                                                )}
+                                            </div>
+                                            <p className="text-gray-500 text-sm mb-6">{ticket.description}</p>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <div>
+                                                <p className="text-3xl font-bold text-eling-green">{formatRupiah(ticket.price)}<span className="text-sm text-gray-400 ml-1">/org</span></p>
+                                            </div>
+                                            <div className="flex items-center gap-4 bg-gray-50 p-2 rounded-xl">
+                                                <button onClick={() => updateQty(ticket.id, -1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
+                                                    <i className="fas fa-minus"></i>
+                                                </button>
+                                                <span className="font-bold text-xl w-6 text-center">{qtys[ticket.id] || 0}</span>
+                                                <button onClick={() => updateQty(ticket.id, 1)} className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition">
+                                                    <i className="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            ))
+                        )}
                     </div>
 
                     {/* Right: Payment Summary */}
@@ -199,10 +185,10 @@ export default function Ticketing() {
                                     orderItems.map((item, idx) => (
                                         <div key={idx} className="flex justify-between items-center">
                                             <div className="flex flex-col">
-                                                <span className="font-semibold">{item.name}</span>
+                                                <span className="font-semibold text-gray-800">{item.name}</span>
                                                 <span className="text-xs text-gray-400">{item.qty}x {formatRupiah(item.price)}</span>
                                             </div>
-                                            <span className="font-bold">{formatRupiah(item.amount)}</span>
+                                            <span className="font-bold text-gray-900">{formatRupiah(item.amount)}</span>
                                         </div>
                                     ))
                                 )}
@@ -215,7 +201,7 @@ export default function Ticketing() {
                                 </div>
                                 {activePromo && (
                                     <div className="flex justify-between text-red-500">
-                                        <span>Diskon ({activePromo.code})</span>
+                                        <span>Diskon ({activePromo.promo_code})</span>
                                         <span>-{formatRupiah(promoDiscountAmt)}</span>
                                     </div>
                                 )}
@@ -231,7 +217,7 @@ export default function Ticketing() {
 
                             {/* Form Pilihan Tanggal dan Nama (hanya tampil jika ada tiket dipilih) */}
                             {hasItems && (
-                                <div className="border-t border-gray-100 pt-6 mb-6 space-y-4">
+                                <div className="border-t border-gray-100 pt-6 mb-6 mt-6 space-y-4">
                                     <div>
                                         <label className="block text-xs font-bold uppercase text-gray-400 mb-2 tracking-wide">
                                             Tanggal Kunjungan
@@ -295,7 +281,7 @@ export default function Ticketing() {
                                     if (!bookerName) return alert('Silakan masukkan nama pemesan terlebih dahulu.');
                                     setShowPayment(true);
                                 }}
-                                disabled={!hasItems || isProcessing}
+                                disabled={!hasItems || isProcessing || isLoading}
                                 className="w-full bg-eling-red text-white font-bold py-4 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:bg-red-800 transition shadow-lg flex items-center justify-center gap-2"
                             >
                                 {isProcessing ? (
@@ -364,7 +350,6 @@ export default function Ticketing() {
 
                         <div className="bg-white p-8 rounded-3xl inline-block shadow-2xl mb-12 text-center">
                             <div className="mb-4 flex justify-center bg-white p-2">
-                                {/* Dummy QR using an image from dicebear or just an icon for visual sake */}
                                 <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=EB-TICK-${Math.floor(Math.random() * 1000000)}&color=2E7D32`} alt="QR Code" width={200} height={200} />
                             </div>
                             <p className="text-gray-900 font-bold text-lg mb-1">{bookerName || 'Guest'}</p>

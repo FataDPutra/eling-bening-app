@@ -1,11 +1,19 @@
 import { Link } from 'react-router-dom';
+import { useContent } from '../../context/ContentContext';
 import {
     Mountain, Utensils, BedDouble, Waves, MapPin,
     Phone, Mail, Star,
-    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight
+    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight, Loader2
 } from 'lucide-react';
 
 export default function Home() {
+    const { content, isLoading } = useContent();
+
+    if (isLoading) return (
+        <div className="h-screen flex items-center justify-center bg-white">
+            <Loader2 className="animate-spin text-eling-green" size={48} />
+        </div>
+    );
     return (
         <div className="animate-fade-in overflow-x-hidden">
             <style>{`
@@ -43,27 +51,27 @@ export default function Home() {
 
             {/* 1. Hero Section (Above the Fold) */}
             <section id="hero" className="relative h-screen flex items-center justify-center text-center overflow-hidden pt-20">
-                <img src="/images/generated/hero.png" alt="Eling Bening View" className="absolute inset-0 w-full h-full object-cover scale-105" />
+                <img src={content.home.heroImage || "/images/generated/hero.png"} alt="Eling Bening View" className="absolute inset-0 w-full h-full object-cover scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60"></div>
                 <div className="relative z-10 text-white max-w-5xl px-4 flex flex-col items-center">
                     <div className="flex justify-center mb-6 opacity-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                         <span className="px-6 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-bold tracking-[0.3em] uppercase">
-                            Premium Destination in Ambarawa
+                            {content.home.heroBadge}
                         </span>
                     </div>
                     <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 font-serif leading-[1.1] opacity-0 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-                        Nikmati Keindahan Alam <br />
-                        <span className="text-eling-green drop-shadow-[0_2px_10px_rgba(46,125,50,0.4)]">Rawa Pening</span> dari Ketinggian
+                        {content.home.heroTitleLine1} <br />
+                        <span className="text-eling-green drop-shadow-[0_2px_10px_rgba(46,125,50,0.4)]">{content.home.heroTitleLine2}</span>
                     </h1>
                     <p className="text-lg md:text-xl mb-12 font-light max-w-2xl mx-auto leading-relaxed opacity-0 animate-slide-up" style={{ animationDelay: '0.3s' }}>
-                        Destinasi wisata alam, kuliner, dan event terbaik dengan pemandangan pegunungan yang memukau dan udara segar yang menyegarkan jiwa.
+                        {content.home.heroSubtitle}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center opacity-0 animate-slide-up" style={{ animationDelay: '0.4s' }}>
                         <Link to="/ticketing" className="w-full sm:w-auto bg-eling-red hover:bg-red-800 text-white font-bold py-5 px-12 rounded-full text-lg transition shadow-2xl flex items-center justify-center gap-3 group">
-                            Pesan Tiket <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
+                            {content.home.ctaPrimary} <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
                         </Link>
                         <Link to="/rooms" className="w-full sm:w-auto backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold py-5 px-12 rounded-full text-lg transition shadow-2xl flex items-center justify-center gap-3">
-                            Pesan Resort
+                            {content.home.ctaSecondary}
                         </Link>
                     </div>
 
@@ -111,16 +119,13 @@ export default function Home() {
                         </div>
                     </div>
                     <div className="lg:w-1/2">
-                        <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-6">Discovery</span>
+                        <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-6">{content.home.discoveryBadge}</span>
                         <h2 className="text-4xl md:text-6xl font-bold mb-8 font-serif leading-tight text-gray-900">
-                            Eling Bening: Harmoni <br /> Keindahan Alam & Kemewahan
+                            {content.home.discoveryTitle}
                         </h2>
                         <div className="space-y-6 text-gray-600 leading-relaxed text-lg lg:text-xl font-light">
                             <p>
-                                Eling Bening adalah destinasi wisata alam terintegrasi yang menawarkan pemandangan spektakuler Danau Rawa Pening dengan latar belakang Gunung Merbabu, Ungaran, dan Telomoyo.
-                            </p>
-                            <p>
-                                Kami menghadirkan pengalaman berlibur yang tak terlupakan melalui perpaduan antara fasilitas modern, kuliner lezat, dan ketenangan alam pegunungan yang masih asri.
+                                {content.home.discoveryText}
                             </p>
                         </div>
                         <Link to="/about" className="mt-12 inline-flex items-center gap-3 bg-eling-green text-white font-bold py-4 px-10 rounded-full hover:bg-green-800 transition shadow-xl group">
@@ -255,23 +260,21 @@ export default function Home() {
             <section id="testimonials" className="section-container bg-white overflow-hidden">
                 <div className="max-w-7xl mx-auto relative">
                     <div className="text-center mb-16 relative z-10">
-                        <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">Guest Reviews</span>
-                        <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">Apa Kata Mereka?</h2>
+                        <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">{content.home.testimonialBadge}</span>
+                        <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">{content.home.testimonialTitle}</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[
-                            { name: "Andi Saputra", quote: "Pemandangannya luar biasa, sangat cocok untuk liburan keluarga. Pelayanannya ramah sekali.", rating: 5 },
-                            { name: "Siti Rahma", quote: "Tempat favorit saya di Semarang. Makanannya enak dan spot fotonya banyak banget.", rating: 5 },
-                            { name: "Jessica Lim", quote: "Kolam renangnya keren banget, view-nya nggak kalah sama di Bali. Sangat worth it!", rating: 4 }
-                        ].map((item, i) => (
+                        {(content.home.testimonials || []).map((item, i) => (
                             <div key={i} className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-6">
                                 <div className="flex gap-1">
                                     {[...Array(item.rating)].map((_, r) => <Star key={r} size={16} fill="#FACC15" className="text-yellow-400" />)}
                                 </div>
                                 <p className="text-gray-600 italic font-light leading-relaxed">"{item.quote}"</p>
                                 <div className="flex items-center gap-4 mt-4">
-                                    <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-eling-green bg-green-50">
+                                        {item.name.charAt(0)}
+                                    </div>
                                     <div>
                                         <p className="font-bold text-gray-900">{item.name}</p>
                                         <p className="text-xs text-gray-400">Pengunjung Terverifikasi</p>
@@ -368,21 +371,21 @@ export default function Home() {
 
             {/* 9. CTA Section (Call To Action) */}
             <section id="final-cta" className="relative py-32 px-6 flex items-center justify-center text-center">
-                <img src="/images/generated/hero.png" className="absolute inset-0 w-full h-full object-cover grayscale" alt="CTA BG" />
+                <img src={content.home.finalCtaImage || "/images/generated/hero.png"} className="absolute inset-0 w-full h-full object-cover grayscale" alt="CTA BG" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 max-w-4xl">
                     <h2 className="text-4xl md:text-7xl font-bold text-white mb-8 font-serif leading-tight">
-                        Siap Mengunjungi <br /> Eling Bening?
+                        {content.home.finalCtaTitle}
                     </h2>
                     <p className="text-xl text-green-100 mb-12 max-w-2xl mx-auto font-light leading-relaxed">
-                        Ajak keluarga dan teman Anda untuk menciptakan momen berharga bersama kami. Pesan tiket Anda sekarang untuk menghindari antrian.
+                        {content.home.finalCtaSubtitle}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center">
                         <Link to="/ticketing" className="bg-white text-eling-green hover:bg-green-50 font-bold py-5 px-12 rounded-full text-xl transition-all duration-300 shadow-2xl hover:scale-105 hover:shadow-white/20">
-                            Beli Tiket Sekarang
+                            {content.home.finalCtaPrimary}
                         </Link>
                         <Link to="/contact" className="bg-eling-red text-white hover:bg-red-800 font-bold py-5 px-12 rounded-full text-xl transition-all duration-300 shadow-2xl hover:scale-105 hover:shadow-red-900/40">
-                            Reservasi Event
+                            {content.home.finalCtaSecondary}
                         </Link>
                     </div>
                     <button className="mt-12 text-white font-bold flex items-center gap-2 mx-auto hover:underline underline-offset-8 transition group">

@@ -1,35 +1,38 @@
 import { useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Calendar, Tag, Type } from 'lucide-react';
-import { getEvents, saveEvents } from '../../../utils/data';
 import ImageUpload from '../../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 
 export default function AddEvent() {
     const navigate = useNavigate();
+    const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({ 
         name: '', 
         category: 'Wedding', 
-        date: '', 
-        price: '', 
-        desc: '', 
-        status: 'active',
+        date_info: '', 
+        price_info: '', 
+        description: '', 
+        is_active: true,
         images: [] 
     });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const events = getEvents();
-        const newId = events.length > 0 ? Math.max(...events.map(ev => ev.id)) + 1 : 1;
-        const finalData = {
-            ...formData,
-            id: newId,
-            image: formData.images.length > 0 ? formData.images[0] : '/images/generated/event.png'
-        };
-        const updated = [...events, finalData];
-        saveEvents(updated);
-        toast.success('Event berhasil ditambahkan');
-        navigate('/admin/events');
+        setIsSaving(true);
+        const loadingToast = toast.loading('Menyimpan event...');
+        
+        try {
+            await axios.post('/api/events', formData);
+            toast.success('Event berhasil ditambahkan', { id: loadingToast });
+            navigate('/admin/events');
+        } catch (error) {
+            toast.error('Gagal menambahkan event', { id: loadingToast });
+            console.error(error);
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -59,7 +62,7 @@ export default function AddEvent() {
                             
                             <div className="form-group">
                                 <label className="form-label">Deskripsi Lengkap</label>
-                                <textarea required rows="8" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} className="admin-textarea" placeholder="Jelaskan detail event, fasilitas yang didapat, dan informasi penting lainnya..."></textarea>
+                                <textarea required rows="8" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="admin-textarea" placeholder="Jelaskan detail event, fasilitas yang didapat, dan informasi penting lainnya..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -97,32 +100,32 @@ export default function AddEvent() {
                                 <label className="form-label">Jadwal / Tanggal</label>
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                    <input required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} type="text" className="admin-input pl-10" placeholder="misal: 15 Juni 2026 atau Available Daily" />
+                                    <input required value={formData.date_info} onChange={e => setFormData({ ...formData, date_info: e.target.value })} type="text" className="admin-input pl-10" placeholder="misal: 15 Juni 2026 atau Available Daily" />
                                 </div>
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Harga Display</label>
-                                <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="text" className="admin-input" placeholder="misal: Mulai Rp 150rb" />
+                                <input required value={formData.price_info} onChange={e => setFormData({ ...formData, price_info: e.target.value })} type="text" className="admin-input" placeholder="misal: Mulai Rp 150rb" />
                                 <p className="text-[10px] text-admin-text-muted mt-1 italic">*Teks ini akan muncul di kartu event guest</p>
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Status Publikasi</label>
-                                <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="admin-input">
-                                    <option value="active">Langsung Publish</option>
-                                    <option value="inactive">Simpan sebagai Draft</option>
+                                <select value={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.value === 'true' })} className="admin-input">
+                                    <option value="true">Langsung Publish</option>
+                                    <option value="false">Simpan sebagai Draft</option>
                                 </select>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex gap-4">
-                        <button type="button" onClick={() => navigate('/admin/events')} className="flex-1 py-3 px-4 rounded-xl border border-admin-border text-admin-text-muted font-bold text-sm hover:bg-admin-bg transition-all">
+                        <button type="button" disabled={isSaving} onClick={() => navigate('/admin/events')} className="flex-1 py-3 px-4 rounded-xl border border-admin-border text-admin-text-muted font-bold text-sm hover:bg-admin-bg transition-all">
                             Batal
                         </button>
-                        <button type="submit" className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20">
-                            <Save size={18} /> Simpan Event
+                        <button type="submit" disabled={isSaving} className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20">
+                            <Save size={18} /> {isSaving ? 'Menyimpan...' : 'Simpan Event'}
                         </button>
                     </div>
 
