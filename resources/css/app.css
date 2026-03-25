@@ -1,11 +1,27 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@import "tailwindcss";
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --color-eling-green: #2E7D32;
+    --color-eling-red: #C62828;
+    
+    /* Admin Theme Variables */
+    --color-admin-bg: #F8FAFC;
+    --color-admin-primary: #0D9488;
+    --color-admin-secondary: #0F172A;
+    --color-admin-border: #E2E8F0;
+    --color-admin-text-main: #0F172A;
+    --color-admin-text-muted: #64748B;
+    --color-admin-text-light: #94A3B8;
+}
+
+@layer base {
+    body {
+        @apply antialiased;
+    }
+}
+
+@layer components {
+    .animate-spin-slow {
+        animation: spin 3s linear infinite;
+    }
 }
