@@ -10,13 +10,8 @@ if (token) {
     window.axios.defaults.headers.common['X-CSRF-TOKEN'] = token.content;
 }
 
-// Redirect to login if 401
+// Unified response handling
 window.axios.interceptors.response.use(
     response => response,
-    error => {
-        if (error.response?.status === 401) {
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
+    error => Promise.reject(error)
 );

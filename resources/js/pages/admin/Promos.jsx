@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Ticket, Calendar } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit, Trash2, Search, Ticket, Calendar, Percent, CheckCircle, ShoppingBag, LayoutGrid, Tag, Info, X, TrendingUp, DollarSign, Users, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
+import { formatRupiah } from '../../utils/data';
 
 export default function Promos() {
-    const [promos, setPromos] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
+    const [promos, setPromos] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [showStatsModal, setShowStatsModal] = useState(false);
 
     const fetchPromos = async () => {
         try {
@@ -17,8 +19,7 @@ export default function Promos() {
             setPromos(res.data);
             setIsLoading(false);
         } catch (error) {
-            console.error("Failed to fetch promos", error);
-            toast.error("Gagal memuat data promo");
+            toast.error('Gagal memuat data promo');
             setIsLoading(false);
         }
     };
@@ -27,15 +28,36 @@ export default function Promos() {
         fetchPromos();
     }, []);
 
+    const stats = useMemo(() => {
+        if (!promos.length) return null;
+        return {
+            totalRedemptions: promos.reduce((acc, p) => acc + (p.used_count || 0), 0),
+            totalDiscountGiven: promos.reduce((acc, p) => acc + Number(p.transactions_sum_discount_amount || 0), 0),
+            activePromos: promos.filter(p => p.is_active).length,
+            topPromos: [...promos].sort((a, b) => (b.used_count || 0) - (a.used_count || 0)).slice(0, 3)
+        };
+    }, [promos]);
+
     const handleDelete = async (id) => {
-        if (confirm('Yakin ingin menghapus promo ini?')) {
+        const result = await Swal.fire({
+            title: 'Hapus Promo?',
+            text: 'Data promo yang dihapus tidak dapat dikembalikan!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#6B7280',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[2rem]' }
+        });
+
+        if (result.isConfirmed) {
             try {
                 await axios.delete(`/api/promos/${id}`);
-                setPromos(promos.filter(p => p.id !== id));
                 toast.success('Promo berhasil dihapus');
+                fetchPromos();
             } catch (error) {
-                console.error("Failed to delete promo", error);
-                toast.error("Gagal menghapus promo");
+                toast.error('Gagal menghapus promo');
             }
         }
     };
@@ -46,128 +68,257 @@ export default function Promos() {
         try {
             const res = await axios.put(`/api/promos/${id}`, { is_active: newStatus });
             setPromos(promos.map(p => p.id === id ? res.data : p));
-            toast.success('Status promo diperbarui');
+            toast.success(`Promo ${newStatus ? 'diaktifkan' : 'dinonaktifkan'}`);
         } catch (error) {
-            console.error("Failed to toggle status", error);
             toast.error("Gagal mengubah status promo");
         }
     };
 
-    const filteredPromos = promos.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.promo_code.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredPromos = promos.filter(p => 
+        p.promo_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
-        <div className="animate-fade-in space-y-8">
+        <div className="animate-fade-in space-y-8 pb-20">
             <div className="admin-page-header">
                 <div>
-                    <h1>Promo & Diskon</h1>
-                    <p>Kelola kampanye pemasaran, kode kupon, dan strategi diskon operasional.</p>
+                    <h1>Registry Kampanye & Promo</h1>
+                    <p>Manajemen kupon diskon, strategi penetapan harga dinamis, dan kontrol validasi reservasi.</p>
                 </div>
-                <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20" onClick={() => navigate('/admin/promos/add')}>
-                    <Plus size={18} /> Buat Promo Baru
-                </button>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => setShowStatsModal(true)}
+                        className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm"
+                    >
+                        <ShoppingBag size={18} className="text-admin-primary" /> Campaign Stats
+                    </button>
+                    <button className="btn-primary py-3 px-6 shadow-xl shadow-admin-primary/20" onClick={() => navigate('/admin/promos/add')}>
+                        <Plus size={20} /> Create Voucher
+                    </button>
+                </div>
             </div>
 
             <div className="admin-table-container">
-                <div className="table-header-actions">
-                    <div className="topbar-search !w-full md:!w-96">
-                        <Search className="search-icon" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari promo atau kode..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                <div className="table-header-actions mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
+                            <Tag size={18} />
+                        </div>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Pricing Incentives</h3>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                            <input
+                                type="text"
+                                placeholder="Search by code/name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Identitas Promo</th>
-                            <th>Value Diskon</th>
-                            <th>Min. Transaksi</th>
-                            <th>Masa Berlaku</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
+                            <th>Voucher Identity</th>
+                            <th>Market Scope</th>
+                            <th>Benefit Value</th>
+                            <th>Active Timeline</th>
+                            <th>System Status</th>
+                            <th>Usage Quota</th>
+                            <th className="text-right">Operations</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
-                                    Fetching active campaigns...
+                                <td colSpan="7" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                    Auditing promotional registry...
                                 </td>
                             </tr>
                         ) : filteredPromos.map(promo => (
-                            <tr key={promo.id}>
+                            <tr key={promo.id} className="group">
                                 <td>
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-admin-primary/5 flex items-center justify-center text-admin-primary">
-                                            <Ticket size={24} />
+                                        <div className="w-12 h-12 rounded-xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary group-hover:border-admin-primary transition-all shadow-sm">
+                                            <Ticket size={20} />
                                         </div>
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="font-black text-admin-primary font-mono text-sm tracking-widest uppercase">{promo.promo_code}</span>
-                                            <span className="text-[11px] font-bold text-admin-text-muted uppercase tracking-tight">{promo.name}</span>
+                                        <div>
+                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{promo.promo_code}</div>
+                                            <div className="text-[10px] text-admin-text-muted font-bold mt-0.5 line-clamp-1 italic">"{promo.name}"</div>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <div className="font-black text-admin-text-main text-base">
-                                        {promo.discount_type === 'percentage' ? (
-                                            <span className="flex items-center gap-1">
-                                                {promo.discount_value}% <span className="text-[10px] text-admin-text-muted font-bold uppercase tracking-widest">Off</span>
-                                            </span>
-                                        ) : formatRupiah(promo.discount_value)}
+                                    <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
+                                        <div className={`w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-xs font-black ${
+                                            promo.applicable_to === 'ALL' ? 'text-indigo-500' : 
+                                            promo.applicable_to === 'RESORT' ? 'text-amber-500' : 
+                                            'text-emerald-500'
+                                        }`}>
+                                            {promo.applicable_to === 'ALL' ? 'UNV' : promo.applicable_to === 'RESORT' ? 'RST' : 'TCK'}
+                                        </div>
+                                        <span className="uppercase tracking-wider">
+                                            {promo.applicable_to === 'ALL' ? 'Universal' : promo.applicable_to}
+                                        </span>
                                     </div>
                                 </td>
                                 <td>
-                                    <span className="text-xs font-bold text-admin-text-muted">{formatRupiah(promo.min_purchase)}</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-black text-admin-primary">
+                                            {promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `-${(Number(promo.discount_value) / 1000).toFixed(0)}K IDR`}
+                                        </span>
+                                        <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest">Min: {Number(promo.min_purchase).toLocaleString()}</span>
+                                    </div>
                                 </td>
                                 <td>
-                                    <div className="flex items-center gap-2 text-xs font-bold text-admin-text-muted">
-                                        <Calendar size={14} className="text-admin-text-light" />
-                                        {new Date(promo.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    <div className="flex items-center gap-2.5 text-[11px] font-bold text-admin-text-muted">
+                                        <Calendar size={13} className="text-admin-primary" />
+                                        <span>{new Date(promo.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                        <span className="text-admin-text-light">→</span>
+                                        <span>{new Date(promo.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                     </div>
                                 </td>
                                 <td>
                                     <button
                                         onClick={() => toggleStatus(promo.id)}
-                                        className={`badge-status group cursor-pointer transition-all ${promo.is_active
-                                            ? 'bg-success/5 text-success border-success/10 hover:bg-success/10'
-                                            : 'bg-danger/5 text-danger border-danger/10 hover:bg-danger/10'
-                                            }`}
+                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                            promo.is_active
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm shadow-emerald-100'
+                                                : 'bg-rose-50 text-rose-600 border-rose-200'
+                                        }`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${promo.is_active ? 'bg-success animate-pulse' : 'bg-danger'}`} />
                                         {promo.is_active ? 'Active' : 'Paused'}
                                     </button>
                                 </td>
                                 <td>
-                                    <div className="flex justify-start gap-2">
-                                        <button className="btn-icon" title="Edit" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
-                                            <Edit size={18} />
+                                    <div className="flex flex-col gap-1 pr-4 min-w-[120px]">
+                                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                                            <span className="text-admin-text-muted">{promo.used_count || 0} REDEEMED</span>
+                                            <span className="text-admin-primary">{promo.usage_limit ? `LIMIT: ${promo.usage_limit}` : 'UNLIMITED'}</span>
+                                        </div>
+                                        {promo.usage_limit && (
+                                            <div className="w-full h-1.5 bg-admin-bg border border-admin-border rounded-full overflow-hidden">
+                                                <div 
+                                                    className={`h-full transition-all duration-1000 ${
+                                                        (promo.used_count / promo.usage_limit) > 0.9 ? 'bg-rose-500' : 
+                                                        (promo.used_count / promo.usage_limit) > 0.7 ? 'bg-amber-500' : 'bg-admin-primary'
+                                                    }`}
+                                                    style={{ width: `${Math.min(100, (promo.used_count / promo.usage_limit) * 100)}%` }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                </td>
+                                <td className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
+                                            <Edit size={16} />
                                         </button>
-                                        <button className="btn-icon !text-danger hover:!bg-danger/10" title="Hapus" onClick={() => handleDelete(promo.id)}>
-                                            <Trash2 size={18} />
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(promo.id)}>
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </td>
                             </tr>
                         ))}
-                        {!isLoading && filteredPromos.length === 0 && (
-                            <tr>
-                                <td colSpan="6" className="py-24 text-center">
-                                    <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
-                                        <Ticket size={40} />
-                                    </div>
-                                    <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Belum ada promo aktif</p>
-                                </td>
-                            </tr>
-                        )}
                     </tbody>
                 </table>
+
+                {filteredPromos.length === 0 && !isLoading && (
+                    <div className="py-24 text-center">
+                        <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
+                            <LayoutGrid size={40} />
+                        </div>
+                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">No matching campaigns found</h4>
+                    </div>
+                )}
+            </div>
+
+            {/* Campaign Stats Modal */}
+            {showStatsModal && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setShowStatsModal(false)}>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-scale-up overflow-hidden border border-white" onClick={e => e.stopPropagation()}>
+                        <div className="bg-admin-bg p-8 border-b border-admin-border flex justify-between items-center bg-gradient-to-br from-admin-bg to-white">
+                            <div className="flex items-center gap-4">
+                                <div className="p-3 bg-admin-primary text-white rounded-2xl shadow-lg shadow-admin-primary/20">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-black text-admin-text-main uppercase tracking-tight">Campaign Analytics</h2>
+                                    <p className="text-xs text-admin-text-muted font-bold uppercase tracking-widest">Performance Dashboard</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowStatsModal(false)} className="p-2 hover:bg-admin-bg rounded-xl transition-colors"><X /></button>
+                        </div>
+                        
+                        <div className="p-8 space-y-8">
+                            <div className="grid grid-cols-3 gap-6">
+                                <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4"><Users size={20}/></div>
+                                    <div className="text-2xl font-black text-indigo-600">{stats?.totalRedemptions}</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Total Usage</div>
+                                </div>
+                                <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4"><DollarSign size={20}/></div>
+                                    <div className="text-xl font-black text-emerald-600 leading-tight tracking-tighter">{formatRupiah(stats?.totalDiscountGiven)}</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Discount Given</div>
+                                </div>
+                                <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
+                                    <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-4"><Award size={20}/></div>
+                                    <div className="text-2xl font-black text-amber-600">{stats?.activePromos}</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Live Campaigns</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4">Most Redeemed Vouchers</h3>
+                                <div className="space-y-3">
+                                    {stats?.topPromos.map((p, idx) => (
+                                        <div key={p.id} className="p-5 bg-white border border-gray-100 rounded-[2rem] shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-admin-bg flex items-center justify-center font-black text-sm text-admin-primary group-hover:bg-admin-primary group-hover:text-white transition-colors border border-admin-border group-hover:border-admin-primary">
+                                                    #{idx + 1}
+                                                </div>
+                                                <div>
+                                                    <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{p.promo_code}</div>
+                                                    <div className="text-[10px] text-admin-text-muted font-bold">{p.name}</div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-lg font-black text-admin-text-main">{p.used_count || 0}</div>
+                                                <div className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest">Redemptions</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="p-6 bg-admin-primary/5 rounded-[2rem] border border-admin-primary/10 flex items-start gap-4">
+                                <Info className="text-admin-primary shrink-0" size={18} />
+                                <p className="text-[11px] text-admin-text-muted leading-relaxed font-bold italic shadow-sm">
+                                    Analytics ini diupdate setiap kali transaksi diselesaikan. Gunakan data ini untuk mengevaluasi strategi kampanye Anda bulan depan.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div className="p-8 bg-white/50 border border-admin-border rounded-[2.5rem] flex items-start gap-6">
+                <div className="p-4 rounded-2xl bg-admin-primary/10 text-admin-primary">
+                    <Info size={24} />
+                </div>
+                <div>
+                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-widest mb-2">Campaign Protocol</h4>
+                    <p className="text-xs text-admin-text-muted leading-relaxed font-medium">
+                        Pastikan tanggal kedaluwarsa selalu terpantau. Promo yang sudah melewati batas waktu akan otomatis tidak valid pada sistem checkout guest meskipun statusnya masih 'Active'. Gunakan tombol status untuk memberhentikan kampanye secara manual.
+                    </p>
+                </div>
             </div>
         </div>
     );

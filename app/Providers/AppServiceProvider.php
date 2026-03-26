@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,5 +41,12 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Exception $e) {
             // Database may not be ready yet
         }
+        // Morph Map for cleaner database values
+        Relation::morphMap([
+            'ticket' => \App\Models\Ticket::class,
+            'resort' => \App\Models\Resort::class,
+            'event'  => \App\Models\Event::class,
+            'user'   => \App\Models\User::class,
+        ]);
     }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, X, Check, Building, Maximize, BedDouble, Info, Search, Users, ShieldCheck, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, X, Check, Building, Maximize, BedDouble, Info, Search, Users, ShieldCheck, ChevronRight, Play, Film } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
     const [selectedRoom, setSelectedRoom] = useState(null);
+    const [activeMedia, setActiveMedia] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();
@@ -96,7 +97,7 @@ export default function Rooms() {
                                 <td className="w-28">
                                     <div className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm">
                                         <img
-                                            src={(Array.isArray(room.images) && room.images.length > 0 ? room.images[0] : room.image) || '/images/resort-room.png'}
+                                            src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png'}
                                             alt={room.name}
                                             className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
                                         />
@@ -106,10 +107,10 @@ export default function Rooms() {
                                     <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{room.name}</div>
                                     <div className="flex gap-4 mt-1.5">
                                         <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
-                                            <BedDouble size={12} className="text-admin-primary/60" /> {room.bed}
+                                            <BedDouble size={12} className="text-admin-primary/60" /> {room.bed_type}
                                         </span>
                                         <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
-                                            <Maximize size={12} className="text-admin-primary/60" /> {room.size} m²
+                                            <Maximize size={12} className="text-admin-primary/60" /> {room.room_size} m²
                                         </span>
                                     </div>
                                 </td>
@@ -143,7 +144,10 @@ export default function Rooms() {
                                 </td>
                                 <td>
                                     <div className="flex justify-start gap-2">
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="View Deep Analysis" onClick={() => setSelectedRoom(room)}><Eye size={18} /></button>
+                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="View Deep Analysis" onClick={() => {
+                                            setSelectedRoom(room);
+                                            setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
+                                        }}><Eye size={18} /></button>
                                         <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/rooms/edit/${room.id}`)}><Edit size={18} /></button>
                                         <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-danger flex items-center justify-center hover:bg-danger hover:text-white hover:border-danger transition-all shadow-sm" title="Terminate" onClick={() => handleDelete(room.id)}><Trash2 size={18} /></button>
                                     </div>
@@ -175,21 +179,50 @@ export default function Rooms() {
                             <X size={24} />
                         </button>
 
-                        <div className="lg:w-1/2 h-80 lg:h-auto relative">
-                            <img
-                                src={(Array.isArray(selectedRoom.images) && selectedRoom.images.length > 0 ? selectedRoom.images[0] : selectedRoom.image) || '/images/resort-room.png'}
-                                alt={selectedRoom.name}
-                                className="w-full h-full object-cover"
-                            />
+                        <div className="lg:w-1/2 h-80 lg:h-auto relative bg-black flex items-center justify-center">
+                            {activeMedia && (activeMedia.startsWith('data:video/') || activeMedia.endsWith('.mp4')) ? (
+                                <video 
+                                    src={activeMedia} 
+                                    controls 
+                                    autoPlay 
+                                    loop 
+                                    className="max-w-full max-h-full"
+                                />
+                            ) : (
+                                <img
+                                    src={activeMedia}
+                                    alt={selectedRoom.name}
+                                    className="w-full h-full object-cover transition-all duration-700"
+                                />
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none" />
 
-                            {Array.isArray(selectedRoom.images) && selectedRoom.images.length > 1 && (
+                            {Array.isArray(selectedRoom.gallery) && selectedRoom.gallery.length > 1 && (
                                 <div className="absolute bottom-8 left-8 right-8 flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-                                    {selectedRoom.images.map((img, i) => (
-                                        <div key={i} className="flex-shrink-0 w-24 h-16 rounded-[1.25rem] overflow-hidden border-2 border-white/40 hover:border-white transition-all cursor-pointer shadow-xl">
-                                            <img src={img} className="w-full h-full object-cover" />
-                                        </div>
-                                    ))}
+                                    {selectedRoom.gallery.map((img, i) => {
+                                        const isVideo = img.startsWith('data:video/') || img.endsWith('.mp4');
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => setActiveMedia(img)}
+                                                className={`flex-shrink-0 w-24 h-16 rounded-[1.25rem] overflow-hidden border-2 transition-all cursor-pointer shadow-xl relative ${activeMedia === img ? 'border-white scale-105 z-10' : 'border-white/40 hover:border-white/70'}`}
+                                            >
+                                                {isVideo ? (
+                                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                                                        <Film size={20} className="text-white opacity-60" />
+                                                        <video src={img} className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                                                    </div>
+                                                ) : (
+                                                    <img src={img} className="w-full h-full object-cover" />
+                                                )}
+                                                {isVideo && (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Play size={12} fill="white" className="text-white" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -212,11 +245,11 @@ export default function Rooms() {
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
                                             <BedDouble size={16} className="text-admin-primary" />
-                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.bed} Room</span>
+                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.bed_type} Room</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Maximize size={16} className="text-admin-primary" />
-                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.size} Square Meters</span>
+                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.room_size} Square Meters</span>
                                         </div>
                                     </div>
                                 </div>
@@ -236,7 +269,7 @@ export default function Rooms() {
                                         <span className="w-12 h-px bg-admin-border" />
                                     </h4>
                                     <div className="flex flex-wrap gap-3">
-                                        {(selectedRoom.amenities || []).map((a, i) => (
+                                        {(selectedRoom.facilities || []).map((a, i) => (
                                             <span key={i} className="px-5 py-2.5 bg-admin-bg border border-admin-border text-admin-text-main rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all">
                                                 <Check size={14} className="opacity-50" /> {a}
                                             </span>
@@ -247,7 +280,7 @@ export default function Rooms() {
                                 <section>
                                     <h4 className="text-xs font-black text-admin-text-main uppercase tracking-widest mb-4">Description Text</h4>
                                     <p className="text-sm font-medium text-admin-text-muted leading-relaxed italic border-l-4 border-admin-primary/10 pl-6">
-                                        "{selectedRoom.desc}"
+                                        "{selectedRoom.description}"
                                     </p>
                                 </section>
 

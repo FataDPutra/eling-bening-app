@@ -16,6 +16,8 @@ class Transaction extends Model
 
     protected $casts = [
         'check_in_date' => 'date',
+        'check_out_date' => 'date',
+        'additional_facilities' => 'array',
     ];
 
     public function user()
@@ -28,9 +30,14 @@ class Transaction extends Model
         return $this->belongsTo(Promo::class);
     }
 
-    public function item()
+    public function items()
     {
-        return $this->morphTo();
+        return $this->hasMany(TransactionItem::class);
+    }
+
+    public function tickets()
+    {
+        return $this->hasMany(TransactionTicket::class, 'transaction_id', 'id');
     }
 
     public function reschedules()

@@ -167,7 +167,7 @@ export default function AdminLayout() {
                             {!isSidebarCollapsed && (
                                 <div className={`submenu ${openMenus.ticket ? 'open' : ''}`}>
                                     <NavLink to="/admin/tickets/orders" className="submenu-item">Pesanan Tiket</NavLink>
-                                    <NavLink to="/admin/tickets" className="submenu-item">Kelola Tiket</NavLink>
+                                    <NavLink to="/admin/tickets" end className="submenu-item">Kelola Tiket</NavLink>
                                     <NavLink to="/admin/scanner" className="submenu-item">Scan Tiket</NavLink>
                                 </div>
                             )}

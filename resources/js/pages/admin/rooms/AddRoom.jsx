@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Save } from 'lucide-react';
-import { getRooms, saveRooms } from '../../../utils/data';
+import { ArrowLeft, Check, Save, Loader2 } from 'lucide-react';
 import ImageUpload from '../../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 
@@ -13,48 +13,52 @@ const AMENITIES_OPTIONS = [
 
 export default function AddRoom() {
     const navigate = useNavigate();
+    const [isSaving, setIsSaving] = useState(false);
     const initialForm = {
         name: '',
         price: '',
-        priceWeekend: '',
+        price_weekend: '',
         capacity: 2,
         stock: 5,
-        bed: 'King Bed',
-        size: 30,
-        desc: '',
-        amenities: [],
-        status: 'available',
-        images: []
+        bed_type: 'King Bed',
+        room_size: 30,
+        description: '',
+        facilities: [],
+        gallery: []
     };
     const [formData, setFormData] = useState(initialForm);
 
     const handleAmenityChange = (amenity) => {
-        const current = formData.amenities;
+        const current = formData.facilities;
         if (current.includes(amenity)) {
-            setFormData({ ...formData, amenities: current.filter(a => a !== amenity) });
+            setFormData({ ...formData, facilities: current.filter(a => a !== amenity) });
         } else {
-            setFormData({ ...formData, amenities: [...current, amenity] });
+            setFormData({ ...formData, facilities: [...current, amenity] });
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const rooms = getRooms();
-        const newId = rooms.length > 0 ? Math.max(...rooms.map(r => r.id)) + 1 : 1;
-        const finalData = {
-            ...formData,
-            id: newId,
-            image: formData.images.length > 0 ? formData.images[0] : '/images/resort-room.png',
-            price: Number(formData.price),
-            priceWeekend: Number(formData.priceWeekend),
-            capacity: Number(formData.capacity),
-            stock: Number(formData.stock),
-            size: Number(formData.size)
-        };
+        setIsSaving(true);
+        try {
+            const finalData = {
+                ...formData,
+                price: Number(formData.price),
+                price_weekend: Number(formData.price_weekend),
+                capacity: Number(formData.capacity),
+                stock: Number(formData.stock),
+                room_size: String(formData.room_size)
+            };
 
-        saveRooms([...rooms, finalData]);
-        toast.success('Kamar berhasil ditambahkan');
-        navigate('/admin/rooms');
+            await axios.post('/api/resorts', finalData);
+            toast.success('Kamar berhasil ditambahkan');
+            navigate('/admin/rooms');
+        } catch (error) {
+            console.error("Failed to add resort", error);
+            toast.error(error.response?.data?.message || 'Gagal menambahkan kamar');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -81,7 +85,7 @@ export default function AddRoom() {
 
                             <div className="form-group">
                                 <label className="form-label">Deskripsi Lengkap</label>
-                                <textarea required rows="6" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} className="admin-textarea" placeholder="Jelaskan detail kamar, pemandangan, dan keunggulan lainnya..."></textarea>
+                                <textarea required rows="6" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="admin-textarea" placeholder="Jelaskan detail kamar, pemandangan, dan keunggulan lainnya..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -90,7 +94,7 @@ export default function AddRoom() {
                         <h3 className="text-sm font-bold text-admin-text-main mb-6 pb-4 border-b border-admin-border">Fasilitas Kamar</h3>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {AMENITIES_OPTIONS.map(opt => {
-                                const isSelected = formData.amenities.includes(opt);
+                                const isSelected = formData.facilities.includes(opt);
                                 return (
                                     <div
                                         key={opt}
@@ -119,19 +123,19 @@ export default function AddRoom() {
                     <div className="admin-card">
                         <h3 className="text-sm font-bold text-admin-text-main mb-6 pb-4 border-b border-admin-border">Pengaturan & Harga</h3>
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-4">
                                 <div className="form-group">
                                     <label className="form-label">Harga per Malam (Weekday)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light font-bold text-sm">Rp</span>
-                                        <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="number" className="admin-input pl-10" placeholder="0" />
+                                    <div className="input-with-prefix">
+                                        <div className="input-prefix">Rp</div>
+                                        <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="number" placeholder="0" className="w-full" />
                                     </div>
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Harga per Malam (Weekend)</label>
-                                    <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light font-bold text-sm">Rp</span>
-                                        <input required value={formData.priceWeekend} onChange={e => setFormData({ ...formData, priceWeekend: e.target.value })} type="number" className="admin-input pl-10" placeholder="0" />
+                                    <div className="input-with-prefix">
+                                        <div className="input-prefix">Rp</div>
+                                        <input required value={formData.price_weekend} onChange={e => setFormData({ ...formData, price_weekend: e.target.value })} type="number" placeholder="0" className="w-full" />
                                     </div>
                                 </div>
                             </div>
@@ -149,12 +153,12 @@ export default function AddRoom() {
 
                             <div className="form-group">
                                 <label className="form-label">Tipe Kasur</label>
-                                <input required value={formData.bed} onChange={e => setFormData({ ...formData, bed: e.target.value })} type="text" placeholder="misal: 1 King Bed" className="admin-input" />
+                                <input required value={formData.bed_type} onChange={e => setFormData({ ...formData, bed_type: e.target.value })} type="text" placeholder="misal: 1 King Bed" className="admin-input" />
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Luas Kamar (m²)</label>
-                                <input required value={formData.size} onChange={e => setFormData({ ...formData, size: e.target.value })} type="number" className="admin-input" />
+                                <input required value={formData.room_size} onChange={e => setFormData({ ...formData, room_size: e.target.value })} type="number" className="admin-input" />
                             </div>
                         </div>
                     </div>
@@ -162,8 +166,8 @@ export default function AddRoom() {
                     <div className="admin-card">
                         <h3 className="text-sm font-bold text-admin-text-main mb-6 pb-4 border-b border-admin-border">Galeri Foto</h3>
                         <ImageUpload
-                            images={formData.images}
-                            onChange={(images) => setFormData({ ...formData, images })}
+                            images={formData.gallery}
+                            onChange={(gallery) => setFormData({ ...formData, gallery })}
                         />
                     </div>
 
@@ -171,8 +175,9 @@ export default function AddRoom() {
                         <button type="button" onClick={() => navigate('/admin/rooms')} className="flex-1 py-3 px-4 rounded-xl border border-admin-border text-admin-text-muted font-bold text-sm hover:bg-admin-bg transition-all">
                             Batal
                         </button>
-                        <button type="submit" className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20">
-                            <Save size={18} /> Simpan Kamar
+                        <button type="submit" disabled={isSaving} className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20 disabled:opacity-50">
+                            {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save size={18} />}
+                            {isSaving ? 'Menyimpan...' : 'Simpan Kamar'}
                         </button>
                     </div>
                 </div>

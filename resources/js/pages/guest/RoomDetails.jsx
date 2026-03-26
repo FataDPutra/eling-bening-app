@@ -9,6 +9,117 @@ export default function RoomDetails() {
     
     const [room, setRoom] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [startDate, setStartDate] = useState("2026-03-27");
+    const [endDate, setEndDate] = useState("2026-03-28");
+    const [guests, setGuests] = useState(2);
+    
+    // Gallery & Lightbox states
+    const [showFullGallery, setShowFullGallery] = useState(false);
+    const [lightboxMedia, setLightboxMedia] = useState(null); // { url: string, type: 'image' | 'video' }
+
+    // Media detection & rendering (Robust Version)
+    const renderMedia = (mediaItem, alt) => {
+        if (!mediaItem) return <img src="/images/resort-room.png" alt="Default" className="w-full h-full object-cover" />;
+        
+        // Ensure string and clean
+        const urlStr = typeof mediaItem === 'string' ? mediaItem : (mediaItem.url || "");
+        const url = urlStr.trim();
+        if (!url) return <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300"><i className="fas fa-image text-2xl"></i></div>;
+
+        const isYouTube = /youtube\.com|youtu\.be/i.test(url);
+        const isVimeo = /vimeo\.com/i.test(url);
+        const isDirectVideo = /\.(mp4|webm|ogg)/i.test(url) || url.startsWith('data:video');
+
+        // Handle YouTube / Vimeo (Grid View Optimized)
+        if (isYouTube || isVimeo) {
+            let embedUrl = "";
+            let thumbUrl = "";
+            
+            if (isYouTube) {
+                const videoId = url.includes('v=') ? url.split('v=')[1].split('&')[0] : url.split('/').pop().split('?')[0];
+                embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&rel=0`;
+                thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            } else if (isVimeo) {
+                const videoId = url.split('/').pop().split('?')[0];
+                embedUrl = `https://player.vimeo.com/video/${videoId}`;
+                thumbUrl = null;
+            }
+
+            return (
+                <div 
+                    className="w-full h-full relative group cursor-pointer overflow-hidden bg-slate-900"
+                    onClick={() => setLightboxMedia({ url: embedUrl, type: 'iframe' })}
+                >
+                    {thumbUrl ? (
+                        <img 
+                            src={thumbUrl} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-90 group-hover:opacity-100" 
+                            alt={alt}
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=800";
+                            }}
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                             <i className="fab fa-vimeo-v text-white/20 text-4xl"></i>
+                        </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center group-hover:bg-black/30 transition-all duration-500">
+                        <div className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/30 text-white shadow-2xl scale-90 group-hover:scale-100 transition duration-500">
+                            <i className="fas fa-play text-sm ml-1"></i>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Handle Direct Video Files
+        if (isDirectVideo) {
+            return (
+                <div 
+                    className="w-full h-full relative group cursor-pointer bg-slate-950"
+                    onClick={() => setLightboxMedia({ url: url, type: 'video' })}
+                >
+                    <video 
+                        src={url} 
+                        className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
+                        muted 
+                        playsInline 
+                        preload="metadata"
+                        loop
+                        onLoadedMetadata={(e) => {
+                            // Seek to 1s to ensure a frame is shown if metadata is ready
+                            e.target.currentTime = 0.5;
+                        }}
+                        onMouseOver={e => e.target.play()}
+                        onMouseOut={e => {e.target.pause();}}
+                    />
+                    <div className="absolute inset-0 bg-black/10 flex items-center justify-center pointer-events-none group-hover:bg-black/30 transition-all">
+                        <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl flex items-center justify-center border border-white/30 text-white shadow-2xl scale-90 group-hover:scale-110 transition duration-500">
+                            <i className="fas fa-play text-sm ml-1"></i>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Standard Image (Handling potential base64 or long URLs)
+        return (
+            <div className="w-full h-full overflow-hidden bg-gray-100">
+                <img 
+                    src={url} 
+                    alt={alt} 
+                    onClick={() => setLightboxMedia({ url, type: 'image' })}
+                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-1000 cursor-pointer" 
+                    onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/images/resort-room.png";
+                    }}
+                />
+            </div>
+        );
+    };
 
     useEffect(() => {
         axios.get(`/api/resorts/${id}`)
@@ -23,8 +134,15 @@ export default function RoomDetails() {
     }, [id]);
 
     const handleBooking = () => {
-        // Here we could store room details in context or state before navigating
-        navigate('/booking'); 
+        navigate('/booking', { 
+            state: { 
+                room, 
+                checkIn: startDate, 
+                checkOut: endDate, 
+                guests,
+                totalNights: Math.max(1, (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
+            } 
+        }); 
     };
 
     if (isLoading) {
@@ -61,25 +179,31 @@ export default function RoomDetails() {
             </div>
 
             {/* Image Gallery Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[400px] mb-10 overflow-hidden rounded-3xl">
-                <div className="md:col-span-2 md:row-span-2">
-                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : "/images/resort-room.png")} alt="Main Room" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer" />
-                </div>
-                <div className="md:col-span-1 md:row-span-1 hidden md:block">
-                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 1 ? room.gallery[1] : "/images/resort-room.png")} alt="Room Detail 1" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-110" />
-                </div>
-                <div className="md:col-span-1 md:row-span-1 hidden md:block">
-                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 2 ? room.gallery[2] : "/images/resort-room.png")} alt="Room Detail 2" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer brightness-90" />
-                </div>
-                <div className="md:col-span-2 md:row-span-1 hidden md:block relative">
-                    <img src={(Array.isArray(room.gallery) && room.gallery.length > 3 ? room.gallery[3] : "/images/resort-room.png")} alt="Room Detail 3" className="w-full h-full object-cover hover:scale-105 transition duration-700 cursor-pointer saturate-50" />
-                    {Array.isArray(room.gallery) && room.gallery.length > 4 && (
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                            <span className="text-white font-bold text-2xl">+{room.gallery.length - 4}</span>
+            <div className="mb-10 group/gallery">
+                <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[450px] overflow-hidden rounded-3xl relative">
+                    {/* Main Slot */}
+                    <div className="md:col-span-2 md:row-span-2 relative h-full overflow-hidden">
+                        {(!room.gallery || room.gallery.length === 0) ? (
+                            <img src="/images/resort-room.png" alt="Default" className="w-full h-full object-cover" />
+                        ) : (
+                            renderMedia(room.gallery[0], "Main")
+                        )}
+                    </div>
+
+                    {/* Secondary Slots (Adaptive) */}
+                    {Array.isArray(room.gallery) && room.gallery.slice(1, 4).map((media, idx) => (
+                        <div key={idx} className={`relative overflow-hidden hidden md:block ${idx === 2 ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'}`}>
+                            {renderMedia(media, `Detail ${idx+1}`)}
                         </div>
-                    )}
-                    <button className="absolute bottom-4 right-4 bg-white text-gray-900 px-6 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-gray-50 flex items-center gap-2">
-                        <i className="fas fa-th"></i> Lihat Semua Foto
+                    ))}
+
+                    {/* View All Button Overlay */}
+                    <button 
+                        onClick={() => setShowFullGallery(true)}
+                        className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-md text-gray-900 px-6 py-3 rounded-2xl font-black text-xs shadow-2xl hover:bg-white hover:scale-105 transition-all flex items-center gap-3 border border-white/50 uppercase tracking-[0.2em] group"
+                    >
+                        <i className="fas fa-th-large text-eling-green group-hover:rotate-90 transition-transform duration-500"></i> 
+                        {Array.isArray(room.gallery) && room.gallery.length > 4 ? `Explore ${room.gallery.length} Media` : 'Lihat Semua Foto'}
                     </button>
                 </div>
             </div>
@@ -183,20 +307,20 @@ export default function RoomDetails() {
                                 <div className="border-r border-gray-200 hover:bg-gray-50 focus-within:bg-gray-50 transition">
                                     <label className="block p-4 cursor-pointer">
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Check-in</span>
-                                        <input type="date" className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" defaultValue="2026-03-10" />
+                                        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" />
                                     </label>
                                 </div>
                                 <div className="hover:bg-gray-50 focus-within:bg-gray-50 transition">
                                     <label className="block p-4 cursor-pointer">
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Check-out</span>
-                                        <input type="date" className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" defaultValue="2026-03-11" />
+                                        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" />
                                     </label>
                                 </div>
                             </div>
                             <div className="relative hover:bg-gray-50 focus-within:bg-gray-50 transition">
                                 <label className="block p-4 cursor-pointer">
                                     <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Tamu</span>
-                                    <select className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer appearance-none focus:ring-0 p-0 border-0" defaultValue="2">
+                                    <select value={guests} onChange={e => setGuests(parseInt(e.target.value))} className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer appearance-none focus:ring-0 p-0 border-0">
                                         <option value="1">1 Dewasa</option>
                                         <option value="2">2 Dewasa</option>
                                         <option value="3">3 Dewasa</option>
@@ -242,6 +366,75 @@ export default function RoomDetails() {
                     </button>
                 </div>
             </div>
+
+            {/* View All Gallery Modal */}
+            {showFullGallery && (
+                <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-fade-in">
+                    <div className="px-6 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                        <div>
+                            <h2 className="text-xl font-serif font-black text-gray-900 tracking-tight">{room.name}</h2>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{room.gallery?.length || 0} Media Terunggah</p>
+                        </div>
+                        <button 
+                            onClick={() => setShowFullGallery(false)}
+                            className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-eling-red hover:text-white transition-all shadow-sm"
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 md:p-12">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pb-20">
+                            {Array.isArray(room.gallery) && room.gallery.map((media, i) => (
+                                <div key={i} className="aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 group shadow-sm hover:shadow-xl transition-all">
+                                    {renderMedia(media, `Gallery ${i+1}`)}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Lightbox Modal */}
+            {lightboxMedia && (
+                <div className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in">
+                    <button 
+                        onClick={() => setLightboxMedia(null)}
+                        className="absolute top-8 right-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all backdrop-blur-md border border-white/20"
+                    >
+                        <i className="fas fa-times text-xl"></i>
+                    </button>
+                    
+                    <div className="w-full max-w-6xl max-h-[85vh] flex items-center justify-center">
+                        {lightboxMedia.type === 'iframe' ? (
+                            <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
+                                <iframe 
+                                    src={lightboxMedia.url.replace('mute=1', 'mute=0&autoplay=1')} 
+                                    className="w-full h-full" 
+                                    allow="autoplay; encrypted-media; fullscreen"
+                                    allowFullScreen
+                                ></iframe>
+                            </div>
+                        ) : lightboxMedia.type === 'video' ? (
+                            <video 
+                                src={lightboxMedia.url} 
+                                className="max-w-full max-h-full rounded-2xl shadow-2xl" 
+                                controls 
+                                autoPlay 
+                            />
+                        ) : (
+                            <img 
+                                src={lightboxMedia.url} 
+                                className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain animate-scale-up" 
+                                alt="Detail" 
+                            />
+                        )}
+                    </div>
+
+                    <div className="absolute bottom-8 left-0 right-0 text-center">
+                        <p className="text-white/60 text-xs font-bold uppercase tracking-[0.3em] font-serif">Detail Media • Eling Bening Resort</p>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

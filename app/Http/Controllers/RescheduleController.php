@@ -12,7 +12,7 @@ class RescheduleController extends Controller
     {
         $user = $request->user();
         if ($user && $user->role === 'admin') {
-            return response()->json(Reschedule::with('transaction.user')->orderBy('created_at', 'desc')->get());
+            return response()->json(Reschedule::with(['transaction.user', 'transaction.items.item'])->orderBy('created_at', 'desc')->get());
         }
         return response()->json(['message' => 'Unauthorized'], 401);
     }

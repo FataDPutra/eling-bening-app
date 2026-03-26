@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Ticket, CalendarDays, ShoppingBag, LayoutGrid } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Ticket, CalendarDays, ShoppingBag, LayoutGrid, X, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
@@ -9,6 +9,7 @@ export default function Tickets() {
     const [tickets, setTickets] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
+    const [previewImage, setPreviewImage] = useState(null);
     const navigate = useNavigate();
 
     const fetchTickets = async () => {
@@ -118,8 +119,20 @@ export default function Tickets() {
                             <tr key={ticket.id} className="group">
                                 <td>
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3.5 rounded-2xl bg-admin-bg border border-admin-border text-admin-primary group-hover:bg-admin-primary group-hover:text-white group-hover:border-admin-primary transition-all shadow-sm">
-                                            <Ticket size={22} />
+                                        <div 
+                                            className="relative group/img w-14 h-14 rounded-2xl bg-admin-bg border border-admin-border overflow-hidden text-admin-primary group-hover:border-admin-primary transition-all shadow-sm flex items-center justify-center flex-shrink-0 cursor-zoom-in"
+                                            onClick={() => ticket.image && setPreviewImage(ticket.image)}
+                                        >
+                                            {ticket.image ? (
+                                                <>
+                                                    <img src={ticket.image} alt={ticket.name} className="w-full h-full object-cover transition-transform group-hover/img:scale-110" />
+                                                    <div className="absolute inset-0 bg-admin-primary/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center text-white">
+                                                        <Eye size={16} />
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <Ticket size={22} />
+                                            )}
                                         </div>
                                         <div className="max-w-[280px]">
                                             <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{ticket.name}</div>
@@ -138,24 +151,28 @@ export default function Tickets() {
                                     </div>
                                 </td>
                                 <td>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-primary">{formatRupiah(ticket.price)}</span>
-                                        <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Fixed Rate</span>
-                                    </div>
+                                    <span className="text-sm font-black text-admin-primary">{formatRupiah(ticket.price)}</span>
                                 </td>
                                 <td>
                                     <button
                                         onClick={() => toggleStatus(ticket.id)}
-                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${ticket.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
+                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                            ticket.is_active
+                                                ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                                                : 'bg-rose-50 text-rose-600 border-rose-200'
+                                        }`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${ticket.is_active ? 'bg-success' : 'bg-warning'}`} />
-                                        {ticket.is_active ? 'Online' : 'Disabled'}
+                                        {ticket.is_active ? 'Active' : 'Inactive'}
                                     </button>
                                 </td>
-                                <td>
-                                    <div className="flex justify-start gap-2">
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/tickets/edit/${ticket.id}`)}><Edit size={16} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-danger flex items-center justify-center hover:bg-danger hover:text-white hover:border-danger transition-all shadow-sm" title="Delete" onClick={() => handleDelete(ticket.id)}><Trash2 size={16} /></button>
+                                <td className="text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/tickets/edit/${ticket.id}`)}>
+                                            <Edit size={16} />
+                                        </button>
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(ticket.id)}>
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -172,6 +189,32 @@ export default function Tickets() {
                     </div>
                 )}
             </div>
+
+            {/* Premium Image Lightbox Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-8 animate-fade-in">
+                    <div 
+                        className="absolute inset-0 bg-slate-900/90 backdrop-blur-md cursor-zoom-out"
+                        onClick={() => setPreviewImage(null)}
+                    />
+                    
+                    <div className="relative max-w-5xl w-full max-h-[85vh] rounded-[2.5rem] overflow-hidden bg-white shadow-2xl animate-scale-up border-[8px] border-white/20 text-left">
+                        <button 
+                            onClick={() => setPreviewImage(null)}
+                            className="absolute top-6 right-6 z-20 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl transition-all border border-white/20"
+                        >
+                            <X size={20} />
+                        </button>
+                        
+                        <img src={previewImage} alt="Ticket Preview" className="w-full h-full object-contain bg-slate-100" />
+                        
+                        <div className="absolute bottom-0 inset-x-0 p-8 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                            <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.3em] mb-2">High Resolution Media</p>
+                            <h3 className="text-white text-2xl font-black uppercase tracking-tight">Ticket Category Preview</h3>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

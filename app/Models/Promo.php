@@ -16,4 +16,9 @@ class Promo extends Model
         'start_date' => 'date',
         'end_date' => 'date',
     ];
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
 }

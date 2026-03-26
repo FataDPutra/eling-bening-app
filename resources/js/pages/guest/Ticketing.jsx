@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import { useAuth } from '../../utils/AuthContext';
 import { formatRupiah } from '../../utils/data';
+import toast from 'react-hot-toast';
 import '../../styles/guest.css';
 
 export default function Ticketing() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -13,7 +17,7 @@ export default function Ticketing() {
     const [promoInput, setPromoInput] = useState('');
     const [activePromo, setActivePromo] = useState(null);
     const [promoMsg, setPromoMsg] = useState({ show: false, success: false, text: '' });
-    const [bookDate, setBookDate] = useState('');
+    const [bookDate, setBookDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookerName, setBookerName] = useState('');
 
     // For payment modal
@@ -21,6 +25,12 @@ export default function Ticketing() {
     const [showSuccess, setShowSuccess] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [ticketDate, setTicketDate] = useState('');
+
+    useEffect(() => {
+        if (user) {
+            setBookerName(user.name);
+        }
+    }, [user]);
 
     useEffect(() => {
         axios.get('/api/tickets')
@@ -40,11 +50,37 @@ export default function Ticketing() {
             });
     }, []);
 
+    const [guestNamesData, setGuestNamesData] = useState({});
+
     const updateQty = (id, delta) => {
-        setQtys(prev => ({
-            ...prev,
-            [id]: Math.max(0, (prev[id] || 0) + delta)
-        }));
+        const currentTotal = Object.values(qtys).reduce((acc, q) => acc + q, 0);
+        const newQty = Math.max(0, (qtys[id] || 0) + delta);
+        
+        if (delta > 0 && currentTotal >= 10) {
+            toast.error('Maksimal pemesanan adalah 10 tiket per transaksi.');
+            return;
+        }
+
+        setQtys(prev => ({ ...prev, [id]: newQty }));
+
+        // Manage guest names array for this ticket type
+        setGuestNamesData(prev => {
+            const currentNames = prev[id] || [];
+            if (delta > 0) {
+                return { ...prev, [id]: [...currentNames, ''] };
+            } else if (newQty < currentNames.length) {
+                return { ...prev, [id]: currentNames.slice(0, newQty) };
+            }
+            return prev;
+        });
+    };
+
+    const updateGuestName = (ticketId, index, name) => {
+        setGuestNamesData(prev => {
+            const names = [...(prev[ticketId] || [])];
+            names[index] = name;
+            return { ...prev, [ticketId]: names };
+        });
     };
 
     const applyPromo = async () => {
@@ -52,7 +88,11 @@ export default function Ticketing() {
         if(!code) return;
 
         try {
-            const res = await axios.post('/api/promos/validate', { promo_code: code });
+            const res = await axios.post('/api/promos/validate', { 
+                promo_code: code,
+                booking_type: 'TICKET',
+                total_amount: subtotal
+            });
             setActivePromo(res.data);
             setPromoMsg({
                 show: true,
@@ -85,6 +125,7 @@ export default function Ticketing() {
     const hasItems = orderItems.length > 0;
     const adminFee = hasItems ? 2500 : 0;
     let promoDiscountAmt = 0;
+    let minPurchaseError = false;
 
     if (activePromo && hasItems) {
         if (subtotal >= activePromo.min_purchase) {
@@ -93,27 +134,70 @@ export default function Ticketing() {
             } else {
                 promoDiscountAmt = parseFloat(activePromo.discount_value);
             }
+        } else {
+            minPurchaseError = true;
         }
     }
 
     const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
 
-    const simulatePayment = (method) => {
+    const simulatePayment = async (method) => {
         if (!hasItems) return;
-
-        // Note: For real integration, we should post trans to backend.
-        // For guest, let's assume they must login first to hit transactions.
-        // We'll simulate here, then direct to profile.
-        // Real logic: axios.post('/api/transactions', { items, promo, etc... })
+        if (!user) {
+            Swal.fire({
+                title: 'Harap Login',
+                text: 'Silakan login terlebih dahulu untuk melakukan pemesanan.',
+                icon: 'warning',
+                confirmButtonColor: '#2E7D32',
+                confirmButtonText: 'Login Sekarang',
+                showCancelButton: true,
+                customClass: { popup: 'rounded-[2rem] font-serif' }
+            }).then(res => {
+                if (res.isConfirmed) navigate('/login');
+            });
+            return;
+        }
 
         setShowPayment(false);
         setIsProcessing(true);
-        setTimeout(() => {
+
+        const transId = `EB-TICK-${Math.floor(Math.random() * 899999 + 100000)}`;
+        
+        const payload = {
+            id: transId,
+            booking_type: 'TICKET',
+            booker_name: bookerName,
+            payment_method: method,
+            promo_id: activePromo?.id,
+            check_in_date: bookDate,
+            total_price: total,
+            total_qty: orderItems.reduce((acc, item) => acc + item.qty, 0),
+            discount_amount: promoDiscountAmt,
+            items: orderItems.map(item => ({
+                item_id: item.id,
+                item_type: 'App\\Models\\Ticket',
+                quantity: item.qty,
+                price: item.price,
+                guest_names: guestNamesData[item.id] || []
+            }))
+        };
+
+        try {
+            await axios.post('/api/transactions', payload);
             setIsProcessing(false);
             const formattedDate = bookDate ? new Date(bookDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('id-ID');
             setTicketDate(`Berlaku untuk: ${formattedDate}`);
             setShowSuccess(true);
-        }, 1500);
+        } catch (error) {
+            setIsProcessing(false);
+            Swal.fire({
+                title: 'Gagal!',
+                text: error.response?.data?.message || 'Terjadi kesalahan saat memproses pesanan.',
+                icon: 'error',
+                confirmButtonColor: '#C62828',
+                customClass: { popup: 'rounded-[2rem] font-serif' }
+            });
+        }
     };
 
     return (
@@ -136,9 +220,9 @@ export default function Ticketing() {
                             </div>
                         ) : (
                             tickets.map(ticket => (
-                                <div key={ticket.id} className="bg-white rounded-3xl p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green transition group">
-                                    <div className="md:w-1/3 h-48 bg-gray-200 rounded-2xl overflow-hidden relative">
-                                        <img src="/images/hero-bg.png" className="w-full h-full object-cover" alt={ticket.name} />
+                                <div key={ticket.id} className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green transition-all group overflow-hidden">
+                                    <div className="md:w-1/3 h-52 bg-slate-100 rounded-2xl overflow-hidden relative border border-gray-50 uppercase font-black text-[10px] tracking-widest text-slate-300 flex items-center justify-center">
+                                        <img src={ticket.image || "/images/hero-bg.png"} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={ticket.name} />
                                     </div>
                                     <div className="flex-1 flex flex-col justify-between">
                                         <div>
@@ -232,17 +316,38 @@ export default function Ticketing() {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold uppercase text-gray-400 mb-2 tracking-wide">
-                                            Nama Pemesan / Pengunjung
+                                            Nama Pemesan Utama
                                         </label>
                                         <input
                                             type="text"
-                                            placeholder="Cth: Budi Santoso"
+                                            placeholder={`Otomatis: ${user?.name || 'Nama Akun'}`}
                                             value={bookerName}
                                             onChange={(e) => setBookerName(e.target.value)}
                                             className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-200"
-                                            required
                                         />
-                                        <p className="text-[10px] text-gray-400 mt-1">Jika memesan untuk orang lain, masukkan nama perwakilan rombongan.</p>
+                                        <p className="text-[10px] text-gray-400 italic mt-1.5">*Biarkan kosong untuk menggunakan nama akun Anda.</p>
+                                    </div>
+
+                                    {/* Individual Guest Name Inputs */}
+                                    <div className="space-y-4 pt-4 border-t border-gray-50">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg inline-block">Manifest Pengunjung & QR Code</p>
+                                        {orderItems.map((item) => (
+                                            <div key={item.id} className="space-y-3">
+                                                <p className="text-xs font-bold text-eling-green">{item.name} ({item.qty})</p>
+                                                {Array.from({ length: item.qty }).map((_, idx) => (
+                                                    <div key={`${item.id}-${idx}`} className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">#{idx+1}</div>
+                                                        <input 
+                                                            type="text"
+                                                            placeholder={`Nama Tiket #${idx+1}`}
+                                                            value={guestNamesData[item.id]?.[idx] || ''}
+                                                            onChange={(e) => updateGuestName(item.id, idx, e.target.value)}
+                                                            className="flex-1 border border-gray-100 rounded-xl px-4 py-2 text-xs focus:ring-2 focus:ring-green-100 outline-none"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -267,10 +372,19 @@ export default function Ticketing() {
                                         <i className="fas fa-check"></i> Pakai
                                     </button>
                                 </div>
-                                {promoMsg.show && (
+                                {promoMsg.show && !minPurchaseError && (
                                     <div className={`mt-2 text-xs font-bold flex items-center gap-2 ${promoMsg.success ? 'text-green-600' : 'text-red-500'}`}>
                                         <i className={`fas ${promoMsg.success ? 'fa-check-circle' : 'fa-times-circle'}`}></i>
                                         {promoMsg.text}
+                                    </div>
+                                )}
+                                {activePromo && minPurchaseError && (
+                                    <div className="mt-2 text-[10px] font-bold text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100 flex items-start gap-2 animate-pulse">
+                                        <i className="fas fa-exclamation-triangle mt-0.5"></i>
+                                        <div>
+                                            Promo tidak dapat digunakan. Min. pembelian: {formatRupiah(activePromo.min_purchase)}
+                                            <p className="font-normal opacity-80 mt-0.5 mt-0.5">Butuh tambahan: {formatRupiah(activePromo.min_purchase - subtotal)}</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -278,7 +392,6 @@ export default function Ticketing() {
                             <button
                                 onClick={() => {
                                     if (!bookDate) return alert('Silakan pilih tanggal kunjungan terlebih dahulu.');
-                                    if (!bookerName) return alert('Silakan masukkan nama pemesan terlebih dahulu.');
                                     setShowPayment(true);
                                 }}
                                 disabled={!hasItems || isProcessing || isLoading}

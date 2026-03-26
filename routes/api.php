@@ -64,6 +64,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function() {
     
     // Manage Transactions
     Route::put('/transactions/{id}', [TransactionController::class, 'update']); 
+    Route::post('/transactions/{id}/check-in', [TransactionController::class, 'checkIn']);
+    Route::post('/transactions/{id}/check-out', [TransactionController::class, 'checkOut']);
+    Route::patch('/tickets/{ticket_uid}/check-in', [TransactionController::class, 'checkInTicket']);
 
     // Manage Reschedules
     Route::get('/reschedules', [RescheduleController::class, 'index']);

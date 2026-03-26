@@ -1,8 +1,16 @@
-import { MapPin, Phone, Mail, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { MapPin, Phone, Mail, Loader2, MapPinned } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 
 export default function Contact() {
     const { content, isLoading } = useContent();
+    const [isInteracting, setIsInteracting] = useState(false);
+
+    useEffect(() => {
+        const handleGlobalReset = () => setIsInteracting(false);
+        window.addEventListener('click', handleGlobalReset);
+        return () => window.removeEventListener('click', handleGlobalReset);
+    }, []);
 
     if (isLoading) return (
         <div className="h-screen flex items-center justify-center bg-white">
@@ -102,17 +110,51 @@ export default function Contact() {
                     </div>
                 </div>
 
-                <div className="mt-24 h-[600px] w-full bg-gray-200 rounded-3xl shadow-inner overflow-hidden relative">
-                    <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none z-10">
-                        <i className="fas fa-map-marked-alt text-6xl text-gray-400 mb-4 drop-shadow-md"></i>
-                        <p className="text-gray-700 font-bold uppercase tracking-widest drop-shadow-md bg-white/80 px-6 py-2 rounded-full backdrop-blur-sm shadow-sm">Peta Interaktif Eling Bening</p>
+                <div 
+                    className="mt-24 h-[700px] w-full bg-gray-100 rounded-[4rem] shadow-[inset_0_4px_30px_rgba(0,0,0,0.05)] overflow-hidden relative group/map border-8 border-white"
+                    onMouseLeave={() => setIsInteracting(false)}
+                >
+                    {/* Aesthetic Veil - Hides when interacting */}
+                    <div className={`absolute inset-0 z-30 flex items-center justify-center flex-col transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)] ${isInteracting ? 'opacity-0 scale-125 pointer-events-none' : 'opacity-100 scale-100 pointer-events-auto'}`}>
+                        {/* Interactive Click Catcher */}
+                        <div 
+                            className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] cursor-grab active:cursor-grabbing"
+                            onMouseDown={() => setIsInteracting(true)}
+                        />
+                        
+                        {/* Actual Visible Elements */}
+                        <div className="relative z-10 pointer-events-none flex flex-col items-center">
+                            <div className="w-28 h-28 rounded-full bg-white/20 backdrop-blur-2xl border border-white/40 flex items-center justify-center text-white shadow-[0_20px_50px_rgba(0,0,0,0.3)] mb-8 transform transition-transform group-hover/map:scale-110 duration-700">
+                                <MapPinned size={48} className="drop-shadow-lg" />
+                            </div>
+                            <div className="bg-black/40 backdrop-blur-xl px-12 py-5 rounded-full border border-white/20 shadow-2xl">
+                                <p className="text-white font-black uppercase tracking-[0.5em] text-[10px]">
+                                    Click to Explore Interactive Map
+                                </p>
+                            </div>
+                            <div className="mt-6 flex items-center gap-2 text-white/60 animate-bounce">
+                                <i className="fas fa-mouse text-[10px]"></i>
+                                <span className="text-[8px] font-bold uppercase tracking-widest">Move Scroll wheel or Drag</span>
+                            </div>
+                        </div>
                     </div>
+
                     <iframe
+                        title="Eling Bening Interactive Map"
                         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15830.34757657279!2d110.4045!3d-7.2657!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7a783783a3371b%3A0x6a0a09e075c3f6e!2sEling%20Bening!5e0!3m2!1sen!2sid!4v1700000000000"
-                        className="w-full h-full border-0 grayscale hover:grayscale-0 transition duration-1000 relative z-0"
+                        className={`w-full h-full border-0 transition-all duration-1000 ${isInteracting ? 'grayscale-0 scale-100 shadow-2xl' : 'grayscale shadow-inner scale-105 opacity-80 blur-[0.5px]'}`}
                         allowFullScreen={false}
                         loading="lazy">
                     </iframe>
+                    
+                    {/* Small Close Label when interacting */}
+                    {isInteracting && (
+                        <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 animate-in slide-in-from-top-10 duration-700 pointer-events-none">
+                            <div className="bg-eling-red/80 backdrop-blur-md px-6 py-2 rounded-full border border-white/20 shadow-xl">
+                                <span className="text-white text-[8px] font-black uppercase tracking-widest">Move Mouse Out to Lock</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
         </div>

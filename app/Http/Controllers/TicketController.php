@@ -21,6 +21,7 @@ class TicketController extends Controller
             'validity_day' => 'required|in:weekday,weekend,all_days',
             'price' => 'required|numeric',
             'is_active' => 'boolean',
+            'image' => 'nullable|string',
         ]);
 
         $ticket = Ticket::create($validated);
@@ -43,6 +44,7 @@ class TicketController extends Controller
             'validity_day' => 'sometimes|in:weekday,weekend,all_days',
             'price' => 'sometimes|numeric',
             'is_active' => 'boolean',
+            'image' => 'nullable|string',
         ]);
 
         $ticket->update($validated);

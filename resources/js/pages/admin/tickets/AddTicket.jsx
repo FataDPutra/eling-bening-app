@@ -1,21 +1,39 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Ticket, CalendarDays, Coins, Type } from 'lucide-react';
-import { getTickets, saveTickets } from '../../../utils/data';
+import { ArrowLeft, Save, Ticket, CalendarDays, Coins, Type, Fingerprint, Loader2, Image as ImageIcon } from 'lucide-react';
+import axios from 'axios';
+import MediaUpload from '../../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 
 export default function AddTicket() {
     const navigate = useNavigate();
-    const [formData, setFormData] = useState({ name: '', days: 'Weekday', price: '', priceWeekend: '', desc: '', status: 'active' });
+    const [isSaving, setIsSaving] = useState(false);
+    const [formData, setFormData] = useState({ 
+        id: 'EB-TICK-' + Math.random().toString(36).substring(2, 6).toUpperCase(), 
+        name: '', 
+        validity_day: 'all_days', 
+        price: '', 
+        description: '', 
+        is_active: true,
+        image: ''
+    });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const tickets = getTickets();
-        const newId = tickets.length > 0 ? Math.max(...tickets.map(t => t.id)) + 1 : 1;
-        const updated = [...tickets, { ...formData, id: newId, price: Number(formData.price), priceWeekend: Number(formData.priceWeekend) }];
-        saveTickets(updated);
-        toast.success('Tiket berhasil ditambahkan');
-        navigate('/admin/tickets');
+        setIsSaving(true);
+        try {
+            await axios.post('/api/tickets', {
+                ...formData,
+                price: Number(formData.price)
+            });
+            toast.success('Tiket berhasil ditambahkan');
+            navigate('/admin/tickets');
+        } catch (error) {
+            console.error("Failed to save ticket", error);
+            toast.error(error.response?.data?.message || 'Gagal menambahkan tiket');
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -34,61 +52,88 @@ export default function AddTicket() {
                     <form onSubmit={handleSubmit} className="admin-card space-y-6">
                         <h3 className="text-sm font-bold text-admin-text-main mb-6 pb-4 border-b border-admin-border">Konfigurasi Tiket</h3>
 
-                        <div className="form-group">
-                            <label className="form-label">Nama / Jenis Tiket</label>
-                            <div className="relative">
-                                <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" className="admin-input pl-10" placeholder="misal: Tiket Terusan" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="form-group opacity-70">
+                                <label className="form-label">ID Tiket (Otomatis)</label>
+                                <div className="form-input-group bg-slate-50">
+                                    <div className="input-icon-box">
+                                        <Fingerprint size={18} />
+                                    </div>
+                                    <input value={formData.id} readOnly type="text" className="cursor-not-allowed" />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label">Nama / Jenis Tiket</label>
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">
+                                        <Type size={18} />
+                                    </div>
+                                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" placeholder="misal: Tiket Terusan" />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
                             <div className="form-group">
                                 <label className="form-label">Hari Berlaku</label>
-                                <div className="relative">
-                                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                    <select value={formData.days} onChange={e => setFormData({ ...formData, days: e.target.value })} className="admin-input pl-10">
-                                        <option>Weekday</option>
-                                        <option>Weekend</option>
-                                        <option>Semua Hari</option>
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">
+                                        <CalendarDays size={18} />
+                                    </div>
+                                    <select value={formData.validity_day} onChange={e => setFormData({ ...formData, validity_day: e.target.value })}>
+                                        <option value="weekday">Weekday Only</option>
+                                        <option value="weekend">Weekend Only</option>
+                                        <option value="all_days">Setiap Hari (All Days)</option>
                                     </select>
                                 </div>
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Harga Tiket (Weekday)</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light font-bold text-sm">Rp</span>
-                                    <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="number" className="admin-input pl-10" placeholder="0" />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Harga Tiket (Weekend)</label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light font-bold text-sm">Rp</span>
-                                    <input required value={formData.priceWeekend} onChange={e => setFormData({ ...formData, priceWeekend: e.target.value })} type="number" className="admin-input pl-10" placeholder="0" />
+                                <label className="form-label">Harga Tiket</label>
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">
+                                        <Coins size={18} />
+                                        <span className="ml-1">Rp</span>
+                                    </div>
+                                    <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="number" placeholder="0" className="w-full" />
                                 </div>
                             </div>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Deskripsi Singkat</label>
-                            <textarea required rows="5" value={formData.desc} onChange={e => setFormData({ ...formData, desc: e.target.value })} className="admin-textarea" placeholder="Jelaskan fasilitas atau area yang bisa diakses dengan tiket ini..."></textarea>
+                            <textarea required rows="4" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="admin-textarea" placeholder="Jelaskan fasilitas atau area yang bisa diakses dengan tiket ini..."></textarea>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label">Status Aktivasi</label>
-                            <select value={formData.status} onChange={e => setFormData({ ...formData, status: e.target.value })} className="admin-input">
-                                <option value="active">Aktif (Tampil di Guest)</option>
-                                <option value="inactive">Non-aktif (Sembunyikan)</option>
-                            </select>
+                            <div className="form-input-group">
+                                <select value={formData.is_active} onChange={e => setFormData({ ...formData, is_active: e.target.value === 'true' })}>
+                                    <option value="true">Aktif (Tampil di Guest)</option>
+                                    <option value="false">Non-aktif (Sembunyikan)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="form-group pb-4">
+                            <label className="form-label flex items-center gap-2">
+                                <ImageIcon size={14} className="text-admin-primary" /> Cover & Galeri Tiket
+                            </label>
+                            <div className="p-6 bg-admin-bg rounded-[2rem] border-2 border-dashed border-admin-border hover:border-admin-primary transition-all">
+                                <MediaUpload 
+                                    images={formData.image ? [formData.image] : []} 
+                                    setImages={(newImages) => setFormData({ ...formData, image: newImages[0] || '' })} 
+                                    maxImages={1} 
+                                />
+                            </div>
                         </div>
 
                         <div className="flex gap-4 pt-4">
                             <button type="button" onClick={() => navigate('/admin/tickets')} className="flex-1 py-3 px-4 rounded-xl border border-admin-border text-admin-text-muted font-bold text-sm hover:bg-admin-bg transition-all">
                                 Batal
                             </button>
-                            <button type="submit" className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20">
-                                <Save size={18} /> Simpan Tiket
+                            <button type="submit" disabled={isSaving} className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20 disabled:opacity-50">
+                                {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save size={18} />}
+                                {isSaving ? 'Menyimpan...' : 'Simpan Tiket'}
                             </button>
                         </div>
                     </form>
@@ -102,20 +147,47 @@ export default function AddTicket() {
                             </div>
                             <h3 className="font-bold text-admin-text-main">Preview Kartu</h3>
                         </div>
-                        <div className="p-4 rounded-2xl bg-white border border-admin-border shadow-sm">
-                            <div className="flex justify-between items-start mb-3">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-admin-primary px-2 py-0.5 rounded-full bg-admin-primary-light">
-                                    {formData.days || 'Weekday'}
-                                </span>
-                                <div className="text-right">
-                                    <p className="text-[10px] text-admin-text-muted uppercase font-bold tracking-tighter">Mulai Dari</p>
-                                    <p className="text-sm font-black text-admin-primary leading-tight">Rp {(Number(formData.price) || 0).toLocaleString()}</p>
+                        <div className="relative p-6 rounded-[2rem] bg-white border border-admin-border shadow-xl shadow-admin-primary/5 overflow-hidden transition-all hover:shadow-2xl hover:scale-[1.02]">
+                            <img src={formData.image || "/images/hero-bg.png"} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-20 blur-[2px]" />
+                            
+                            <div className="relative z-10">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="p-3 rounded-2xl bg-admin-primary/10 text-admin-primary">
+                                        <Ticket size={24} />
+                                    </div>
+                                    <div className="text-right">
+                                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full border ${formData.is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}`}>
+                                            {formData.is_active ? 'Active' : 'Draft'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <h4 className="text-lg font-black text-admin-text-main leading-tight mb-1">{formData.name || 'New Category'}</h4>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-admin-text-muted uppercase tracking-widest">
+                                            <CalendarDays size={12} className="text-admin-primary" />
+                                            {formData.validity_day.replace('_', ' ')}
+                                        </div>
+                                    </div>
+                                    
+                                    <p className="text-xs text-admin-text-muted leading-relaxed line-clamp-2 min-h-[2.5rem]">
+                                        {formData.description || 'Provide a compelling description of what this ticket offers to your guests...'}
+                                    </p>
+
+                                    <div className="pt-4 border-t border-dashed border-admin-border flex justify-between items-end">
+                                        <div>
+                                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-tighter mb-1 opacity-60">Entry Price</p>
+                                            <p className="text-xl font-black text-admin-primary leading-none tracking-tight">
+                                                Rp {(Number(formData.price) || 0).toLocaleString()}
+                                            </p>
+                                        </div>
+                                        <div className="w-12 h-12 rounded-xl bg-admin-bg border border-admin-border flex items-center justify-center opacity-30">
+                                            <Fingerprint size={24} />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <h4 className="font-bold text-admin-text-main mb-1">{formData.name || 'Nama Tiket'}</h4>
-                            <p className="text-[10px] text-admin-text-muted line-clamp-2 leading-relaxed">
-                                {formData.desc || 'Deskripsi tiket akan muncul di sini...'}
-                            </p>
                         </div>
                         <p className="text-[10px] text-admin-text-muted mt-4 leading-relaxed italic">
                             *Ini adalah gambaran bagaimana tiket akan muncul di halaman pemesanan pengunjung.
@@ -127,7 +199,7 @@ export default function AddTicket() {
                             <Coins size={14} className="text-admin-primary" /> Tips Pengaturan
                         </h4>
                         <ul className="text-[11px] text-admin-text-muted space-y-2">
-                            <li>• Gunakan nama yang jelas dan deskriptif.</li>
+                            <li>• Gunakan ID yang mudah diingat dan unik.</li>
                             <li>• Pastikan harga sesuai dengan kategori hari.</li>
                             <li>• Detailkan fasilitas (misal: "Akses Kolam Renang").</li>
                         </ul>

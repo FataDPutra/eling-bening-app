@@ -58,13 +58,17 @@ export default function Rooms() {
 
                     // Dynamic Pricing Logic
                     const today = new Date().getDay();
-                    const isWeekend = today === 0 || today === 5 || today === 6; // 0=Sun, 5=Fri, 6=Sat
-                    const currentPrice = isWeekend && r.priceWeekend ? r.priceWeekend : r.price;
+                    const isWeekend = today === 0 || today === 6; // 0=Sun, 6=Sat (Adjusted as per common practice)
+                    const currentPrice = isWeekend && r.price_weekend ? r.price_weekend : r.price;
 
                     return (
                         <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group ${unavailable ? 'opacity-75' : ''}`}>
                             <div className="h-64 overflow-hidden relative">
-                                <img src={(Array.isArray(r.images) && r.images.length > 0 ? r.images[0] : r.image) || "/images/resort-room.png"} className={`w-full h-full object-cover group-hover:scale-110 transition duration-700 ${unavailable ? 'grayscale' : ''}`} alt={r.name} />
+                                <img 
+                                    src={(Array.isArray(r.gallery) && r.gallery.length > 0 ? r.gallery[0] : null) || "/images/resort-room.png"} 
+                                    className={`w-full h-full object-cover group-hover:scale-110 transition duration-700 ${unavailable ? 'grayscale' : ''}`} 
+                                    alt={r.name} 
+                                />
                                 {unavailable ? (
                                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                         <span className="bg-white text-gray-900 font-bold px-6 py-2 rounded-full uppercase tracking-widest text-sm">{badgeText}</span>
@@ -76,13 +80,13 @@ export default function Rooms() {
                             <div className="p-8">
                                 <h3 className="font-bold text-2xl mb-2 font-serif text-gray-900">{r.name}</h3>
                                 <div className="flex gap-4 text-gray-400 mb-6 text-sm">
-                                    {r.bed && <span><i className="fas fa-bed mr-2 text-eling-green"></i>{r.bed}</span>}
+                                    {r.bed_type && <span><i className="fas fa-bed mr-2 text-eling-green"></i>{r.bed_type}</span>}
                                     <span><i className="fas fa-user-friends mr-2 text-eling-green"></i>{r.capacity} Tamu</span>
-                                    {r.size && <span><i className="fas fa-expand mr-2 text-eling-green"></i>{r.size} m&sup2;</span>}
+                                    {r.room_size && <span><i className="fas fa-expand mr-2 text-eling-green"></i>{r.room_size} m&sup2;</span>}
                                 </div>
                                 <ul className="space-y-2 mb-8 text-sm text-gray-600">
                                     {!unavailable ? (
-                                        (r.amenities || []).map((a, i) => (
+                                        (Array.isArray(r.facilities) ? r.facilities : []).slice(0, 3).map((a, i) => (
                                             <li key={i}><i className="fas fa-check text-eling-green mr-2"></i>{a}</li>
                                         ))
                                     ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, DollarSign, LayoutGrid, Download } from 'lucide-react';
+import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, DollarSign, LayoutGrid, Download, MessageSquare, Quote, Star, CheckCircle2, Ticket, DoorOpen, DoorClosed } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
@@ -14,12 +14,25 @@ export default function Bookings() {
     const fetchBookings = async () => {
         try {
             const res = await axios.get('/api/transactions');
-            setBookings(res.data);
+            // Filter only resort bookings
+            const resortBookings = (res.data || []).filter(b => b.booking_type === 'RESORT');
+            setBookings(resortBookings);
             setIsLoading(false);
         } catch (error) {
             console.error("Failed to fetch bookings", error);
             toast.error("Gagal memuat data transaksi");
             setIsLoading(false);
+        }
+    };
+
+    const handleCheckAction = async (action) => {
+        try {
+            const res = await axios.post(`/api/transactions/${selectedBooking.id}/${action}`);
+            toast.success(`Berhasil ${action}!`);
+            setSelectedBooking(res.data.data);
+            fetchBookings();
+        } catch (error) {
+            toast.error(error.response?.data?.message || `Gagal ${action}`);
         }
     };
 
@@ -118,6 +131,7 @@ export default function Bookings() {
                             <th>Lead Customer</th>
                             <th>Entry Date</th>
                             <th>Net Total</th>
+                            <th>Promo Tracking</th>
                             <th>Status</th>
                             <th>Operations</th>
                         </tr>
@@ -160,10 +174,27 @@ export default function Bookings() {
                                     </div>
                                 </td>
                                 <td>
-                                    <span className={`badge-status ${getStatusStyles(booking.status)}`}>
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusStyles(booking.status).includes('success') ? 'bg-success' : 'bg-warning'}`} />
-                                        <span className="uppercase">{booking.status}</span>
-                                    </span>
+                                    {booking.promo ? (
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-admin-primary uppercase tracking-widest">{booking.promo.promo_code}</span>
+                                            <span className="text-[9px] font-bold text-danger uppercase tracking-tighter">-{formatRupiah(booking.discount_amount)}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-[10px] font-bold text-admin-text-muted/30 uppercase tracking-widest italic">— No Voucher</span>
+                                    )}
+                                </td>
+                                <td>
+                                    <div className="flex flex-col gap-1">
+                                        <span className={`badge-status ${getStatusStyles(booking.status)}`}>
+                                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusStyles(booking.status).includes('success') ? 'bg-success' : 'bg-warning'}`} />
+                                            <span className="uppercase">{booking.status}</span>
+                                        </span>
+                                        {booking.stay_status && booking.stay_status !== 'pending' && (
+                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border self-start uppercase tracking-widest ${booking.stay_status === 'checked_in' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                                                {booking.stay_status === 'checked_in' ? 'Resident' : 'Checked Out'}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td>
                                     <div className="flex justify-start gap-2">
@@ -226,76 +257,192 @@ export default function Bookings() {
                                 <div className="space-y-6">
                                     <div>
                                         <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Lead Personnel</h4>
-                                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-admin-bg border border-admin-border">
+                                        <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <User size={18} />
                                             </div>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedBooking.user?.name || 'Guest User'}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">{selectedBooking.booker_name || selectedBooking.user?.name || 'Guest User'}</span>
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[10px] text-admin-text-muted font-bold tracking-tight">{selectedBooking.booker_email || selectedBooking.user?.email || 'No email provided'}</span>
+                                                    {selectedBooking.booker_phone && <span className="text-[10px] text-admin-primary font-black tracking-widest">{selectedBooking.booker_phone}</span>}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Mission Date</h4>
-                                        <div className="flex items-center gap-4 p-4 rounded-2xl bg-admin-bg border border-admin-border">
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Mission Timing</h4>
+                                        <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <Calendar size={18} />
                                             </div>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{new Date(selectedBooking.check_in_date).toLocaleDateString('id-ID')}</span>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">
+                                                    {new Date(selectedBooking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                </span>
+                                                <span className="text-[10px] text-admin-text-muted font-bold tracking-widest uppercase">
+                                                    ETA: {selectedBooking.arrival_time || 'Standard (14:00)'}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="space-y-6">
                                     <div>
                                         <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Settlement Total</h4>
-                                        <div className="flex items-center gap-4 p-6 rounded-3xl bg-admin-primary text-white shadow-xl shadow-admin-primary/20">
-                                            <DollarSign size={24} />
-                                            <div className="flex flex-col">
-                                                <span className="text-xl font-black leading-none">{formatRupiah(selectedBooking.total_price)}</span>
-                                                <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1">Net Valuation</span>
+                                        <div className="flex items-center gap-5 p-8 rounded-[2rem] bg-admin-primary text-white shadow-xl shadow-admin-primary/30 relative overflow-hidden group">
+                                            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full -z-0 group-hover:scale-110 transition-transform duration-1000" />
+                                            <DollarSign size={32} className="relative z-10" />
+                                            <div className="flex flex-col relative z-10">
+                                                <span className="text-2xl font-black leading-none tracking-tighter">{formatRupiah(selectedBooking.total_price)}</span>
+                                                <span className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] mt-2">Net Valuation</span>
                                             </div>
                                         </div>
                                     </div>
+                                    {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Stay Preferences</h4>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedBooking.additional_facilities.map((fac, idx) => (
+                                                    <span key={idx} className="px-3 py-1.5 rounded-lg bg-green-50 border border-green-100 text-[9px] font-black text-green-700 uppercase tracking-widest">
+                                                        {fac}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
+                            {selectedBooking.special_requests && (
+                                <section className="mb-12">
+                                    <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <MessageSquare size={12} className="text-admin-primary" />
+                                        Bespoke Guest Requests
+                                    </h4>
+                                    <div className="bg-admin-bg p-8 rounded-[2rem] border-2 border-dashed border-admin-border relative group hover:border-admin-primary/30 transition-all">
+                                        <div className="absolute top-4 right-6 opacity-5 select-none">
+                                            <Quote size={48} className="text-admin-text-main" />
+                                        </div>
+                                        <p className="text-sm font-bold text-admin-text-main leading-relaxed italic relative z-10">
+                                            "{selectedBooking.special_requests}"
+                                        </p>
+                                    </div>
+                                </section>
+                            )}
+
                             <section className="mb-10">
                                 <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
-                                    Manifest Details
+                                    Manifest Items
                                     <span className="w-12 h-px bg-admin-border" />
                                 </h4>
-                                <div className="bg-admin-bg border border-admin-border rounded-[2rem] p-8 space-y-6">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm hover:scale-110 transition-transform">
-                                            <ShoppingCart size={20} />
+                                <div className="space-y-4">
+                                    {(selectedBooking.items || []).map((tItem, idx) => (
+                                        <div key={idx} className="bg-admin-bg border border-admin-border rounded-2xl p-6 flex flex-col gap-4 group hover:bg-white transition-all">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm group-hover:scale-110 transition-transform">
+                                                        <ShoppingCart size={18} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-xs font-black text-admin-text-main uppercase">{tItem.item?.name || 'Unknown Item'}</span>
+                                                        <div className="text-[9px] font-bold text-admin-text-muted uppercase tracking-widest flex items-center gap-2 mt-1">
+                                                            <span>{tItem.item_type.split('\\').pop()}</span>
+                                                            <span className="w-1 h-1 bg-admin-border rounded-full" />
+                                                            <span>{formatRupiah(tItem.price)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-sm font-black text-admin-text-main">x{tItem.quantity}</div>
+                                                    <div className="text-[10px] font-bold text-admin-text-muted">{formatRupiah(tItem.subtotal)}</div>
+                                                </div>
+                                            </div>
+
+                                            {/* Show individual tickets if TICKET type */}
+                                            {selectedBooking.booking_type === 'TICKET' && selectedBooking.tickets?.filter(t => t.transaction_item_id === tItem.id).length > 0 && (
+                                                <div className="pt-4 border-t border-admin-border/50 grid grid-cols-1 gap-2">
+                                                    {selectedBooking.tickets.filter(t => t.transaction_item_id === tItem.id).map((ticket, tIdx) => (
+                                                        <div key={tIdx} className="flex justify-between items-center bg-admin-bg/50 px-4 py-2 rounded-xl text-[10px] font-bold">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-admin-text-muted">#{tIdx+1}</span>
+                                                                <span className="text-admin-text-main uppercase">{ticket.guest_name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="font-mono text-admin-text-light">{ticket.ticket_id}</span>
+                                                                {ticket.is_used ? (
+                                                                    <CheckCircle2 size={12} className="text-success" />
+                                                                ) : (
+                                                                    <div className="w-2 h-2 rounded-full bg-admin-text-light/20" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                        <div>
-                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1">Service Item</span>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">
-                                                {selectedBooking.item?.name || 'Item Not Found'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm hover:scale-110 transition-transform">
-                                            <CreditCard size={20} />
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1">Payment Status</span>
-                                            <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">
-                                                {selectedBooking.status.toUpperCase()}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    ))}
                                 </div>
                             </section>
 
+                            {selectedBooking.promo && (
+                                <section className="mb-10 p-6 bg-admin-primary/5 border-2 border-dashed border-admin-primary/20 rounded-[2rem] flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-white border border-admin-primary/20 flex items-center justify-center text-admin-primary shadow-sm hover:scale-110 transition-transform">
+                                            <Ticket size={24} />
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-0.5">Voucher Verified</span>
+                                            <span className="text-sm font-black text-admin-primary uppercase tracking-widest leading-none">
+                                                {selectedBooking.promo.promo_code}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1 font-serif">Valuation Savings</span>
+                                        <div className="text-lg font-black text-admin-primary">-{formatRupiah(selectedBooking.discount_amount)}</div>
+                                    </div>
+                                </section>
+                            )}
+
                             <div className="flex gap-4">
+                                {selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? (
+                                    <>
+                                        {selectedBooking.stay_status === 'pending' && (
+                                            <button
+                                                onClick={() => handleCheckAction('check-in')}
+                                                className="flex-1 bg-eling-green text-white py-5 rounded-[2rem] shadow-xl shadow-green-900/10 active:scale-95 transition-all text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3"
+                                            >
+                                                <DoorOpen size={18} />
+                                                Confirm Check-In
+                                            </button>
+                                        )}
+                                        {selectedBooking.stay_status === 'checked_in' && (
+                                            <button
+                                                onClick={() => handleCheckAction('check-out')}
+                                                className="flex-1 bg-slate-900 text-white py-5 rounded-[2rem] shadow-xl shadow-slate-900/10 active:scale-95 transition-all text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3"
+                                            >
+                                                <DoorClosed size={18} />
+                                                Process Check-Out
+                                            </button>
+                                        )}
+                                        {selectedBooking.stay_status === 'checked_out' && (
+                                            <div className="flex-1 bg-slate-50 border border-slate-200 text-slate-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3">
+                                                <Check size={18} />
+                                                Stay Completed
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    <button
+                                        disabled
+                                        className="flex-1 bg-gray-100 text-gray-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] cursor-not-allowed"
+                                    >
+                                        Payment Required
+                                    </button>
+                                )}
                                 <button
                                     onClick={() => setSelectedBooking(null)}
-                                    className="flex-1 btn-primary py-5 rounded-[2rem] shadow-2xl shadow-admin-primary/30 active:scale-95 transition-all text-sm uppercase tracking-[0.2em] font-black underline-offset-4"
-                                >
-                                    Confirm Log Audit
-                                </button>
-                                <button
                                     className="w-20 h-20 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted flex items-center justify-center hover:bg-white transition-all shadow-xl"
                                 >
                                     <ChevronRight size={32} />

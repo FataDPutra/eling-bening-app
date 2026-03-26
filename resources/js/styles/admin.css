@@ -542,6 +542,111 @@
     box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
+.input-with-prefix {
+    display: flex;
+    align-items: center;
+    background-color: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-md);
+    overflow: hidden;
+    transition: all 0.2s;
+}
+
+.input-with-prefix:focus-within {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+.input-prefix {
+    padding: 0.75rem 1rem;
+    background-color: #F8FAFC;
+    border-right: 1px solid var(--admin-border);
+    color: var(--admin-text-muted);
+    font-weight: 700;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.input-with-prefix input {
+    flex: 1;
+    border: none;
+    padding: 0.75rem 1.25rem;
+    background-color: transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--admin-text-main);
+}
+
+.input-with-prefix input:focus {
+    outline: none;
+}
+
+/* Global Form Input Group System */
+.form-input-group {
+    display: flex;
+    align-items: center;
+    background-color: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-md);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.form-input-group:focus-within {
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.08);
+}
+
+.input-icon-box {
+    padding-left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--admin-text-light);
+    transition: color 0.2s;
+}
+
+.form-input-group:focus-within .input-icon-box {
+    color: var(--admin-primary);
+}
+
+.form-input-group input, 
+.form-input-group select {
+    flex: 1;
+    border: none !important;
+    background-color: transparent !important;
+    padding: 0.875rem 1rem !important;
+    font-size: 0.9375rem !important;
+    font-weight: 600 !important;
+    color: var(--admin-text-main) !important;
+    box-shadow: none !important;
+}
+
+.form-input-group input:focus, 
+.form-input-group select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Redefining admin-textarea for consistency */
+.admin-textarea {
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--admin-radius-md);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    line-height: 1.6;
+}
+
+.admin-textarea:focus {
+    outline: none;
+    border-color: var(--admin-primary);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.08);
+}
+
 /* Mobile Responsive */
 .bottom-navbar {
     display: none;

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { QrCode, Scan, Search, Camera, StopCircle, RefreshCw, X, CheckCircle2, AlertCircle, User, Fullscreen, CornerUpRight, Terminal } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 export default function Scanner() {
     const [scannedId, setScannedId] = useState('');
@@ -57,33 +58,58 @@ export default function Scanner() {
         }
     };
 
-    const handleScanSuccess = (decodedText) => {
-        setScanResult({
-            id: decodedText,
-            name: "Budi Santoso",
-            type: "Tiket Masuk (Domestik)",
-            date: new Date().toLocaleDateString('id-ID'),
-            status: "Valid",
-            count: 2
-        });
-        toast.success("Tiket Berhasil Discan!");
-        stopScanner();
+    const handleScanSuccess = async (decodedText) => {
+        setIsLoading(true);
+        try {
+            const res = await axios.patch(`/api/tickets/${decodedText}/check-in`);
+            const data = res.data;
+            
+            setScanResult({
+                id: data.ticket_id,
+                name: data.guest_name,
+                type: data.item_name,
+                date: data.check_in_date || "Today",
+                status: data.is_used ? "Authenticated" : "Standing By",
+                is_used: data.is_used,
+                booker: data.booker_name
+            });
+            
+            toast.success(data.message);
+            stopScanner();
+        } catch (err) {
+            console.error("Scan processing failed", err);
+            toast.error(err.response?.data?.message || "Kode Tiket Tidak Valid");
+            // Optional: don't stop scanner on error if you want to keep trying
+            stopScanner(); 
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleManualCheck = () => {
+    const handleManualCheck = async () => {
         if (!scannedId) return;
         setIsLoading(true);
-        setTimeout(() => {
+        try {
+            const res = await axios.patch(`/api/tickets/${scannedId.trim()}/check-in`);
+            const data = res.data;
+            
             setScanResult({
-                id: scannedId.toUpperCase(),
-                name: "Siska Amelia",
-                type: "Tiket Masuk (Anak)",
-                date: new Date().toLocaleDateString('id-ID'),
-                status: "Valid",
-                count: 1
+                id: data.ticket_id,
+                name: data.guest_name,
+                type: data.item_name,
+                date: data.check_in_date || "Today",
+                status: data.is_used ? "Authenticated" : "Standing By",
+                is_used: data.is_used,
+                booker: data.booker_name
             });
+            
+            toast.success(data.message);
+        } catch (err) {
+            console.error("Manual check failed", err);
+            toast.error(err.response?.data?.message || "Gagal Verifikasi Kode");
+        } finally {
             setIsLoading(false);
-        }, 800);
+        }
     };
 
     return (
@@ -209,12 +235,12 @@ export default function Scanner() {
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-8">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Customer</label>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Visitor Name</label>
                                         <p className="text-base font-black text-admin-text-main uppercase">{scanResult.name}</p>
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Quantity</label>
-                                        <p className="text-base font-black text-admin-text-main">{scanResult.count} PERSONS</p>
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Booker</label>
+                                        <p className="text-base font-black text-admin-text-main uppercase">{scanResult.booker || 'N/A'}</p>
                                     </div>
                                     <div className="col-span-2 space-y-1.5">
                                         <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Service Category</label>
@@ -228,11 +254,11 @@ export default function Scanner() {
 
                                 <div className="pt-6 border-t border-admin-border flex items-center justify-between">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] font-black text-admin-text-muted uppercase mb-1">Authenticated At</span>
+                                        <span className="text-[10px] font-black text-admin-text-muted uppercase mb-1">Validation Activity</span>
                                         <span className="text-sm font-black text-admin-text-main">{scanResult.date} • {new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <div className="bg-success text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-success/20 animate-bounce">
-                                        Entry Authorized
+                                    <div className={`px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg ${scanResult.is_used ? 'bg-slate-950 text-white shadow-xl shadow-slate-950/20 animate-bounce ring-1 ring-white/20' : 'bg-warning text-white shadow-warning/20'}`}>
+                                        {scanResult.is_used ? 'Entry Authorized' : 'Standing By'}
                                     </div>
                                 </div>
                             </div>
