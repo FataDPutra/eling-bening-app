@@ -43,7 +43,8 @@ export default function AdminLayout() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [openMenus, setOpenMenus] = useState({
         booking: false,
-        ticket: false
+        ticket: false,
+        event: false
     });
 
     const location = useLocation();
@@ -70,9 +71,10 @@ export default function AdminLayout() {
         { label: 'Pemesanan Kamar', to: '/admin/bookings' },
         { label: 'Kelola Kamar', to: '/admin/rooms' },
         { label: 'Reschedule', to: '/admin/reschedule' },
-        { label: 'Pemesanan Tiket', to: '/admin/tickets/orders' },
+        { label: 'Pesanan Tiket', to: '/admin/tickets/orders' },
         { label: 'Kelola Tiket', to: '/admin/tickets' },
         { label: 'Scan Tiket', to: '/admin/scanner' },
+        { label: 'Pesanan Event', to: '/admin/events/orders' },
         { label: 'Kelola Event', to: '/admin/events' },
         { label: 'Promo & Banner', to: '/admin/promos' },
         { label: 'Konten CMS', to: '/admin/content' },
@@ -173,8 +175,23 @@ export default function AdminLayout() {
                             )}
                         </li>
 
+                        <li>
+                            <button onClick={() => toggleMenu('event')} className="nav-group-btn" title={isSidebarCollapsed ? 'Event & Show' : ''}>
+                                <div className="btn-content">
+                                    <Calendar size={20} />
+                                    {!isSidebarCollapsed && <span>Event & Show</span>}
+                                </div>
+                                {!isSidebarCollapsed && <ChevronDown size={14} className={`chevron ${openMenus.event ? 'rotated' : ''}`} />}
+                            </button>
+                            {!isSidebarCollapsed && (
+                                <div className={`submenu ${openMenus.event ? 'open' : ''}`}>
+                                    <NavLink to="/admin/events/orders" className="submenu-item">Pesanan Event</NavLink>
+                                    <NavLink to="/admin/events" end className="submenu-item">Kelola Event</NavLink>
+                                </div>
+                            )}
+                        </li>
+
                         {!isSidebarCollapsed && <div className="nav-section-title">Marketing & Content</div>}
-                        <NavItem to="/admin/events" icon={Calendar} label="Kelola Event" />
                         <NavItem to="/admin/promos" icon={Megaphone} label="Promo & Banner" />
                         <NavItem to="/admin/content" icon={Layout} label="Konten CMS" />
 

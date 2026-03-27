@@ -82,6 +82,7 @@ class StatController extends Controller
         $typeShare = [
             'ticket' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'TICKET')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
             'resort' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'RESORT')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
+            'event' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'EVENT')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
         ];
 
         return response()->json([
@@ -111,7 +112,7 @@ class StatController extends Controller
             'booking_types' => [
                 ['label' => 'Tiket Wisata', 'val' => round($typeShare['ticket']), 'color' => '#C62828'],
                 ['label' => 'Resort Booking', 'val' => round($typeShare['resort']), 'color' => '#2E7D32'],
-                ['label' => 'Paket / Lainnya', 'val' => 0, 'color' => '#F59E0B']
+                ['label' => 'Event / Konser', 'val' => round($typeShare['event']), 'color' => '#0284c7']
             ]
         ]);
     }

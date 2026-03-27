@@ -33,6 +33,7 @@ Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCa
 
 // Dynamic CMS Content & Events
 Route::get('/events', [EventController::class, 'index']);
+Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/contents', [ContentController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function() {

@@ -15,15 +15,18 @@ class Event extends Model
         'category',
         'date_info',
         'event_date',
-        'price_info',
         'price',
         'images',
         'is_active',
+        'is_ticketed',
+        'ticket_quota',
     ];
 
     protected $casts = [
         'images' => 'array',
         'is_active' => 'boolean',
+        'is_ticketed' => 'boolean',
+        'ticket_quota' => 'integer',
         'event_date' => 'date',
         'price' => 'float',
     ];

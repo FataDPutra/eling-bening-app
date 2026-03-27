@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, MapPin, ArrowRight, Tag, Loader2, X, Phone, Mail, Clock, Star, ChevronLeft, ChevronRight, Users, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, ArrowRight, Tag, Loader2, X, Phone, Mail, Clock, Star, ChevronLeft, ChevronRight, Users, CheckCircle, CreditCard } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import { Link } from 'react-router-dom';
+import { formatRupiah } from '../../utils/data';
 
 export default function Events() {
     const { content, isLoading: contentLoading } = useContent();
@@ -131,14 +132,20 @@ export default function Events() {
 
                                     <div className="pt-5 border-t border-gray-100 flex items-center justify-between gap-4">
                                         <div className="flex flex-col min-w-0">
-                                            <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">Mulai Dari</span>
-                                            <span className="font-black text-lg text-gray-900 truncate">{event.price_info}</span>
+                                            <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">
+                                                {event.price > 0 ? 'Harga Tiket' : (event.is_ticketed ? 'Tiket' : 'Informasi')}
+                                            </span>
+                                            <span className="font-black text-lg text-gray-900 truncate">
+                                                {event.price > 0 
+                                                    ? formatRupiah(event.price) 
+                                                    : (event.is_ticketed ? 'Gratis' : 'Kontak')}
+                                            </span>
                                         </div>
                                         <button
                                             onClick={() => openDetail(event)}
-                                            className="flex items-center gap-2.5 bg-eling-green text-white font-black text-[11px] uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-green-800 hover:shadow-lg hover:shadow-eling-green/30 transition-all duration-300 flex-shrink-0 whitespace-nowrap"
+                                            className={`flex items-center gap-2.5 ${event.price > 0 ? 'bg-eling-red hover:bg-red-800' : 'bg-eling-green hover:bg-green-800'} text-white font-black text-[11px] uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 flex-shrink-0 whitespace-nowrap`}
                                         >
-                                            Lihat Detail <ArrowRight size={15} />
+                                            Lihat Detail <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
                                         </button>
                                     </div>
                                 </div>
@@ -255,8 +262,14 @@ export default function Events() {
                                             </div>
                                         </div>
                                         <div className="bg-eling-green/5 border border-eling-green/20 rounded-2xl px-6 py-4 text-center flex-shrink-0">
-                                            <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Mulai Dari</p>
-                                            <p className="text-xl font-black text-eling-green">{selectedEvent.price_info}</p>
+                                            <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">
+                                                {selectedEvent.price > 0 ? 'Harga Tiket' : (selectedEvent.is_ticketed ? 'Tiket Masuk' : 'Info Event')}
+                                            </p>
+                                            <p className="text-xl font-black text-eling-green">
+                                                {selectedEvent.price > 0 
+                                                    ? formatRupiah(selectedEvent.price) 
+                                                    : (selectedEvent.is_ticketed ? 'Gratis' : 'Kontak Kami')}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -299,13 +312,29 @@ export default function Events() {
 
                                     {/* CTA Buttons */}
                                     <div className="flex flex-col sm:flex-row gap-4">
-                                        <Link
-                                            to="/contact"
-                                            onClick={closeDetail}
-                                            className="flex-1 bg-eling-green text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-green-800 transition-all shadow-lg shadow-eling-green/20 text-center flex items-center justify-center gap-2"
-                                        >
-                                            <Phone size={16} /> Konsultasi Gratis
-                                        </Link>
+                                        {selectedEvent.is_ticketed ? (
+                                            <Link
+                                                to={`/events/${selectedEvent.id}/book`}
+                                                onClick={closeDetail}
+                                                className="flex-1 bg-eling-red text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-red-800 transition-all shadow-lg shadow-eling-red/20 text-center flex items-center justify-center gap-2"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                                    <CreditCard size={16} />
+                                                </div>
+                                                {selectedEvent.price > 0 ? 'Pesan Tiket Sekarang' : 'Dapatkan Tiket Gratis'}
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                to="/contact"
+                                                onClick={closeDetail}
+                                                className="flex-1 bg-eling-green text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-green-800 transition-all shadow-lg shadow-eling-green/20 text-center flex items-center justify-center gap-2"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                                    <Phone size={16} />
+                                                </div>
+                                                Konsultasi Gratis
+                                            </Link>
+                                        )}
                                         <Link
                                             to="/contact"
                                             onClick={closeDetail}

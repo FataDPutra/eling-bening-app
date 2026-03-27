@@ -62,9 +62,10 @@ class EventController extends Controller
             'description' => 'nullable|string',
             'category'    => 'required|string',
             'date_info'   => 'required|string',
-            'price_info'  => 'required|string',
             'price'       => 'nullable|numeric',
-            'is_active'   => 'boolean',
+            'is_active'   => 'nullable|boolean',
+            'is_ticketed' => 'nullable|boolean',
+            'ticket_quota' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -83,13 +84,27 @@ class EventController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Event $event)
+    {
+        return response()->json($event);
+    }
+
+    /**
      * Update the specified resource.
      */
     public function update(Request $request, Event $event)
     {
         $validator = Validator::make($request->all(), [
-            'name'     => 'string|max:255',
-            'category' => 'string',
+            'name'        => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'category'    => 'nullable|string',
+            'date_info'   => 'nullable|string',
+            'price'       => 'nullable|numeric',
+            'is_active'   => 'nullable|boolean',
+            'is_ticketed' => 'nullable|boolean',
+            'ticket_quota' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {

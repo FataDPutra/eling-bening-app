@@ -238,9 +238,50 @@ export default function EditEvent() {
                             </div>
 
                             <div className="form-group">
-                                <label className="form-label">Harga Display</label>
-                                <input required value={formData.price_info} onChange={e => setFormData({ ...formData, price_info: e.target.value })} type="text" className="admin-input" placeholder="misal: Mulai Rp 150rb" />
-                                <p className="text-[10px] text-admin-text-muted mt-1 italic">*Teks ini akan muncul di kartu event guest</p>
+                                <label className="form-label">Tipe Event</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, is_ticketed: true })}
+                                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                            formData.is_ticketed
+                                                ? 'bg-admin-primary/10 text-admin-primary border-admin-primary/20'
+                                                : 'bg-white text-admin-text-muted border-admin-border'
+                                        }`}
+                                    >
+                                        🎟️ Jual Tiket
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, is_ticketed: false })}
+                                        className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                            !formData.is_ticketed
+                                                ? 'bg-admin-primary/10 text-admin-primary border-admin-primary/20'
+                                                : 'bg-white text-admin-text-muted border-admin-border'
+                                        }`}
+                                    >
+                                        📢 Info Saja
+                                    </button>
+                                </div>
+                                <p className="text-[9px] text-admin-text-muted mt-2 italic px-2">"Jual Tiket" akan mengaktifkan tombol beli di guest</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Harga Tiket (Transaksi)</label>
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">Rp</div>
+                                    <input required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} type="number" placeholder="0" />
+                                </div>
+                                <p className="text-[9px] text-admin-text-muted mt-1 italic px-2">*Masukkan 0 jika tiket gratis. Harga ini akan tampil otomatis di situs guest.</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Kuota Tiket</label>
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">🎟</div>
+                                    <input value={formData.ticket_quota ?? ''} onChange={e => setFormData({ ...formData, ticket_quota: e.target.value })} type="number" placeholder="Kosongkan jika tidak terbatas" min="0" />
+                                </div>
+                                <p className="text-[9px] text-admin-text-muted mt-1 italic px-2">*Biarkan kosong untuk kuota tidak terbatas</p>
                             </div>
 
                             <div className="form-group">

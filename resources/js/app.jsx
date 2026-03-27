@@ -22,6 +22,8 @@ import Booking from './pages/guest/Booking';
 import Payment from './pages/guest/Payment';
 import BookingDetails from './pages/guest/BookingDetails';
 import Events from './pages/guest/Events';
+import EventBooking from './pages/guest/EventBooking';
+import EventTicketing from './pages/guest/EventTicketing';
 import Profile from './pages/guest/Profile';
 import Login from './pages/guest/Login';
 import Register from './pages/guest/Register';
@@ -59,6 +61,7 @@ import EditTicket from './pages/admin/tickets/EditTicket';
 // Events sub-pages
 import AddEvent from './pages/admin/events/AddEvent';
 import EditEvent from './pages/admin/events/EditEvent';
+import EventOrders from './pages/admin/events/EventOrders';
 
 // Promos sub-pages
 import AddPromo from './pages/admin/promos/AddPromo';
@@ -123,6 +126,8 @@ const App = () => {
                         <Route path="rooms" element={<Rooms />} />
                         <Route path="rooms/:id" element={<RoomDetails />} />
                         <Route path="events" element={<Events />} />
+                        <Route path="events/:id/book" element={<ProtectedRoute><EventBooking /></ProtectedRoute>} />
+                        <Route path="event-ticketing" element={<ProtectedRoute><EventTicketing /></ProtectedRoute>} />
                         
                         {/* Protected Guest */}
                         <Route path="ticketing" element={<ProtectedRoute><Ticketing /></ProtectedRoute>} />
@@ -153,6 +158,7 @@ const App = () => {
                         
                         <Route path="scanner" element={<Scanner />} />
                         <Route path="events" element={<AdminEvents />} />
+                        <Route path="events/orders" element={<EventOrders />} />
                         <Route path="events/add" element={<AddEvent />} />
                         <Route path="events/edit/:id" element={<EditEvent />} />
                         

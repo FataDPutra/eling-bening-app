@@ -121,16 +121,16 @@ export default function Promos() {
                     </div>
                 </div>
 
-                <table className="admin-table">
+                <table className="admin-table w-full">
                     <thead>
                         <tr>
-                            <th>Voucher Identity</th>
-                            <th>Market Scope</th>
-                            <th>Benefit Value</th>
-                            <th>Active Timeline</th>
-                            <th>System Status</th>
-                            <th>Usage Quota</th>
-                            <th className="text-right">Operations</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '22%' }}>Voucher Identity</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '12%' }}>Market Scope</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '14%' }}>Benefit Value</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '18%' }}>Active Timeline</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-center" style={{ width: '12%' }}>System Status</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '15%' }}>Usage Quota</th>
+                            <th className="py-5 px-6 whitespace-nowrap text-right" style={{ width: '7%' }}>Operations</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -142,51 +142,50 @@ export default function Promos() {
                             </tr>
                         ) : filteredPromos.map(promo => (
                             <tr key={promo.id} className="group">
-                                <td>
+                                <td className="px-6">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary group-hover:border-admin-primary transition-all shadow-sm">
-                                            <Ticket size={20} />
+                                        <div className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary group-hover:border-admin-primary transition-all shadow-sm shrink-0">
+                                            <Ticket size={18} />
                                         </div>
-                                        <div>
-                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{promo.promo_code}</div>
+                                        <div className="min-w-0">
+                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight truncate">{promo.promo_code}</div>
                                             <div className="text-[10px] text-admin-text-muted font-bold mt-0.5 line-clamp-1 italic">"{promo.name}"</div>
                                         </div>
                                     </div>
                                 </td>
-                                <td>
+                                <td className="px-6">
                                     <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
-                                        <div className={`w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-xs font-black ${
+                                        <div className={`w-7 h-7 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-[10px] font-black ${
                                             promo.applicable_to === 'ALL' ? 'text-indigo-500' : 
                                             promo.applicable_to === 'RESORT' ? 'text-amber-500' : 
                                             'text-emerald-500'
                                         }`}>
                                             {promo.applicable_to === 'ALL' ? 'UNV' : promo.applicable_to === 'RESORT' ? 'RST' : 'TCK'}
                                         </div>
-                                        <span className="uppercase tracking-wider">
+                                        <span className="uppercase tracking-wider text-[10px]">
                                             {promo.applicable_to === 'ALL' ? 'Universal' : promo.applicable_to}
                                         </span>
                                     </div>
                                 </td>
-                                <td>
+                                <td className="px-6">
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-primary">
+                                        <span className="text-[13px] font-black text-admin-primary">
                                             {promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `-${(Number(promo.discount_value) / 1000).toFixed(0)}K IDR`}
                                         </span>
                                         <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest">Min: {Number(promo.min_purchase).toLocaleString()}</span>
                                     </div>
                                 </td>
-                                <td>
-                                    <div className="flex items-center gap-2.5 text-[11px] font-bold text-admin-text-muted">
-                                        <Calendar size={13} className="text-admin-primary" />
-                                        <span>{new Date(promo.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                        <span className="text-admin-text-light">→</span>
+                                <td className="px-6">
+                                    <div className="flex items-center gap-2 text-[10px] font-black text-admin-text-muted uppercase tracking-tighter">
+                                        <span className="text-admin-text-light">{new Date(promo.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                        <span className="text-admin-primary/30">/</span>
                                         <span>{new Date(promo.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                                     </div>
                                 </td>
-                                <td>
+                                <td className="px-6 text-center">
                                     <button
                                         onClick={() => toggleStatus(promo.id)}
-                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                                        className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
                                             promo.is_active
                                                 ? 'bg-emerald-50 text-emerald-600 border-emerald-200 shadow-sm shadow-emerald-100'
                                                 : 'bg-rose-50 text-rose-600 border-rose-200'
@@ -195,9 +194,9 @@ export default function Promos() {
                                         {promo.is_active ? 'Active' : 'Paused'}
                                     </button>
                                 </td>
-                                <td>
-                                    <div className="flex flex-col gap-1 pr-4 min-w-[120px]">
-                                        <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
+                                <td className="px-6">
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col text-[8px] font-black uppercase tracking-[0.15em] leading-tight space-y-0.5">
                                             <span className="text-admin-text-muted">{promo.used_count || 0} REDEEMED</span>
                                             <span className="text-admin-primary">{promo.usage_limit ? `LIMIT: ${promo.usage_limit}` : 'UNLIMITED'}</span>
                                         </div>
@@ -214,13 +213,13 @@ export default function Promos() {
                                         )}
                                     </div>
                                 </td>
-                                <td className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
-                                            <Edit size={16} />
+                                <td className="px-6 text-right">
+                                    <div className="flex justify-end gap-1.5">
+                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
+                                            <Edit size={14} />
                                         </button>
-                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(promo.id)}>
-                                            <Trash2 size={16} />
+                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(promo.id)}>
+                                            <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </td>

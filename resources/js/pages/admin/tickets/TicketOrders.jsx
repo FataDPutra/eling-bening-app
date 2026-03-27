@@ -13,25 +13,25 @@ export default function TicketOrders() {
     const [orders, setOrders] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('all');
+    const [filter, setFilter] = useState('all'); 
+    const [assetFilter, setAssetFilter] = useState('all'); // Filter by specific ticket name
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     const fetchOrders = async () => {
         try {
             setIsLoading(true);
             const res = await axios.get('/api/transactions');
-            console.log("Admin API Debug (TicketOrders):", res.data); // Helpful for tracing data flow
             
-            // Robust filtering for ticket-related transactions
-            const ticketOrders = (res.data || []).filter(b => 
+            // Revert to ONLY TICKET (Resort)
+            const resortOrders = (res.data || []).filter(b => 
                 String(b.booking_type).toUpperCase() === 'TICKET'
             );
             
-            setOrders(ticketOrders);
+            setOrders(resortOrders);
             setIsLoading(false);
         } catch (error) {
             console.error("Critical: Failed to sync ticket records", error);
-            toast.error("Gagal sinkronisasi data pesanan tiket");
+            toast.error("Gagal sinkronisasi data pesanan");
             setIsLoading(false);
         }
     };
@@ -41,7 +41,6 @@ export default function TicketOrders() {
             const res = await axios.put(`/api/transactions/${orderId}`, { status: newStatus });
             toast.success(`Status pesanan diperbarui ke ${newStatus}`);
             
-            // Update local state
             setOrders(prev => prev.map(o => o.id === orderId ? { ...o, ...res.data } : o));
             if (selectedOrder && selectedOrder.id === orderId) {
                 setSelectedOrder({ ...selectedOrder, ...res.data });
@@ -57,7 +56,6 @@ export default function TicketOrders() {
             const res = await axios.patch(`/api/tickets/${ticketUid}/check-in`);
             toast.success(res.data.message);
             
-            // Update local state for immediate feedback
             setOrders(prev => prev.map(o => {
                 if (o.tickets && o.tickets.some(t => t.ticket_id === ticketUid)) {
                     return {
@@ -70,7 +68,6 @@ export default function TicketOrders() {
                 return o;
             }));
 
-            // Also update selectedOrder if it's open
             if (selectedOrder) {
                 setSelectedOrder(prev => ({
                     ...prev,
@@ -89,15 +86,25 @@ export default function TicketOrders() {
         fetchOrders();
     }, []);
 
+    // Get unique ticket names from orders to build the asset filter
+    const uniqueTicketNames = Array.from(new Set(
+        orders.map(o => o.items?.[0]?.item?.name).filter(Boolean)
+    ));
+
     const filteredOrders = orders.filter(o => {
         const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.booker_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             o.items?.some(item => item.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()));
 
-        if (filter === 'all') return matchesSearch;
-        if (filter === 'success') return matchesSearch && (o.status === 'success' || o.status === 'paid');
-        if (filter === 'pending') return matchesSearch && o.status === 'pending';
-        return matchesSearch;
+        const matchesStatus = filter === 'all' 
+            ? true 
+            : (filter === 'success' ? (o.status === 'success' || o.status === 'paid') : (o.status === 'pending'));
+        
+        const matchesAsset = assetFilter === 'all'
+            ? true
+            : o.items?.some(item => item.item?.name === assetFilter);
+
+        return matchesSearch && matchesStatus && matchesAsset;
     });
 
     const stats = {
@@ -120,7 +127,7 @@ export default function TicketOrders() {
                         <ArrowLeft size={14} className="mr-2" /> Back to Ticket Assets
                     </button>
                     <h1>Registry Pesanan Tiket</h1>
-                    <p>Audit rincian transaksi tiket, verifikasi identitas pengunjung, dan kelola status validasi secara terpadu.</p>
+                    <p>Audit rincian transaksi tiket wisata (Tiket Kolam Renang / Masuk) secara eksklusif.</p>
                     <div className="mt-4 flex items-center gap-3">
                         <div className="px-3 py-1 bg-admin-primary/10 rounded-full border border-admin-primary/20 flex items-center gap-2">
                             <User size={12} className="text-admin-primary" />
@@ -136,9 +143,6 @@ export default function TicketOrders() {
                         <Clock size={18} className={isLoading ? 'animate-spin text-admin-primary' : 'text-success'} /> 
                         {isLoading ? 'Synchronizing...' : 'Manual Sync'}
                     </button>
-                    <button className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm">
-                        <FileText size={18} className="text-admin-primary" /> Generate Report
-                    </button>
                 </div>
             </div>
 
@@ -150,7 +154,7 @@ export default function TicketOrders() {
                             <ShoppingBag size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Orders</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Resort Orders</p>
                             <p className="text-3xl font-black text-admin-text-main leading-none tabular-nums">{stats.total}</p>
                         </div>
                     </div>
@@ -161,7 +165,7 @@ export default function TicketOrders() {
                             <CheckCircle2 size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Confirmed</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Authenticated</p>
                             <p className="text-3xl font-black text-success leading-none tabular-nums">{stats.success}</p>
                         </div>
                     </div>
@@ -172,7 +176,7 @@ export default function TicketOrders() {
                             <Clock size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Pending Audit</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Waiting Payment</p>
                             <p className="text-3xl font-black text-warning leading-none tabular-nums">{stats.pending}</p>
                         </div>
                     </div>
@@ -180,27 +184,44 @@ export default function TicketOrders() {
             </div>
 
             <div className="admin-table-container overflow-visible">
-                <div className="table-header-actions mb-8 !flex-col md:!flex-row items-stretch md:items-center gap-6">
-                    <div className="flex bg-admin-bg p-1 rounded-2xl border border-admin-border">
+                <div className="table-header-actions mb-8 flex flex-col xl:flex-row items-stretch xl:items-center gap-6">
+                    {/* Status Filter */}
+                    <div className="flex bg-admin-bg p-1 rounded-2xl border border-admin-border w-fit whitespace-nowrap">
                         {[
-                            { id: 'all', label: 'All Records' },
-                            { id: 'success', label: 'Success Only' },
-                            { id: 'pending', label: 'Pending' }
+                            { id: 'all', label: 'Semua Status' },
+                            { id: 'success', label: 'Selesai' },
+                            { id: 'pending', label: 'Perlu Audit' }
                         ].map(t => (
                             <button
                                 key={t.id}
                                 onClick={() => setFilter(t.id)}
-                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === t.id ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' : 'text-admin-text-muted hover:text-admin-text-main'}`}
+                                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filter === t.id ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' : 'text-admin-text-muted hover:text-admin-text-main'}`}
                             >
                                 {t.label}
                             </button>
                         ))}
                     </div>
+
+                    {/* Asset Filter (Filter berdasarkan Nama Tiket) */}
+                    <div className="flex-1 max-w-[300px]">
+                        <select 
+                            value={assetFilter}
+                            onChange={(e) => setAssetFilter(e.target.value)}
+                            className="w-full bg-admin-bg border border-admin-border rounded-2xl px-5 py-4 text-xs font-black uppercase tracking-widest text-admin-text-main focus:outline-none focus:border-admin-primary shadow-sm"
+                        >
+                            <option value="all">Semua Jenis Tiket (Asset)</option>
+                            {uniqueTicketNames.map(name => (
+                                <option key={name} value={name}>{name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Search */}
                     <div className="relative flex-1">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-admin-text-light" size={18} />
                         <input
                             type="text"
-                            placeholder="Cari Order ID, Nama Customer, atau Jenis Tiket..."
+                            placeholder="Cari ID atau Nama Customer..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full pl-14 pr-6 py-4 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all shadow-sm"
@@ -215,6 +236,7 @@ export default function TicketOrders() {
                                 <th>Registry ID</th>
                                 <th>Primary Traveler</th>
                                 <th>Manifest Item</th>
+                                <th>Scanned</th>
                                 <th>Settlement</th>
                                 <th>Status</th>
                                 <th className="text-right">Actions</th>
@@ -223,14 +245,19 @@ export default function TicketOrders() {
                         <tbody>
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center">
+                                    <td colSpan="7" className="py-24 text-center">
                                         <div className="flex flex-col items-center">
                                             <div className="w-10 h-10 border-4 border-admin-primary/20 border-t-admin-primary rounded-full animate-spin mb-4" />
                                             <span className="text-xs font-black text-admin-text-muted uppercase tracking-widest animate-pulse">Synchronizing Records...</span>
                                         </div>
                                     </td>
                                 </tr>
-                            ) : filteredOrders.map(order => (
+                            ) : filteredOrders.map(order => {
+                                const totalTickets = order.tickets?.length || 0;
+                                const usedTickets = order.tickets?.filter(t => t.is_used)?.length || 0;
+                                const isFullyUsed = totalTickets > 0 && totalTickets === usedTickets;
+
+                                return (
                                 <tr 
                                     key={order.id} 
                                     onClick={() => setSelectedOrder(order)}
@@ -246,27 +273,35 @@ export default function TicketOrders() {
                                             <div className="w-10 h-10 rounded-full bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-muted shadow-inner group-hover:border-admin-primary/30 group-hover:text-admin-primary transition-all">
                                                 <User size={16} />
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-admin-text-main text-sm uppercase tracking-tight leading-none mb-1 group-hover:text-admin-primary transition-colors">{order.booker_name || 'Anonymous Guest'}</span>
-                                                <span className="text-[10px] text-admin-text-light font-bold truncate max-w-[150px] uppercase tracking-widest">{order.user?.email || 'Walk-in Customer'}</span>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="font-black text-admin-text-main text-sm uppercase tracking-tight leading-none mb-1 group-hover:text-admin-primary transition-colors truncate">{order.booker_name || 'Anonymous Guest'}</span>
+                                                <span className="text-[10px] text-admin-text-light font-bold truncate max-w-[120px] uppercase tracking-widest">{order.user?.email || 'Walk-in Customer'}</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-2 text-xs font-bold text-admin-text-main">
-                                                <Ticket size={14} className="text-admin-primary" /> 
-                                                <span className="uppercase">{order.items?.[0]?.item?.name || 'Multiple Tickets'}</span>
+                                                <MapPin size={14} className="text-eling-green" /> 
+                                                <span className="uppercase truncate max-w-[150px]">{order.items?.[0]?.item?.name || 'Multiple Items'}</span>
                                             </div>
                                             <div className="text-[9px] font-black text-admin-text-muted mt-1 uppercase tracking-[0.1em]">
-                                                {order.total_qty} units • Scheduled for {new Date(order.check_in_date).toLocaleDateString('id-ID')}
+                                                {order.total_qty} units • {new Date(order.check_in_date).toLocaleDateString('id-ID')}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex items-center">
+                                            <div className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tighter flex items-center gap-1.5 ${isFullyUsed ? 'bg-success/10 text-success border-success/20' : (usedTickets > 0 ? 'bg-warning/10 text-warning border-warning/20' : 'bg-gray-100 text-gray-400 border-gray-200')}`}>
+                                                <QrCode size={12} />
+                                                {usedTickets}/{totalTickets} <span className="text-[8px] opacity-60 ml-0.5">Scanned</span>
                                             </div>
                                         </div>
                                     </td>
                                     <td>
                                         <div className="flex flex-col">
                                             <span className="font-black text-admin-text-main text-sm tabular-nums">{formatRupiah(order.total_price)}</span>
-                                            <span className="text-[9px] text-admin-text-light font-bold uppercase tracking-widest">{order.payment_method || 'Midtrans Gateway'}</span>
+                                            <span className="text-[9px] text-admin-text-light font-bold uppercase tracking-widest">{order.payment_method || 'Midtrans'}</span>
                                         </div>
                                     </td>
                                     <td>
@@ -281,7 +316,7 @@ export default function TicketOrders() {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                                )})}
                             {!isLoading && filteredOrders.length === 0 && (
                                 <tr>
                                     <td colSpan="6" className="py-24 text-center">

@@ -48,7 +48,7 @@ class TransactionController extends Controller
     {
         $validated = $request->validate([
             'id' => 'required|string|unique:transactions,id',
-            'booking_type' => 'required|in:TICKET,RESORT',
+            'booking_type' => 'required|in:TICKET,RESORT,EVENT',
             'booker_name' => 'nullable|string',
             'payment_method' => 'nullable|string',
             'promo_id' => 'nullable|exists:promos,id',
@@ -167,10 +167,10 @@ class TransactionController extends Controller
         $oldStatus = $transaction->status;
         $transaction->update($validated);
 
-        // If status changes to PAID/SUCCESS and it's a TICKET type, generate tickets if not already generated
+        // If status changes to PAID/SUCCESS and it's a TICKET or EVENT type, generate tickets if not already generated
         if (in_array($validated['status'], ['paid', 'success']) && 
             !in_array($oldStatus, ['paid', 'success']) &&
-            $transaction->booking_type === 'TICKET') {
+            ($transaction->booking_type === 'TICKET' || $transaction->booking_type === 'EVENT')) {
             
             // Map items for generateTickets
             $itemsData = collect($transaction->items)->map(function($item) {
@@ -197,7 +197,7 @@ class TransactionController extends Controller
     {
         // Don't generate if tickets already exist for this transaction
         if ($transaction->tickets()->count() > 0) return;
-        if ($transaction->booking_type !== 'TICKET') return;
+        if (!in_array($transaction->booking_type, ['TICKET', 'EVENT'])) return;
 
         foreach ($transaction->items as $idx => $transItem) {
             // Find matched names from request itemsData if available, otherwise use booker name
@@ -208,9 +208,22 @@ class TransactionController extends Controller
                     ? $requestItem['guest_names'][$i] 
                     : $transaction->booker_name;
 
+                $prefix = 'EB-TICK-';
+                if ($transaction->booking_type === 'EVENT') {
+                    $prefix = 'EB-EVT-';
+                } else if ($transItem->item && isset($transItem->item->name)) {
+                    // Extract initials from ticket name (e.g. Tiket Kolam Renang -> TKR)
+                    $words = explode(' ', $transItem->item->name);
+                    $initials = '';
+                    foreach ($words as $w) {
+                        if (!empty($w)) $initials .= $w[0];
+                    }
+                    $prefix .= strtoupper($initials) . '-';
+                }
+
                 $transaction->tickets()->create([
                     'transaction_item_id' => $transItem->id,
-                    'ticket_id' => 'TICK-' . strtoupper(str_replace('.', '', uniqid('', true))),
+                    'ticket_id' => $prefix . strtoupper(\Illuminate\Support\Str::random(12)),
                     'guest_name' => $guestName,
                     'is_used' => false
                 ]);
