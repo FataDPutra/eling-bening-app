@@ -6,32 +6,44 @@ import { formatRupiah } from '../../utils/data';
 export default function Stats() {
     const [isLoading, setIsLoading] = useState(true);
     const [realStats, setRealStats] = useState(null);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
+
+    const fetchStats = async () => {
+        setIsLoading(true);
+        try {
+            const { data } = await axios.get(`/api/admin/stats?month=${selectedMonth}&year=${selectedYear}`);
+            setRealStats(data);
+        } catch (error) {
+            console.error('Failed to fetch stats:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const { data } = await axios.get('/api/admin/stats');
-                setRealStats(data);
-            } catch (error) {
-                console.error('Failed to fetch stats:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchStats();
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
-    if (isLoading) return (
+    if (isLoading && !realStats) return (
         <div className="h-[60vh] flex items-center justify-center">
             <Loader2 className="animate-spin text-admin-primary" size={48} />
         </div>
     );
 
     const statsConfig = [
-        { label: 'Tiket Terjual', key: 'tickets', icon: <TrendingUp size={20} className="text-admin-primary" /> },
-        { label: 'Reservasi Kamar', key: 'reservations', icon: <Users size={20} className="text-admin-primary" /> },
-        { label: 'Occupancy Rate', key: 'occupancy', icon: <BarIcon size={20} className="text-info" /> },
-        { label: 'Revenue/Month', key: 'revenue', icon: <Wallet size={20} className="text-admin-primary" />, highlight: true }
+        { label: 'Tiket Terjual', key: 'tickets', icon: <TrendingUp size={20} /> },
+        { label: 'Reservasi Kamar', key: 'reservations', icon: <Users size={20} /> },
+        { label: 'Occupancy Rate', key: 'occupancy', icon: <BarIcon size={20} /> },
+        { label: 'Revenue/Month', key: 'revenue', icon: <Wallet size={20} />, highlight: true }
     ];
 
     const dailyTickets = realStats?.daily_tickets || [];
@@ -48,9 +60,43 @@ export default function Stats() {
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
-                        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-bold text-sm hover:bg-admin-bg transition-all shadow-sm">
-                            <Calendar size={16} className="text-admin-primary" /> Maret 2024
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-bold text-sm hover:bg-admin-bg transition-all shadow-sm min-w-[160px]"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {months.find(m => m.value === selectedMonth).name} {selectedYear}
                         </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-4 z-50 animate-scale-up">
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ArrowDownRight className="rotate-[135deg]" size={16}/></button>
+                                        <span className="font-black text-admin-text-main">{selectedYear}</span>
+                                        <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ArrowUpRight className="rotate-[45deg]" size={16}/></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 rounded-xl text-[11px] font-black uppercase transition-all ${
+                                                    selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                     <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20">
                         <Download size={18} /> Export Laporan
@@ -63,20 +109,23 @@ export default function Stats() {
                 {statsConfig.map((config, i) => {
                     const data = realStats.stats[config.key];
                     return (
-                        <div key={i} className={`stat-card group hover:scale-[1.02] transition-all duration-300 ${config.highlight ? 'bg-admin-primary/5 border-admin-primary/10' : ''}`}>
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-3 rounded-2xl bg-white shadow-sm border border-admin-border group-hover:bg-admin-primary group-hover:text-white transition-colors">
+                        <div key={i} className={`p-8 bg-white rounded-[2rem] border border-admin-border group hover:scale-[1.03] hover:shadow-2xl hover:shadow-admin-primary/5 transition-all duration-500 cursor-default relative overflow-hidden ${config.highlight ? 'bg-gradient-to-br from-white to-admin-primary/5 border-admin-primary/20' : ''}`}>
+                            {config.highlight && <div className="absolute top-0 right-0 w-24 h-24 bg-admin-primary/5 rounded-full -mr-12 -mt-12 blur-2xl"></div>}
+                            <div className="flex justify-between items-start mb-6 relative z-10">
+                                <div className="p-4 rounded-[1.5rem] bg-admin-bg shadow-inner border border-admin-border text-admin-text-main group-hover:bg-admin-primary group-hover:text-white group-hover:border-admin-primary group-hover:rotate-6 transition-all duration-500">
                                     {config.icon}
                                 </div>
-                                <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full ${data.trend === 'up' ? 'text-success bg-success/10' : 'text-danger bg-danger/10'}`}>
-                                    {data.trend === 'up' ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                                <div className={`flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm ${data.trend === 'up' ? 'text-success bg-white border border-success/20' : 'text-danger bg-white border border-danger/20'}`}>
+                                    {data.trend === 'up' ? <ArrowUpRight size={10} strokeWidth={3} /> : <ArrowDownRight size={10} strokeWidth={3} />}
                                     {data.sub}
                                 </div>
                             </div>
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-text-muted mb-1">{config.label}</p>
-                            <h2 className="text-2xl font-black text-admin-text-main">
-                                {config.key === 'revenue' ? formatRupiah(data.value, false) : data.value}
-                            </h2>
+                            <div className="relative z-10">
+                                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-admin-text-muted mb-2">{config.label}</p>
+                                <h2 className="text-3xl font-black text-admin-text-main tracking-tight group-hover:text-admin-primary transition-colors duration-500">
+                                    {config.key === 'revenue' ? formatRupiah(data.value, false) : data.value}
+                                </h2>
+                            </div>
                         </div>
                     );
                 })}
