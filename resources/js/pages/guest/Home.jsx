@@ -1,15 +1,35 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { useContent } from '../../context/ContentContext';
 import {
     Mountain, Utensils, BedDouble, Waves, MapPin,
     Phone, Mail, Star,
-    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight, Loader2
+    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight, Loader2, X
 } from 'lucide-react';
 
 export default function Home() {
-    const { content, isLoading } = useContent();
+    const { content, isLoading: contentLoading } = useContent();
+    const [events, setEvents] = useState([]);
+    const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+    const [selectedImage, setSelectedImage] = useState(null);
 
-    if (isLoading) return (
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const { data } = await axios.get('/api/events');
+                // Priority: Latest 2 active events
+                setEvents(data.filter(e => e.is_active).slice(0, 2));
+            } catch (error) {
+                console.error('Failed to fetch events for home:', error);
+            } finally {
+                setIsLoadingEvents(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    if (contentLoading) return (
         <div className="h-screen flex items-center justify-center bg-white">
             <Loader2 className="animate-spin text-eling-green" size={48} />
         </div>
@@ -179,28 +199,48 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:h-[800px]">
-                        <div className="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-3xl cursor-pointer">
+                        <div 
+                            className="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-3xl cursor-pointer"
+                            onClick={() => setSelectedImage("/images/generated/hero.png")}
+                        >
                             <img src="/images/generated/hero.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 1" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                                <Camera className="text-white" size={48} />
+                                <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 transform scale-50 group-hover:scale-100 transition duration-500">
+                                    <Camera className="text-white" size={32} />
+                                </div>
                             </div>
                         </div>
-                        <div className="relative group overflow-hidden rounded-3xl cursor-pointer">
+                        <div 
+                            className="relative group overflow-hidden rounded-3xl cursor-pointer"
+                            onClick={() => setSelectedImage("/images/generated/restaurant.png")}
+                        >
                             <img src="/images/generated/restaurant.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 2" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                                <Camera className="text-white" size={32} />
+                                <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30 transform scale-50 group-hover:scale-100 transition duration-500">
+                                    <Camera className="text-white" size={24} />
+                                </div>
                             </div>
                         </div>
-                        <div className="relative group overflow-hidden rounded-3xl cursor-pointer">
+                        <div 
+                            className="relative group overflow-hidden rounded-3xl cursor-pointer"
+                            onClick={() => setSelectedImage("/images/generated/event.png")}
+                        >
                             <img src="/images/generated/event.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 3" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                                <Camera className="text-white" size={32} />
+                                <div className="bg-white/20 backdrop-blur-md p-3 rounded-full border border-white/30 transform scale-50 group-hover:scale-100 transition duration-500">
+                                    <Camera className="text-white" size={24} />
+                                </div>
                             </div>
                         </div>
-                        <div className="md:col-span-2 relative group overflow-hidden rounded-3xl cursor-pointer">
+                        <div 
+                            className="md:col-span-2 relative group overflow-hidden rounded-3xl cursor-pointer"
+                            onClick={() => setSelectedImage("/images/generated/resort.png")}
+                        >
                             <img src="/images/generated/resort.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 4" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-500 flex items-center justify-center">
-                                <Camera className="text-white" size={40} />
+                                <div className="bg-white/20 backdrop-blur-md p-4 rounded-full border border-white/30 transform scale-50 group-hover:scale-100 transition duration-500">
+                                    <Camera className="text-white" size={32} />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -227,31 +267,35 @@ export default function Home() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Event Card */}
-                        <div className="group relative h-[400px] rounded-3xl overflow-hidden shadow-xl">
-                            <img src="/images/generated/event.png" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Event" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-10 flex flex-col justify-end">
-                                <div className="bg-eling-green text-white text-[10px] font-bold uppercase tracking-widest py-1 px-3 rounded-md w-fit mb-4">Up Coming Event</div>
-                                <h3 className="text-3xl font-bold text-white mb-2">Live Music Weekend</h3>
-                                <p className="text-gray-300 font-light mb-6">Nikmati senja dengan alunan musik akustik. Setiap Sabtu & Minggu jam 16:00 WIB.</p>
-                                <button className="text-white font-bold flex items-center gap-2 group/btn">
-                                    Detail Event <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition" />
-                                </button>
+                        {isLoadingEvents ? (
+                            Array.from({ length: 2 }).map((_, i) => (
+                                <div key={i} className="animate-pulse bg-gray-200 h-[400px] rounded-3xl"></div>
+                            ))
+                        ) : events.length > 0 ? (
+                            events.map((event, idx) => (
+                                <div key={event.id} className="group relative h-[400px] rounded-3xl overflow-hidden shadow-xl">
+                                    <img 
+                                        src={(Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : event.image) || '/images/generated/event.png'} 
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" 
+                                        alt={event.name} 
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-10 flex flex-col justify-end text-left">
+                                        <div className={`${idx === 0 ? 'bg-eling-green' : 'bg-eling-red'} text-white text-[10px] font-bold uppercase tracking-widest py-1 px-3 rounded-md w-fit mb-4`}>
+                                            {idx === 0 ? 'Latest Event' : 'Featured Highlight'}
+                                        </div>
+                                        <h3 className="text-3xl font-bold text-white mb-2">{event.name}</h3>
+                                        <p className="text-gray-300 font-light mb-6 line-clamp-2">{event.description}</p>
+                                        <Link to="/events" className="text-white font-bold flex items-center gap-2 group/btn">
+                                            Detail Event <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-20 text-center bg-white rounded-3xl border border-dashed border-gray-200">
+                                <p className="text-gray-400 font-medium tracking-widest uppercase text-xs">Belum Ada Event Aktif Saat Ini</p>
                             </div>
-                        </div>
-
-                        {/* Promo Card */}
-                        <div className="group relative h-[400px] rounded-3xl overflow-hidden shadow-xl">
-                            <img src="/images/generated/hero.png" className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Promo" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-10 flex flex-col justify-end">
-                                <div className="bg-eling-red text-white text-[10px] font-bold uppercase tracking-widest py-1 px-3 rounded-md w-fit mb-4">Limited Offer</div>
-                                <h3 className="text-3xl font-bold text-white mb-2">Promo Tiket Liburan</h3>
-                                <p className="text-gray-300 font-light mb-6">Diskon 20% untuk pembelian tiket secara online selama periode Maret - April.</p>
-                                <Link to="/ticketing" className="text-white font-bold flex items-center gap-2 group/btn">
-                                    Ambil Promo <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition" />
-                                </Link>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </section>
@@ -393,6 +437,37 @@ export default function Home() {
                     </button>
                 </div>
             </section>
+
+            {/* Lightbox Modal */}
+            {selectedImage && (
+                <div 
+                    className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-20 animate-fade-in"
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <button 
+                        className="absolute top-10 right-10 text-white/50 hover:text-white transition group flex flex-col items-center gap-2"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white/10 transition">
+                            <X size={24} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest">Close</span>
+                    </button>
+                    
+                    <div className="relative max-w-7xl w-full h-full flex items-center justify-center">
+                        <img 
+                            src={selectedImage} 
+                            className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_100px_rgba(46,125,50,0.2)] animate-slide-up" 
+                            alt="Gallery Preview" 
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        
+                        <div className="absolute bottom-[-60px] left-1/2 -translate-x-1/2 text-white/40 text-xs font-medium italic tracking-wide">
+                           Eling Bening Official Gallery Preview
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

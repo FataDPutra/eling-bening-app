@@ -8,6 +8,26 @@ export default function Reschedule() {
     const [requests, setRequests] = useState([]);
     const [selectedReq, setSelectedReq] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [policy, setPolicy] = useState({ max_reschedule_days: '7' });
+
+    const fetchPolicy = async () => {
+        try {
+            const res = await axios.get('/api/settings/public');
+            setPolicy(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSavePolicy = async () => {
+        const load = toast.loading('Memperbarui kebijakan...');
+        try {
+            await axios.post('/api/settings', policy);
+            toast.success('Kebijakan diperbarui!', { id: load });
+        } catch (err) {
+            toast.error('Gagal memperbarui kebijakan', { id: load });
+        }
+    };
 
     const fetchReschedules = async () => {
         try {
@@ -23,6 +43,7 @@ export default function Reschedule() {
 
     useEffect(() => {
         fetchReschedules();
+        fetchPolicy();
     }, []);
 
     const handleAction = async (id, newStatus) => {
@@ -63,12 +84,39 @@ export default function Reschedule() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="admin-page-header">
-                <div>
-                    <h1>Permintaan Reschedule</h1>
-                    <p>Tinjau dan proses permohonan perubahan jadwal kunjungan atau reservasi.</p>
+                <div className="flex items-center gap-6 p-6 rounded-[2rem] bg-white border border-admin-border shadow-sm">
+                    <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center">
+                        <Clock size={24} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Kebijakan Reschedule</h3>
+                        <p className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest mt-1">Batas minimum hari pengajuan sebelum check-in</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <input 
+                                type="number" 
+                                className="pl-4 pr-12 py-3 bg-admin-bg border border-admin-border rounded-xl text-sm font-black text-admin-text-main w-28 focus:outline-none focus:border-admin-primary transition-all"
+                                value={policy.max_reschedule_days}
+                                onChange={e => setPolicy({ ...policy, max_reschedule_days: e.target.value })}
+                            />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-admin-text-muted uppercase">Hari</span>
+                        </div>
+                        <button 
+                            onClick={handleSavePolicy}
+                            className="px-6 py-3 bg-admin-primary text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-admin-primary/20 hover:scale-105 active:scale-95 transition-all"
+                        >
+                            Simpan Kebijakan
+                        </button>
+                    </div>
                 </div>
-            </div>
+
+                <div className="admin-page-header">
+                    <div>
+                        <h1>Permintaan Reschedule</h1>
+                        <p>Tinjau dan proses permohonan perubahan jadwal kunjungan atau reservasi.</p>
+                    </div>
+                </div>
 
             <div className="admin-table-container">
                 <table className="admin-table">

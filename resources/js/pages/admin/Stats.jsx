@@ -1,27 +1,43 @@
-import { BarChart as BarIcon, TrendingUp, Users, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Download, MoreHorizontal } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import { BarChart as BarIcon, TrendingUp, Users, Wallet, ArrowUpRight, ArrowDownRight, Calendar, Download, MoreHorizontal, Loader2 } from 'lucide-react';
+import { formatRupiah } from '../../utils/data';
 
 export default function Stats() {
-    const stats = [
-        { label: 'Tiket Terjual', value: '8.420', sub: '+12.5%', trend: 'up', icon: <TrendingUp size={20} className="text-admin-primary" /> },
-        { label: 'Reservasi Kamar', value: '213', sub: '+5.2%', trend: 'up', icon: <Users size={20} className="text-admin-primary" /> },
-        { label: 'Occupancy Rate', value: '76%', sub: '-2.1%', trend: 'down', icon: <BarIcon size={20} className="text-info" /> },
-        { label: 'Revenue/Month', value: 'Rp 342M', sub: '+18.4%', trend: 'up', icon: <Wallet size={20} className="text-admin-primary" />, highlight: true }
+    const [isLoading, setIsLoading] = useState(true);
+    const [realStats, setRealStats] = useState(null);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const { data } = await axios.get('/api/admin/stats');
+                setRealStats(data);
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    if (isLoading) return (
+        <div className="h-[60vh] flex items-center justify-center">
+            <Loader2 className="animate-spin text-admin-primary" size={48} />
+        </div>
+    );
+
+    const statsConfig = [
+        { label: 'Tiket Terjual', key: 'tickets', icon: <TrendingUp size={20} className="text-admin-primary" /> },
+        { label: 'Reservasi Kamar', key: 'reservations', icon: <Users size={20} className="text-admin-primary" /> },
+        { label: 'Occupancy Rate', key: 'occupancy', icon: <BarIcon size={20} className="text-info" /> },
+        { label: 'Revenue/Month', key: 'revenue', icon: <Wallet size={20} className="text-admin-primary" />, highlight: true }
     ];
 
-    // Mock data for Bar Chart
-    const dailyTickets = [
-        { day: '01', val: 240 }, { day: '05', val: 320 }, { day: '10', val: 580 },
-        { day: '15', val: 410 }, { day: '20', val: 650 }, { day: '25', val: 890 },
-        { day: '30', val: 720 }
-    ];
-    const maxTicket = Math.max(...dailyTickets.map(d => d.val));
+    const dailyTickets = realStats?.daily_tickets || [];
+    const maxTicket = dailyTickets.length > 0 ? Math.max(...dailyTickets.map(d => d.val)) : 100;
 
-    // Mock data for Doughnut
-    const bookingTypes = [
-        { label: 'Tiket Reguler', val: 65, color: '#C62828' },
-        { label: 'Resort Booking', val: 25, color: '#2E7D32' },
-        { label: 'Paket Rombongan', val: 10, color: '#F59E0B' }
-    ];
+    const bookingTypes = realStats?.booking_types || [];
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -44,21 +60,26 @@ export default function Stats() {
 
             {/* Stat Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((s, i) => (
-                    <div key={i} className={`stat-card group hover:scale-[1.02] transition-all duration-300 ${s.highlight ? 'bg-admin-primary/5 border-admin-primary/10' : ''}`}>
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-3 rounded-2xl bg-white shadow-sm border border-admin-border group-hover:bg-admin-primary group-hover:text-white transition-colors">
-                                {s.icon}
+                {statsConfig.map((config, i) => {
+                    const data = realStats.stats[config.key];
+                    return (
+                        <div key={i} className={`stat-card group hover:scale-[1.02] transition-all duration-300 ${config.highlight ? 'bg-admin-primary/5 border-admin-primary/10' : ''}`}>
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-3 rounded-2xl bg-white shadow-sm border border-admin-border group-hover:bg-admin-primary group-hover:text-white transition-colors">
+                                    {config.icon}
+                                </div>
+                                <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full ${data.trend === 'up' ? 'text-success bg-success/10' : 'text-danger bg-danger/10'}`}>
+                                    {data.trend === 'up' ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                                    {data.sub}
+                                </div>
                             </div>
-                            <div className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full ${s.trend === 'up' ? 'text-success bg-success/10' : 'text-danger bg-danger/10'}`}>
-                                {s.trend === 'up' ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                                {s.sub}
-                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-text-muted mb-1">{config.label}</p>
+                            <h2 className="text-2xl font-black text-admin-text-main">
+                                {config.key === 'revenue' ? formatRupiah(data.value, false) : data.value}
+                            </h2>
                         </div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-text-muted mb-1">{s.label}</p>
-                        <h2 className="text-3xl font-black text-admin-text-main">{s.value}</h2>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Charts Section */}
@@ -109,9 +130,16 @@ export default function Stats() {
                     <div className="relative h-48 flex items-center justify-center translate-y-4">
                         <svg width="200" height="200" viewBox="0 0 42 42" className="transform -rotate-90">
                             <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#F1F5F9" strokeWidth="4"></circle>
-                            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#C62828" strokeWidth="5.5" strokeDasharray="65 35" strokeDashoffset="25" className="transition-all duration-1000"></circle>
-                            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#2E7D32" strokeWidth="5.5" strokeDasharray="25 75" strokeDashoffset="60" className="transition-all duration-1000"></circle>
-                            <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#F59E0B" strokeWidth="5.5" strokeDasharray="10 90" strokeDashoffset="35" className="transition-all duration-1000"></circle>
+                            <circle 
+                                cx="21" cy="21" r="15.915" fill="transparent" stroke="#C62828" strokeWidth="5.5" 
+                                strokeDasharray={`${bookingTypes[0]?.val || 0} ${100 - (bookingTypes[0]?.val || 0)}`} 
+                                strokeDashoffset="25" className="transition-all duration-1000"
+                            ></circle>
+                            <circle 
+                                cx="21" cy="21" r="15.915" fill="transparent" stroke="#2E7D32" strokeWidth="5.5" 
+                                strokeDasharray={`${bookingTypes[1]?.val || 0} ${100 - (bookingTypes[1]?.val || 0)}`} 
+                                strokeDashoffset={25 - (bookingTypes[0]?.val || 0)} className="transition-all duration-1000"
+                            ></circle>
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-xs font-black text-admin-text-muted uppercase">Total</span>

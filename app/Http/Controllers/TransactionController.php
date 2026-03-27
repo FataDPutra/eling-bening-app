@@ -11,13 +11,37 @@ class TransactionController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if ($user && $user->role === 'admin') {
+        $isMine = $request->query('mine') === '1';
+
+        if ($user && $user->role === 'admin' && !$isMine) {
             return response()->json(Transaction::with(['user', 'items.item', 'promo', 'tickets.transactionItem.item'])->orderBy('created_at', 'desc')->get());
         } elseif ($user) {
             return response()->json(Transaction::with(['items.item', 'promo', 'tickets.transactionItem.item'])->whereUserId($user->id)->orderBy('created_at', 'desc')->get());
         }
         
         return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    public function checkBooking(Request $request, $id)
+    {
+        $transaction = Transaction::where('id', $id)
+            ->where('booking_type', 'RESORT')
+            ->first();
+
+        if (!$transaction) {
+            return response()->json(['message' => 'Kode booking tidak ditemukan atau bukan tipe resort.'], 404);
+        }
+
+        if ($transaction->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
+        }
+
+        return response()->json([
+            'id' => $transaction->id,
+            'check_in_date' => $transaction->check_in_date->format('Y-m-d'),
+            'booker_name' => $transaction->booker_name,
+            'status' => $transaction->status,
+        ]);
     }
 
     public function store(Request $request)
@@ -198,13 +222,27 @@ class TransactionController extends Controller
     {
         $transaction = Transaction::findOrFail($id);
         
+        if ($transaction->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
+        }
+
         if ($transaction->booking_type !== 'RESORT') {
             return response()->json(['message' => 'Hanya pemesanan resort yang dapat di-reschedule'], 400);
+        }
+
+        // Check reschedule policy
+        $maxDays = (int) (\App\Models\SystemSetting::where('key', 'max_reschedule_days')->first()?->value ?? 7);
+        $checkInDate = \Carbon\Carbon::parse($transaction->check_in_date)->startOfDay();
+        $now = \Carbon\Carbon::now()->startOfDay();
+
+        if ($now->diffInDays($checkInDate, false) < $maxDays) {
+            return response()->json(['message' => "Batas waktu reschedule sudah terlewati. Harus dilakukan minimal {$maxDays} hari sebelum tanggal check-in."], 400);
         }
 
         $validated = $request->validate([
             'new_check_in_date' => 'required|date|after:today',
             'new_check_out_date' => 'nullable|date|after:new_check_in_date',
+            'reason' => 'nullable|string',
         ]);
 
         $oldDate = $transaction->check_in_date;
@@ -213,6 +251,7 @@ class TransactionController extends Controller
             $transaction->reschedules()->create([
                 'old_date' => $oldDate,
                 'new_date' => $validated['new_check_in_date'],
+                'reason' => $validated['reason'] ?? null,
                 'status' => 'pending',
             ]);
 

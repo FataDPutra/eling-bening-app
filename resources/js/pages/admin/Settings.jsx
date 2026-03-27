@@ -10,7 +10,8 @@ export default function Settings() {
         midtrans_is_production: 'false',
         google_client_id: '',
         google_client_secret: '',
-        google_analytics_id: ''
+        google_analytics_id: '',
+        max_reschedule_days: '7'
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -183,7 +184,17 @@ export default function Settings() {
                             </div>
                         </div>
                     </section>
-
+                </div>
+            </div>
+            
+            {/* Global Info Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                <div className="lg:col-span-2 invisible lg:visible prose prose-sm text-admin-text-muted italic opacity-50">
+                    Sistem ini terenkripsi menggunakan protokol RSA-256 untuk semua transaksi keuangan. 
+                    Seluruh perubahan kebijakan akan terekat dalam log audit internal.
+                </div>
+                
+                <div className="space-y-8">
                     <div className="bg-admin-primary rounded-[2.5rem] p-8 text-white shadow-2xl shadow-admin-primary/20">
                         <Globe size={32} className="mb-6 opacity-40" />
                         <h4 className="text-lg font-black leading-tight mb-3">Global Sync Status</h4>

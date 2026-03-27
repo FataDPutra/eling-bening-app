@@ -12,13 +12,15 @@ export default function Booking() {
     const { user } = useAuth();
     
     const bookingData = location.state || {
-        room: { name: 'Deluxe Room', price: 1250000, image: '/images/resort-room.png' },
+        room: { id: 1, name: 'Deluxe Room', price: 1250000, image: '/images/resort-room.png' },
         checkIn: '2026-03-27',
         checkOut: '2026-03-28',
         guests: 2,
+        roomsNeeded: 1,
         totalNights: 1
     };
 
+    const roomsNeeded = Number(bookingData.roomsNeeded || 1);
     const [guestType, setGuestType] = useState('self');
     const [promoCode, setPromoCode] = useState('');
     const [activePromo, setActivePromo] = useState(null);
@@ -37,7 +39,9 @@ export default function Booking() {
     const [guestLastName, setGuestLastName] = useState('');
     const [arrivalTime, setArrivalTime] = useState('Pilih waktu kedatangan');
 
-    const basePrice = Number(bookingData.room?.price || 0) * Number(bookingData.totalNights || 1);
+    const rooms_price = Number(bookingData.room?.price || 0);
+    const nights = Number(bookingData.totalNights || 1);
+    const basePrice = rooms_price * nights * roomsNeeded;
     const tax = basePrice * 0.1;
     
     let minPurchaseError = false;
@@ -115,15 +119,15 @@ export default function Booking() {
             arrival_time: arrivalTime,
             additional_facilities: selectedFacilities,
             total_price: total,
-            total_qty: 1,
+            total_qty: roomsNeeded,
             discount_amount: discountAmount,
             special_requests: specialRequest,
             items: [
                 {
-                    item_id: bookingData.room.id,
+                    item_id: bookingData.room?.id,
                     item_type: 'App\\Models\\Resort',
-                    quantity: 1,
-                    price: bookingData.room.price
+                    quantity: roomsNeeded,
+                    price: bookingData.room?.price
                 }
             ]
         };
@@ -454,7 +458,7 @@ export default function Booking() {
                                         <div className="flex items-center gap-2 mt-2 opacity-50">
                                             <span className="text-[10px] font-bold text-gray-500">{bookingData.totalNights} Malam</span>
                                             <div className="w-1 h-1 rounded-full bg-gray-300"></div>
-                                            <span className="text-[10px] font-bold text-gray-500">1 Kamar</span>
+                                            <span className="text-[10px] font-bold text-gray-500">{roomsNeeded} Kamar ({bookingData.guests} Tamu)</span>
                                         </div>
                                     </div>
                                 </div>
@@ -468,7 +472,7 @@ export default function Booking() {
                                 
                                 <div className="space-y-4 px-1">
                                     <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Kamar {bookingData.room.name}</span>
+                                        <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Layanan: {roomsNeeded} Unit {bookingData.room.name}</span>
                                         <span className="font-black text-gray-900">{formatRupiah(basePrice)}</span>
                                     </div>
                                     <div className="flex justify-between items-center text-sm">

@@ -13,6 +13,8 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\RescheduleController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\StatController;
+use App\Http\Controllers\ProfileController;
 
 // Breeze Auth Routes
 require __DIR__.'/auth.php';
@@ -21,12 +23,13 @@ require __DIR__.'/auth.php';
 Route::get('/auth/google', [SocialiteController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCallback']);
 
-// Public Endpoints
-Route::get('/resorts', [ResortController::class, 'index']);
-Route::get('/resorts/{id}', [ResortController::class, 'show']);
-Route::get('/tickets', [TicketController::class, 'index']);
-Route::get('/tickets/{id}', [TicketController::class, 'show']);
-Route::post('/promos/validate', [PromoController::class, 'validatePromo']);
+    // Public Endpoints
+    Route::get('/resorts', [ResortController::class, 'index']);
+    Route::get('/resorts/{id}', [ResortController::class, 'show']);
+    Route::get('/tickets', [TicketController::class, 'index']);
+    Route::get('/tickets/{id}', [TicketController::class, 'show']);
+    Route::post('/promos/validate', [PromoController::class, 'validatePromo']);
+    Route::get('/settings/public', [SystemSettingController::class, 'publicSettings']);
 
 // Dynamic CMS Content & Events
 Route::get('/events', [EventController::class, 'index']);
@@ -41,11 +44,19 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::post('/transactions', [TransactionController::class, 'store']);
     Route::get('/transactions', [TransactionController::class, 'index']);
     Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+    Route::post('/transactions/{id}/reschedule', [TransactionController::class, 'reschedule']);
+    
+    // Profile Management
+    Route::put('/user/profile', [ProfileController::class, 'update']);
+    Route::post('/user/photo', [ProfileController::class, 'updatePhoto']);
+    Route::put('/user/password', [ProfileController::class, 'updatePassword']);
     
     Route::post('/reschedules', [RescheduleController::class, 'store']);
+    Route::get('/transactions/check-booking/{id}', [TransactionController::class, 'checkBooking']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function() {
+    Route::get('/admin/stats', [StatController::class, 'getStats']);
     Route::get('/settings', [SystemSettingController::class, 'index']);
     Route::post('/settings', [SystemSettingController::class, 'update']);
 

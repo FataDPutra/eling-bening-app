@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Calendar, MapPin, ArrowRight, Tag, Loader2 } from 'lucide-react';
+import { Calendar, MapPin, ArrowRight, Tag, Loader2, X, Phone, Mail, Clock, Star, ChevronLeft, ChevronRight, Users, CheckCircle } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
+import { Link } from 'react-router-dom';
 
 export default function Events() {
     const { content, isLoading: contentLoading } = useContent();
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+    const [selectedEvent, setSelectedEvent] = useState(null);
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+
     useEffect(() => {
         const fetchEvents = async () => {
             try {
@@ -21,6 +24,24 @@ export default function Events() {
         };
         fetchEvents();
     }, []);
+
+    const openDetail = (event) => {
+        setSelectedEvent(event);
+        setActiveImageIndex(0);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeDetail = () => {
+        setSelectedEvent(null);
+        document.body.style.overflow = '';
+    };
+
+    const getImages = (event) => {
+        const imgs = Array.isArray(event.images) && event.images.length > 0
+            ? event.images
+            : (event.image ? [event.image] : []);
+        return imgs.length > 0 ? imgs : ['/images/generated/event.png'];
+    };
 
     if (contentLoading) return (
         <div className="h-screen flex items-center justify-center bg-white">
@@ -58,56 +79,72 @@ export default function Events() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {isLoading ? (
                         Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="animate-pulse bg-admin-bg rounded-[2.5rem] h-[500px]"></div>
+                            <div key={i} className="animate-pulse bg-gray-100 rounded-[2.5rem] h-[500px]"></div>
                         ))
-                    ) : events.map((event) => (
-                        <div key={event.id} className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-gray-200/50 hover:shadow-eling-green/10 hover:border-eling-green/20 transition-all duration-700 flex flex-col group relative">
-                            {/* Card Image Wrapper */}
-                            <div className="relative h-72 overflow-hidden bg-gray-100">
-                                <img 
-                                    src={(Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : event.image) || '/images/generated/event.png'} 
-                                    alt={event.name} 
-                                    className="w-full h-full object-cover group-hover:scale-110 transition duration-[1.5s] ease-out grayscale-[0.2] group-hover:grayscale-0" 
-                                />
-                                <div className="absolute top-6 left-6 flex flex-col gap-2">
-                                    <span className="bg-white/95 backdrop-blur-xl px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-eling-green shadow-sm border border-white/20">
-                                        {event.category}
-                                    </span>
-                                </div>
-                                <div className="absolute bottom-6 right-6">
-                                    <div className="bg-eling-green text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl">
-                                        BOOKABLE
-                                    </div>
-                                </div>
-                            </div>
+                    ) : events.map((event) => {
+                        const images = getImages(event);
+                        return (
+                            <div
+                                key={event.id}
+                                className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-2xl shadow-gray-200/50 hover:shadow-eling-green/10 hover:border-eling-green/20 transition-all duration-700 flex flex-col group relative"
+                            >
+                                {/* Card Image */}
+                                <div className="relative h-72 overflow-hidden bg-gray-100">
+                                    <img
+                                        src={images[0]}
+                                        alt={event.name}
+                                        className="w-full h-full object-cover group-hover:scale-110 transition duration-[1.5s] ease-out"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
 
-                            {/* Card Body */}
-                            <div className="p-10 flex-grow flex flex-col">
-                                <div className="flex items-center gap-3 text-eling-red font-black text-[10px] mb-6 uppercase tracking-[0.3em]">
-                                    <div className="w-8 h-8 rounded-lg bg-eling-red/5 flex items-center justify-center">
-                                        <Calendar size={14} />
+                                    {/* Category Badge */}
+                                    <div className="absolute top-5 left-5">
+                                        <span className="bg-white/95 backdrop-blur-xl px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-eling-green shadow-sm">
+                                            {event.category}
+                                        </span>
                                     </div>
-                                    {event.date_info}
+
+                                    {/* Image count badge */}
+                                    {images.length > 1 && (
+                                        <div className="absolute bottom-5 right-5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-3 py-1.5 rounded-lg">
+                                            +{images.length - 1} Foto
+                                        </div>
+                                    )}
                                 </div>
-                                
-                                <h3 className="text-2xl font-black mb-4 font-serif text-gray-900 leading-tight group-hover:text-eling-green transition-colors duration-500 capitalize tracking-tighter">{event.name}</h3>
-                                
-                                <p className="text-gray-400 text-sm font-medium mb-8 line-clamp-3 leading-relaxed">
-                                    {event.description}
-                                </p>
-                                
-                                <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1 italic">Investment From</span>
-                                        <span className="font-black text-xl text-gray-900 tracking-tighter">{event.price_info}</span>
+
+                                {/* Card Body */}
+                                <div className="p-8 flex-grow flex flex-col">
+                                    <div className="flex items-center gap-2 text-eling-red font-black text-[10px] mb-4 uppercase tracking-[0.2em]">
+                                        <div className="w-7 h-7 rounded-lg bg-eling-red/5 flex items-center justify-center flex-shrink-0">
+                                            <Calendar size={13} />
+                                        </div>
+                                        <span className="truncate">{event.date_info}</span>
                                     </div>
-                                    <button className="w-14 h-14 rounded-2xl bg-gray-900 text-white flex items-center justify-center hover:bg-eling-green hover:shadow-xl hover:shadow-eling-green/30 transition-all duration-500 scale-90 group-hover:scale-100">
-                                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform" />
-                                    </button>
+
+                                    <h3 className="text-xl font-black mb-3 font-serif text-gray-900 leading-tight group-hover:text-eling-green transition-colors duration-500 capitalize">
+                                        {event.name}
+                                    </h3>
+
+                                    <p className="text-gray-400 text-sm font-medium mb-6 line-clamp-2 leading-relaxed flex-grow">
+                                        {event.description}
+                                    </p>
+
+                                    <div className="pt-5 border-t border-gray-100 flex items-center justify-between gap-4">
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-0.5">Mulai Dari</span>
+                                            <span className="font-black text-lg text-gray-900 truncate">{event.price_info}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => openDetail(event)}
+                                            className="flex items-center gap-2.5 bg-eling-green text-white font-black text-[11px] uppercase tracking-widest px-5 py-3 rounded-2xl hover:bg-green-800 hover:shadow-lg hover:shadow-eling-green/30 transition-all duration-300 flex-shrink-0 whitespace-nowrap"
+                                        >
+                                            Lihat Detail <ArrowRight size={15} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {!isLoading && events.length === 0 && (
@@ -129,12 +166,160 @@ export default function Events() {
                         </p>
                     </div>
                     <div className="relative z-10 flex flex-col sm:flex-row gap-4">
-                        <button className="bg-white text-eling-green font-bold py-5 px-10 rounded-2xl shadow-xl hover:bg-gray-50 transition border-none text-lg">
+                        <Link to="/contact" className="bg-white text-eling-green font-black py-5 px-10 rounded-2xl shadow-xl hover:bg-gray-50 transition text-sm uppercase tracking-widest">
                             Hubungi Tim Event
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
+
+            {/* ─── EVENT DETAIL MODAL ─── */}
+            {selectedEvent && (() => {
+                const images = getImages(selectedEvent);
+                return (
+                    <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center p-0 md:p-6">
+                        {/* Backdrop */}
+                        <div
+                            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                            onClick={closeDetail}
+                        />
+
+                        {/* Modal Panel */}
+                        <div className="relative bg-white w-full md:max-w-4xl max-h-[92vh] md:max-h-[88vh] rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-slide-up">
+                            {/* Close button */}
+                            <button
+                                onClick={closeDetail}
+                                className="absolute top-5 right-5 z-20 w-10 h-10 bg-black/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/40 transition-all"
+                            >
+                                <X size={20} />
+                            </button>
+
+                            {/* Image Gallery */}
+                            <div className="relative h-64 md:h-80 bg-gray-900 flex-shrink-0">
+                                <img
+                                    src={images[activeImageIndex]}
+                                    alt={selectedEvent.name}
+                                    className="w-full h-full object-cover transition-opacity duration-300"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+
+                                {/* Image Nav */}
+                                {images.length > 1 && (
+                                    <>
+                                        <button
+                                            onClick={() => setActiveImageIndex(i => (i - 1 + images.length) % images.length)}
+                                            className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-all"
+                                        >
+                                            <ChevronLeft size={18} />
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveImageIndex(i => (i + 1) % images.length)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/40 backdrop-blur-sm text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-all"
+                                        >
+                                            <ChevronRight size={18} />
+                                        </button>
+
+                                        {/* Dots */}
+                                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                            {images.map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setActiveImageIndex(i)}
+                                                    className={`w-2 h-2 rounded-full transition-all ${i === activeImageIndex ? 'bg-white w-5' : 'bg-white/50'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Category badge */}
+                                <div className="absolute bottom-5 left-5">
+                                    <span className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg">
+                                        {selectedEvent.category}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 overflow-y-auto">
+                                <div className="p-8 md:p-10">
+                                    {/* Title + Price */}
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                                        <div className="flex-1">
+                                            <h2 className="text-2xl md:text-3xl font-black font-serif text-gray-900 capitalize leading-tight mb-2">
+                                                {selectedEvent.name}
+                                            </h2>
+                                            <div className="flex items-center gap-2 text-eling-red font-black text-xs uppercase tracking-widest">
+                                                <Calendar size={13} />
+                                                {selectedEvent.date_info}
+                                            </div>
+                                        </div>
+                                        <div className="bg-eling-green/5 border border-eling-green/20 rounded-2xl px-6 py-4 text-center flex-shrink-0">
+                                            <p className="text-[9px] text-gray-400 uppercase font-black tracking-widest mb-1">Mulai Dari</p>
+                                            <p className="text-xl font-black text-eling-green">{selectedEvent.price_info}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Info Chips */}
+                                    <div className="flex flex-wrap gap-3 mb-6">
+                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+                                            <MapPin size={14} className="text-eling-green" />
+                                            <span className="text-xs font-black text-gray-600">Eling Bening, Ambarawa</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+                                            <Users size={14} className="text-eling-green" />
+                                            <span className="text-xs font-black text-gray-600">Kapasitas Besar</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5">
+                                            <Star size={14} className="text-amber-400" />
+                                            <span className="text-xs font-black text-gray-600">Venue Premium</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Description */}
+                                    <div className="mb-8">
+                                        <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Deskripsi Event</h4>
+                                        <p className="text-gray-600 text-sm leading-relaxed font-medium">
+                                            {selectedEvent.description}
+                                        </p>
+                                    </div>
+
+                                    {/* Highlights */}
+                                    <div className="bg-eling-green/5 border border-eling-green/10 rounded-2xl p-6 mb-8">
+                                        <h4 className="text-xs font-black text-eling-green uppercase tracking-widest mb-4">Yang Sudah Termasuk</h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {['Pemandangan Rawa Pening', 'Tim Event Profesional', 'Area Parkir Luas', 'Dokumentasi Dasar', 'Dekorasi Venue', 'Koordinasi Hari-H'].map(item => (
+                                                <div key={item} className="flex items-center gap-2.5 text-sm text-gray-700 font-medium">
+                                                    <CheckCircle size={15} className="text-eling-green flex-shrink-0" />
+                                                    {item}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* CTA Buttons */}
+                                    <div className="flex flex-col sm:flex-row gap-4">
+                                        <Link
+                                            to="/contact"
+                                            onClick={closeDetail}
+                                            className="flex-1 bg-eling-green text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-green-800 transition-all shadow-lg shadow-eling-green/20 text-center flex items-center justify-center gap-2"
+                                        >
+                                            <Phone size={16} /> Konsultasi Gratis
+                                        </Link>
+                                        <Link
+                                            to="/contact"
+                                            onClick={closeDetail}
+                                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-gray-100 transition-all text-center flex items-center justify-center gap-2"
+                                        >
+                                            <Mail size={16} /> Kirim Pertanyaan
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

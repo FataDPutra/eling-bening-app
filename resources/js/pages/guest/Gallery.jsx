@@ -1,10 +1,56 @@
 import { useState } from 'react';
-import { X, Calendar, Loader2 } from 'lucide-react';
+import { X, Calendar, Loader2, Download, Share2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useContent } from '../../context/ContentContext';
 
 export default function Gallery() {
     const { content, isLoading } = useContent();
     const [selectedImage, setSelectedImage] = useState(null);
+
+    const handleDownload = async (src, filename) => {
+        try {
+            const response = await fetch(src);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || 'eling-bening-gallery.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            toast.success('Foto berhasil diunduh');
+        } catch (error) {
+            console.error('Download failed:', error);
+            // Fallback for cross-origin if fetch fails
+            const link = document.createElement('a');
+            link.href = src;
+            link.target = '_blank';
+            link.download = filename || 'eling-bening-gallery.jpg';
+            link.click();
+        }
+    };
+
+    const handleShare = async (img) => {
+        const shareData = {
+            title: `Eling Bening - ${img.title}`,
+            text: img.desc,
+            url: window.location.href,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                toast.success('Berhasil dibagikan');
+            } catch (err) {
+                console.log('Share cancelled or failed');
+            }
+        } else {
+            // Fallback: Copy link
+            navigator.clipboard.writeText(window.location.href);
+            toast.success('Link galeri berhasil disalin ke clipboard');
+        }
+    };
 
     if (isLoading) return (
         <div className="h-screen flex items-center justify-center bg-white">
@@ -80,11 +126,17 @@ export default function Gallery() {
                             </p>
 
                             <div className="mt-8 pt-6 border-t border-gray-100 flex gap-4">
-                                <button className="flex-1 bg-eling-green text-white font-bold py-3 rounded-xl hover:bg-green-800 transition">
-                                    Simpan Foto
+                                <button 
+                                    onClick={() => handleDownload(selectedImage.src, selectedImage.title + '.jpg')}
+                                    className="flex-1 bg-eling-green text-white font-bold py-3 rounded-xl hover:bg-green-800 transition flex items-center justify-center gap-2"
+                                >
+                                    <Download size={18} /> Simpan Foto
                                 </button>
-                                <button className="flex-1 border-2 border-eling-green text-eling-green font-bold py-3 rounded-xl hover:bg-green-50 transition">
-                                    Bagikan
+                                <button 
+                                    onClick={() => handleShare(selectedImage)}
+                                    className="flex-1 border-2 border-eling-green text-eling-green font-bold py-3 rounded-xl hover:bg-green-50 transition flex items-center justify-center gap-2"
+                                >
+                                    <Share2 size={18} /> Bagikan
                                 </button>
                             </div>
                         </div>

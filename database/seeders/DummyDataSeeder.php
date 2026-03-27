@@ -22,7 +22,7 @@ class DummyDataSeeder extends Seeder
             'capacity' => 4,
             'bed_type' => '2 King Bed',
             'room_size' => '45',
-            'gallery' => ['/images/resort-room.png']
+            'gallery' => [] // Kosongkan agar pakai gambar default
         ]);
 
         Resort::create([
@@ -35,7 +35,7 @@ class DummyDataSeeder extends Seeder
             'capacity' => 2,
             'bed_type' => '1 Queen Bed',
             'room_size' => '20',
-            'gallery' => ['/images/generated/resort.png']
+            'gallery' => [] // Kosongkan agar pakai gambar default
         ]);
         
         Resort::create([
@@ -48,7 +48,20 @@ class DummyDataSeeder extends Seeder
             'capacity' => 6,
             'bed_type' => '3 King Bed',
             'room_size' => '80',
-            'gallery' => ['/images/generated/resort.png']
+            'gallery' => [] // Kosongkan agar pakai gambar default
+        ]);
+
+        Resort::create([
+            'name' => 'Superior Room',
+            'description' => 'Kamar superior dengan fasilitas standar yang nyaman untuk pasangan atau perjalanan dinas.',
+            'facilities' => ['AC', 'TV', 'Shower Panas/Dingin', 'Sarapan 2 Pax'],
+            'price' => 500000,
+            'price_weekend' => 650000,
+            'stock' => 8,
+            'capacity' => 2,
+            'bed_type' => '1 Double Bed',
+            'room_size' => '18',
+            'gallery' => [] // Kosongkan agar pakai gambar default
         ]);
 
         Ticket::create([

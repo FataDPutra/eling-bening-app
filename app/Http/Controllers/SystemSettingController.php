@@ -12,6 +12,12 @@ class SystemSettingController extends Controller
         return response()->json(SystemSetting::all()->pluck('value', 'key'));
     }
 
+    public function publicSettings()
+    {
+        $keys = ['max_reschedule_days'];
+        return response()->json(SystemSetting::whereIn('key', $keys)->pluck('value', 'key'));
+    }
+
     public function update(Request $request)
     {
         $settings = $request->all();

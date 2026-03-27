@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const ContentContext = createContext();
 
@@ -215,6 +216,7 @@ export const ContentProvider = ({ children }) => {
                 { key: 'gallery_hero_image', content: content.galleryHeroImage, type: 'image', page: 'gallery' },
                 { key: 'global_facilities', data: content.facilities, type: 'json', page: 'facilities' },
                 { key: 'global_map_image', content: content.mapImage, type: 'image', page: 'facilities' },
+                { key: 'event_hero_image', content: content.eventHeroImage, type: 'image', page: 'facilities' },
             ];
 
             await axios.post('/api/contents/bulk', { contents: bulkPayload });

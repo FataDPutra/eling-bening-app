@@ -64,9 +64,42 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  
+  const updateProfile = async (data) => {
+    try {
+      const response = await axios.put('/api/user/profile', data);
+      setUser(response.data.user);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const updatePassword = async (data) => {
+    try {
+      const response = await axios.put('/api/user/password', data);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const updatePhoto = async (formData) => {
+    try {
+      const response = await axios.post('/api/user/photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setUser(response.data.user);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, login, register, logout, updateProfile, updatePassword, updatePhoto }}>
       {children}
     </AuthContext.Provider>
   );

@@ -129,9 +129,9 @@ export default function Bookings() {
                         <tr>
                             <th>Transaction ID</th>
                             <th>Lead Customer</th>
-                            <th>Entry Date</th>
+                            <th>Stay Dates</th>
                             <th>Net Total</th>
-                            <th>Promo Tracking</th>
+                            <th>Check Info</th>
                             <th>Status</th>
                             <th>Operations</th>
                         </tr>
@@ -154,8 +154,8 @@ export default function Bookings() {
                                             <User size={16} />
                                         </div>
                                         <div className="flex flex-col">
-                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.user?.name || 'Guest User'}</div>
-                                            <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.user?.email || 'No Email'}</span>
+                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.booker_name || booking.user?.name || 'Guest User'}</div>
+                                            <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.booker_email || booking.user?.email || 'No Email'}</span>
                                         </div>
                                     </div>
                                 </td>
@@ -164,7 +164,10 @@ export default function Bookings() {
                                         <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
                                             <Calendar size={14} />
                                         </div>
-                                        {new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        <div>
+                                            <div className="leading-none">{new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                            <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter">s/d {new Date(booking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -174,13 +177,18 @@ export default function Bookings() {
                                     </div>
                                 </td>
                                 <td>
-                                    {booking.promo ? (
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-admin-primary uppercase tracking-widest">{booking.promo.promo_code}</span>
-                                            <span className="text-[9px] font-bold text-danger uppercase tracking-tighter">-{formatRupiah(booking.discount_amount)}</span>
+                                    {booking.stay_status === 'checked_in' ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 animate-pulse-slow">
+                                            <DoorOpen size={14} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Udah Cekin</span>
+                                        </div>
+                                    ) : booking.stay_status === 'checked_out' ? (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl border border-slate-200">
+                                            <Check size={14} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Selesai</span>
                                         </div>
                                     ) : (
-                                        <span className="text-[10px] font-bold text-admin-text-muted/30 uppercase tracking-widest italic">— No Voucher</span>
+                                        <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest italic opacity-30">Belum Datang</span>
                                     )}
                                 </td>
                                 <td>

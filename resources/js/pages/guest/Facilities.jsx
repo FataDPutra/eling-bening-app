@@ -16,7 +16,7 @@ export default function Facilities() {
     return (
         <div className="animate-fade-in bg-gray-50 pb-24">
             <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
-                <img src="/images/hero-bg.png" alt="Facilities Hero Background" className="absolute inset-0 w-full h-full object-cover" />
+                <img src={content.eventHeroImage || "/images/hero-bg.png"} alt="Facilities Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 text-white max-w-4xl px-4">
                     <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Fasilitas Premium</h1>

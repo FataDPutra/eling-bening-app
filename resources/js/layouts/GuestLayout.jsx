@@ -2,11 +2,13 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Menu, X, User, UserCircle, MapPin, Phone, Mail } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
+import { useContent } from '../context/ContentContext';
 import Swal from 'sweetalert2';
 import '../styles/guest.css';
 
 export default function GuestLayout() {
     const { user, logout } = useAuth();
+    const { content } = useContent();
     const navigate = useNavigate();
     
     const handleLogout = async () => {
@@ -119,8 +121,9 @@ export default function GuestLayout() {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-6">
-                    <div className="relative group">
+                <div className="flex items-center gap-3">
+                    {/* User dropdown (desktop) */}
+                    <div className="hidden lg:block relative group">
                         <button className="w-10 h-10 rounded-full bg-eling-red flex items-center justify-center text-white shadow-xl hover:bg-red-800 transition-all duration-500 hover:rotate-[360deg]">
                             <UserCircle size={24} />
                         </button>
@@ -148,8 +151,94 @@ export default function GuestLayout() {
                             <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-eling-red">Panel Admin</Link>
                         </div>
                     </div>
+
+                    {/* Hamburger (Mobile) */}
+                    <button
+                        className={`lg:hidden p-2 rounded-xl transition-all duration-300 ${isHeroPage && !scrolled ? 'text-white hover:bg-white/10' : 'text-gray-900 hover:bg-gray-100'}`}
+                        onClick={() => setMobileMenuOpen(true)}
+                        aria-label="Open Menu"
+                    >
+                        <Menu size={26} />
+                    </button>
                 </div>
             </nav>
+
+            {/* Mobile Full-Screen Menu Drawer */}
+            <div className={`fixed inset-0 z-[200] lg:hidden transition-all duration-500 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+                {/* Backdrop */}
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
+
+                {/* Drawer Panel */}
+                <div className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-sm bg-white flex flex-col shadow-2xl transform transition-transform duration-500 ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                    {/* Drawer Header */}
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
+                        <div className="flex items-center gap-2">
+                            <img src="/images/logo.png" alt="Logo" className="h-8" />
+                            <span className="text-lg font-serif font-black text-eling-green">Eling Bening</span>
+                        </div>
+                        <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all">
+                            <X size={22} />
+                        </button>
+                    </div>
+
+                    {/* User Info */}
+                    {user && (
+                        <div className="px-8 py-4 bg-eling-green/5 border-b border-green-100">
+                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-1">Halo,</p>
+                            <p className="font-black text-eling-green text-base truncate">{user.name}</p>
+                        </div>
+                    )}
+
+                    {/* Nav Links */}
+                    <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-1">
+                        {[
+                            { name: 'Beranda', path: '/' },
+                            { name: 'Tentang Kami', path: '/about' },
+                            { name: 'Resort & Kamar', path: '/rooms' },
+                            { name: 'Event', path: '/events' },
+                            { name: 'Galeri', path: '/gallery' },
+                            { name: 'Fasilitas', path: '/facilities' },
+                            { name: 'Kontak', path: '/contact' },
+                        ].map((item) => (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl font-black uppercase tracking-wide text-sm transition-all duration-200 ${
+                                    location.pathname === item.path
+                                        ? 'bg-eling-green/10 text-eling-green'
+                                        : 'text-gray-700 hover:bg-gray-50 hover:text-eling-green'
+                                }`}
+                            >
+                                {item.name}
+                            </Link>
+                        ))}
+                    </nav>
+
+                    {/* Bottom Auth Actions */}
+                    <div className="px-4 pb-8 pt-4 border-t border-gray-100 space-y-3">
+                        {user ? (
+                            <>
+                                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 w-full px-5 py-3.5 bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-eling-green/10 hover:text-eling-green transition-all">
+                                    <User size={16} /> Profil & Riwayat
+                                </Link>
+                                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="flex items-center gap-3 w-full px-5 py-3.5 bg-red-50 text-eling-red font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-red-100 transition-all">
+                                    <X size={16} /> Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center w-full px-5 py-3.5 bg-eling-green text-white font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-green-800 transition-all">
+                                    Login
+                                </Link>
+                                <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center w-full px-5 py-3.5 bg-gray-100 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-gray-200 transition-all">
+                                    Daftar
+                                </Link>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
 
             <main className={`flex-grow ${!isHeroPage ? 'pt-offset' : ''}`}>
                 <Outlet />
@@ -165,7 +254,7 @@ export default function GuestLayout() {
                             <span className="text-2xl font-serif font-bold tracking-wider text-white">Eling Bening</span>
                         </div>
                         <p className="text-green-100 text-sm leading-relaxed">
-                            Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat.
+                            {content.contact.supportDesc || "Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat."}
                         </p>
                     </div>
 
@@ -187,15 +276,15 @@ export default function GuestLayout() {
                         <ul className="space-y-4 text-green-100 text-sm">
                             <li className="flex items-start gap-3">
                                 <MapPin size={18} className="flex-shrink-0" />
-                                <span>Jl. Sarjono, Bauman, Ambarawa, Kabupaten Semarang, Jawa Tengah.</span>
+                                <span>{content.contact.address || "Jl. Sarjono, Bauman, Ambarawa, Kabupaten Semarang, Jawa Tengah."}</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Phone size={18} className="flex-shrink-0" />
-                                <span>+62 811-2345-6789</span>
+                                <span>{content.contact.phone || "+62 811-2345-6789"}</span>
                             </li>
                             <li className="flex items-center gap-3">
                                 <Mail size={18} className="flex-shrink-0" />
-                                <span>info@elingbening.com</span>
+                                <span>{content.contact.email || "info@elingbening.com"}</span>
                             </li>
                         </ul>
                     </div>

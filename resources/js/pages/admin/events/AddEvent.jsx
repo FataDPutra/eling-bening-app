@@ -5,9 +5,17 @@ import { ArrowLeft, Save, Calendar, Tag, Type } from 'lucide-react';
 import ImageUpload from '../../../components/admin/ImageUpload';
 import toast from 'react-hot-toast';
 
+const formatDateID = (isoDate) => {
+    if (!isoDate) return '';
+    const d = new Date(isoDate + 'T00:00:00');
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+
 export default function AddEvent() {
     const navigate = useNavigate();
     const [isSaving, setIsSaving] = useState(false);
+    const [dateRaw, setDateRaw] = useState('');
+    const [dateMode, setDateMode] = useState('picker'); // 'picker' | 'custom'
     const [formData, setFormData] = useState({ 
         name: '', 
         category: 'Wedding', 
@@ -17,6 +25,19 @@ export default function AddEvent() {
         is_active: true,
         images: [] 
     });
+
+    const handleDateChange = (e) => {
+        const raw = e.target.value; // e.g. "2026-06-15"
+        setDateRaw(raw);
+        setFormData(prev => ({ ...prev, date_info: formatDateID(raw) }));
+    };
+
+    const handleModeSwitch = (mode) => {
+        setDateMode(mode);
+        // Reset nilai saat beralih mode
+        setDateRaw('');
+        setFormData(prev => ({ ...prev, date_info: '' }));
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -54,9 +75,11 @@ export default function AddEvent() {
                         <div className="space-y-4">
                             <div className="form-group">
                                 <label className="form-label">Nama Event / Paket</label>
-                                <div className="relative">
-                                    <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" className="admin-input pl-10" placeholder="misal: Wedding Sunset Package" />
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">
+                                        <Type size={16} />
+                                    </div>
+                                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" placeholder="misal: Wedding Sunset Package" />
                                 </div>
                             </div>
                             
@@ -83,9 +106,11 @@ export default function AddEvent() {
                         <div className="space-y-4">
                             <div className="form-group">
                                 <label className="form-label">Kategori Event</label>
-                                <div className="relative">
-                                    <Tag className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="admin-input pl-10">
+                                <div className="form-input-group">
+                                    <div className="input-icon-box">
+                                        <Tag size={16} />
+                                    </div>
+                                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })}>
                                         <option>Wedding</option>
                                         <option>Gathering</option>
                                         <option>Concert</option>
@@ -98,10 +123,82 @@ export default function AddEvent() {
 
                             <div className="form-group">
                                 <label className="form-label">Jadwal / Tanggal</label>
-                                <div className="relative">
-                                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                                    <input required value={formData.date_info} onChange={e => setFormData({ ...formData, date_info: e.target.value })} type="text" className="admin-input pl-10" placeholder="misal: 15 Juni 2026 atau Available Daily" />
+
+                                {/* Mode Toggle */}
+                                <div className="flex gap-2 mb-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleModeSwitch('picker')}
+                                        className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider border transition-all ${
+                                            dateMode === 'picker'
+                                                ? 'bg-admin-primary text-white border-admin-primary shadow-sm'
+                                                : 'bg-white text-admin-text-muted border-admin-border hover:border-admin-primary hover:text-admin-primary'
+                                        }`}
+                                    >
+                                        📅 Tanggal Pasti
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleModeSwitch('custom')}
+                                        className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-wider border transition-all ${
+                                            dateMode === 'custom'
+                                                ? 'bg-admin-primary text-white border-admin-primary shadow-sm'
+                                                : 'bg-white text-admin-text-muted border-admin-border hover:border-admin-primary hover:text-admin-primary'
+                                        }`}
+                                    >
+                                        ✏️ Jadwal Custom
+                                    </button>
                                 </div>
+
+                                {dateMode === 'picker' ? (
+                                    <>
+                                        <div className="form-input-group">
+                                            <div className="input-icon-box">
+                                                <Calendar size={16} />
+                                            </div>
+                                            <input
+                                                required
+                                                type="date"
+                                                value={dateRaw}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                onChange={handleDateChange}
+                                                style={{ colorScheme: 'light' }}
+                                            />
+                                        </div>
+                                        {formData.date_info && (
+                                            <p className="text-[11px] text-admin-primary font-bold mt-1.5 flex items-center gap-1">
+                                                <Calendar size={11} /> Tampil sebagai: <span className="italic">{formData.date_info}</span>
+                                            </p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="form-input-group">
+                                            <div className="input-icon-box">
+                                                <Calendar size={16} />
+                                            </div>
+                                            <input
+                                                required
+                                                type="text"
+                                                value={formData.date_info}
+                                                onChange={e => setFormData(prev => ({ ...prev, date_info: e.target.value }))}
+                                                placeholder="misal: Setiap Sabtu & Minggu, 16:00 WIB"
+                                            />
+                                        </div>
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {['Available Daily', 'Setiap Weekend', 'Setiap Sabtu, 16:00 WIB', 'Setiap Hari, 08:00–18:00'].map(s => (
+                                                <button
+                                                    key={s}
+                                                    type="button"
+                                                    onClick={() => setFormData(prev => ({ ...prev, date_info: s }))}
+                                                    className="px-2.5 py-1 text-[10px] font-bold bg-admin-bg border border-admin-border rounded-lg text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all"
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             <div className="form-group">

@@ -7,9 +7,37 @@ use Illuminate\Http\Request;
 
 class ResortController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Resort::all());
+        $resorts = Resort::all();
+        
+        if ($request->has(['check_in', 'check_out'])) {
+            $startDate = $request->check_in;
+            $endDate = $request->check_out;
+
+            foreach ($resorts as $resort) {
+                // Calculate booked rooms for this resort in the date range
+                $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
+                    ->where('item_id', $resort->id)
+                    ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
+                        $query->whereIn('status', ['pending', 'paid', 'success'])
+                              ->where(function ($q) use ($startDate, $endDate) {
+                                  $q->where('check_in_date', '<', $endDate)
+                                    ->where('check_out_date', '>', $startDate);
+                              });
+                    })
+                    ->sum('quantity');
+
+                $resort->available_stock = max(0, $resort->stock - $bookedCount);
+                
+                // Also update status if completely full
+                if ($resort->available_stock <= 0) {
+                    $resort->status = 'full';
+                }
+            }
+        }
+
+        return response()->json($resorts);
     }
 
     public function store(Request $request)
@@ -31,9 +59,28 @@ class ResortController extends Controller
         return response()->json($resort, 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $resort = Resort::findOrFail($id);
+
+        if ($request->has(['check_in', 'check_out'])) {
+            $startDate = $request->check_in;
+            $endDate = $request->check_out;
+
+            $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
+                ->where('item_id', $resort->id)
+                ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
+                    $query->whereIn('status', ['pending', 'paid', 'success'])
+                          ->where(function ($q) use ($startDate, $endDate) {
+                              $q->where('check_in_date', '<', $endDate)
+                                ->where('check_out_date', '>', $startDate);
+                          });
+                })
+                ->sum('quantity');
+
+            $resort->available_stock = max(0, $resort->stock - $bookedCount);
+        }
+
         return response()->json($resort);
     }
 

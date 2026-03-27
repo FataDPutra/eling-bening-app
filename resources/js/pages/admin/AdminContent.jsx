@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useContent } from '../../context/ContentContext';
 
 // High-fidelity preview component that matches Guest pages exactly
-const PreviewRenderer = ({ activeTab, content }) => {
+const PreviewRenderer = ({ activeTab, content, previewDevice }) => {
     const styles = `
         .hero-gradient { background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3)); }
         .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
@@ -19,12 +19,27 @@ const PreviewRenderer = ({ activeTab, content }) => {
         @media (min-width: 1024px) { .section-container { padding: 6rem 4rem; } }
         .hover-scale { transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
         .hover-scale:hover { transform: scale(1.03); }
+
+        .preview-container.mobile h1 { font-size: 2.25rem !important; line-height: 1.1 !important; }
+        .preview-container.mobile h2 { font-size: 1.8rem !important; }
+        .preview-container.mobile p { font-size: 0.875rem !important; }
+        .preview-container.mobile .section-container { padding: 2.5rem 1rem !important; }
+        .preview-container.mobile .quick-info-grid { grid-template-columns: 1fr !important; }
+        .preview-container.mobile .flex-col-mobile { flex-direction: column !important; gap: 2rem !important; }
+        .preview-container.mobile .cta-group { flex-direction: column !important; width: 100% !important; }
+        .preview-container.mobile .cta-group > * { width: 100% !important; }
+        
+        /* Tablet Specific Overrides in Preview */
+        .preview-container.tablet h1 { font-size: 3.5rem !important; }
+        .preview-container.tablet h2 { font-size: 2.5rem !important; }
+        .preview-container.tablet .section-container { padding: 4rem 2rem !important; }
+        .preview-container.tablet .flex-col-tablet { flex-direction: column !important; gap: 3rem !important; }
     `;
 
     if (activeTab === 'home') {
         const h = content.home;
         return (
-            <div className="preview-container font-sans text-gray-900 overflow-x-hidden bg-white">
+            <div className={`preview-container font-sans text-gray-900 overflow-x-hidden bg-white ${previewDevice}`}>
                 <style>{styles}</style>
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
@@ -43,7 +58,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
                         <p className="text-lg md:text-xl mb-12 font-light max-w-2xl mx-auto leading-relaxed animate-slide-up">
                             {h.heroSubtitle}
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-slide-up">
+                        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center animate-slide-up cta-group">
                             <div className="w-full sm:w-auto bg-eling-red text-white font-bold py-5 px-12 rounded-full text-lg shadow-2xl flex items-center justify-center gap-3 text-center">
                                 {h.ctaPrimary} <ArrowRight size={20} />
                             </div>
@@ -54,7 +69,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
 
                         {/* Quick Info Bar */}
                         <div className="mt-20 w-full max-w-4xl animate-slide-up">
-                            <div className="flex flex-wrap justify-center md:grid md:grid-cols-3 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 lg:p-8 gap-8 md:gap-0">
+                            <div className="flex flex-wrap justify-center md:grid md:grid-cols-3 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 lg:p-8 gap-8 md:gap-0 quick-info-grid">
                                 <div className="md:border-r border-white/10 flex flex-col items-center px-8">
                                     <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
                                         <MapPin size={24} className="text-green-400" />
@@ -85,7 +100,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
 
                 {/* About Section */}
                 <section className="section-container bg-white">
-                    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 md:gap-24">
+                    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 md:gap-24 flex-col-mobile flex-col-tablet">
                         <div className="lg:w-1/2 relative text-left">
                             <div className="absolute -top-10 -left-10 w-40 h-40 bg-eling-green opacity-5 rounded-full blur-3xl"></div>
                             <img src={content.about.storyImage || "/images/generated/resort.png"} alt="Landscape" className="rounded-3xl shadow-2xl w-full aspect-[4/3] object-cover relative z-10" />
@@ -112,7 +127,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
     if (activeTab === 'about') {
         const a = content.about;
         return (
-            <div className="preview-container font-sans text-gray-900 bg-gray-50">
+            <div className={`preview-container font-sans text-gray-900 bg-gray-50 ${previewDevice}`}>
                 <style>{styles}</style>
                 <section className="relative h-[60vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
                     <img src={a.heroImage || "/images/hero-bg.png"} alt="Hero Background" className="absolute inset-0 w-full h-full object-cover" />
@@ -124,7 +139,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
                 </section>
 
                 <section className="py-24 px-6 lg:px-24 bg-white">
-                    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+                    <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 flex-col-mobile flex-col-tablet">
                         <div className="lg:w-1/2 relative text-left">
                             <div className="absolute -top-8 -left-8 w-32 h-32 bg-eling-green opacity-10 rounded-full"></div>
                             <img src={a.storyImage || "/images/hero-bg.png"} alt="About" className="rounded-2xl shadow-2xl relative z-10 w-full object-cover aspect-[4/3] transition duration-700 hover:scale-[1.02]" />
@@ -150,10 +165,10 @@ const PreviewRenderer = ({ activeTab, content }) => {
     if (activeTab === 'gallery') {
         const g = content.gallery || [];
         return (
-            <div className="preview-container font-sans text-gray-900 bg-white pb-24 text-center">
+            <div className={`preview-container font-sans text-gray-900 bg-white pb-24 text-center ${previewDevice}`}>
                 <style>{styles}</style>
                 <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center text-center overflow-hidden mb-16">
-                    <img src="/images/hero-bg.png" alt="Gallery Hero" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={content.galleryHeroImage || "/images/hero-bg.png"} alt="Gallery Hero" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60"></div>
                     <div className="relative z-10 text-white max-w-4xl px-4 text-center">
                         <h1 className="text-5xl font-bold mb-4 font-serif">Koleksi Foto</h1>
@@ -181,7 +196,7 @@ const PreviewRenderer = ({ activeTab, content }) => {
     if (activeTab === 'contact') {
         const c = content.contact;
         return (
-            <div className="preview-container font-sans text-gray-900 bg-white pb-24">
+            <div className={`preview-container font-sans text-gray-900 bg-white pb-24 ${previewDevice}`}>
                 <style>{styles}</style>
                 <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
                     <img src={c.heroImage || "/images/hero-bg.png"} alt="Contact Hero" className="absolute inset-0 w-full h-full object-cover" />
@@ -232,10 +247,10 @@ const PreviewRenderer = ({ activeTab, content }) => {
     if (activeTab === 'facilities') {
         const f = content.facilities || [];
         return (
-            <div className="preview-container font-sans text-gray-900 bg-gray-50 pb-24 text-center">
+            <div className={`preview-container font-sans text-gray-900 bg-gray-50 pb-24 text-center ${previewDevice}`}>
                 <style>{styles}</style>
                 <section className="relative h-[50vh] min-h-[400px] flex items-center justify-center text-center overflow-hidden">
-                    <img src="/images/hero-bg.png" alt="Facilities Hero" className="absolute inset-0 w-full h-full object-cover" />
+                    <img src={content.eventHeroImage || "/images/hero-bg.png"} alt="Facilities Hero" className="absolute inset-0 w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/60"></div>
                     <div className="relative z-10 text-white max-w-4xl px-4 text-center">
                         <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Fasilitas Premium</h1>
@@ -305,7 +320,8 @@ export default function AdminContent() {
     const [previewDevice, setPreviewDevice] = useState('desktop');
 
     const handleChange = (key, value) => {
-        updateContent(activeTab, key, value);
+        const tabKey = activeTab === 'home' || activeTab === 'about' || activeTab === 'contact' ? activeTab : null;
+        updateContent(tabKey, key, value);
     };
 
     const handleSave = async () => {
@@ -907,9 +923,13 @@ export default function AdminContent() {
                         </h2>
                         <p className="text-[10px] uppercase tracking-widest font-black text-admin-text-muted mt-1">Real-time Visual Editor</p>
                     </div>
-                    <div className="px-3 py-1 bg-admin-bg rounded-lg border border-admin-border text-[9px] font-black tracking-[0.2em] text-admin-text-muted">
-                        v2.4.0
-                    </div>
+                    <button 
+                        onClick={() => setIsSidebarOpen(false)}
+                        className="p-2 text-admin-text-muted hover:text-admin-primary hover:bg-admin-primary/5 rounded-xl transition-all"
+                        title="Collapse Editor"
+                    >
+                        <PanelLeftClose size={20} />
+                    </button>
                 </div>
 
                 <div className="flex p-4 gap-2 bg-admin-bg/50 border-b border-admin-border">
@@ -944,57 +964,59 @@ export default function AdminContent() {
             </div>
 
             {/* PREVIEW CONTAINER */}
-            <div className="flex-1 bg-admin-bg p-12 flex flex-col transition-all duration-500 min-h-0">
-                <div className={`flex-1 flex flex-col mx-auto transition-all duration-500 min-h-0 ${previewDevice === 'mobile' ? 'max-w-[375px]' : previewDevice === 'tablet' ? 'max-w-[768px]' : 'w-full'
-                    }`}>
-                    {/* Device Header */}
-                    <div className="h-10 bg-slate-800 rounded-t-[2.5rem] flex items-center justify-between px-8 border-b border-slate-700 shadow-2xl relative">
-                        <div className="flex gap-1.5 px-1">
-                            <div className="w-3 h-3 rounded-full bg-red-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
-                            <div className="w-3 h-3 rounded-full bg-amber-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
-                            <div className="w-3 h-3 rounded-full bg-emerald-500/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]" />
+            <div className={`flex-1 flex flex-col transition-all duration-500 min-h-0 overflow-hidden ${isSidebarOpen ? 'bg-admin-bg p-8' : 'bg-slate-900 p-0'}`}>
+                {/* Device Chrome */}
+                <div className={`flex-1 flex flex-col min-h-0 mx-auto w-full transition-all duration-500 ${
+                    previewDevice === 'mobile' ? 'max-w-[390px]' : previewDevice === 'tablet' ? 'max-w-[820px]' : 'w-full max-w-full'
+                }`}>
+                    {/* Browser Bar */}
+                    <div className={`flex items-center gap-3 px-5 py-3 border-b rounded-t-2xl ${isSidebarOpen ? 'bg-slate-800 border-slate-700' : 'bg-slate-800 border-slate-700'}`}>
+                        <div className="flex gap-1.5">
+                            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                            <div className="w-3 h-3 rounded-full bg-amber-500/80" />
+                            <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
                         </div>
-                        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 bg-slate-900/50 px-4 py-1 rounded-full border border-slate-700">
-                            {!isSidebarOpen && (
-                                <button onClick={() => setIsSidebarOpen(true)} className="text-white/60 hover:text-admin-primary transition-colors">
-                                    <PanelLeftOpen size={14} />
-                                </button>
-                            )}
-                            <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">
-                                elingbening.com/{activeTab === 'home' ? '' : activeTab}
-                            </span>
+                        {!isSidebarOpen && (
+                            <button onClick={() => setIsSidebarOpen(true)} className="text-white/50 hover:text-admin-primary transition-colors">
+                                <PanelLeftOpen size={14} />
+                            </button>
+                        )}
+                        <div className="flex-1 bg-slate-700/60 rounded-lg px-3 py-1 text-[11px] font-mono text-slate-400 truncate">
+                            localhost:8000/{activeTab === 'home' ? '' : activeTab}
                         </div>
-                        <button className="px-3 py-0.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-lg uppercase tracking-widest animate-pulse">
-                            Live
-                        </button>
+                        <span className="px-2 py-0.5 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-black rounded-md uppercase tracking-widest animate-pulse">Live</span>
                     </div>
 
-                    {/* Preview Viewport */}
-                    <div className={`flex-1 overflow-hidden bg-white shadow-2xl transition-all duration-500 relative min-h-0 ${previewDevice === 'desktop' ? 'rounded-b-[2.5rem]' : 'rounded-b-none'
-                        }`}>
-                        <div className="absolute inset-0 overflow-y-auto custom-scrollbar bg-white">
-                            <PreviewRenderer activeTab={activeTab} content={content} />
-                        </div>
+                    {/* Live Viewport Renderer */}
+                    <div className="flex-1 overflow-y-auto rounded-b-2xl relative min-h-0 bg-white shadow-2xl custom-scrollbar-thin">
+                        <PreviewRenderer 
+                            activeTab={activeTab} 
+                            content={content} 
+                            previewDevice={previewDevice} 
+                        />
                     </div>
                 </div>
 
-                {/* Status Bar / Tools */}
-                <div className="mt-8 flex items-center justify-between">
+                {/* Floating Toolbar */}
+                <div className={`flex items-center justify-between transition-all duration-500 ${isSidebarOpen ? 'mt-6' : 'fixed bottom-8 left-1/2 -translate-x-1/2 z-50 px-8 py-4 bg-white/80 backdrop-blur-xl border border-admin-border rounded-full shadow-2xl'}`}>
                     <div className="flex items-center gap-2 bg-white p-1.5 rounded-full shadow-lg border border-admin-border">
                         <button
                             onClick={() => setPreviewDevice('desktop')}
+                            title="Desktop"
                             className={`p-2.5 rounded-full transition-all ${previewDevice === 'desktop' ? 'bg-admin-primary text-white shadow-lg' : 'text-admin-text-muted hover:text-admin-primary'}`}
                         >
                             <Monitor size={18} />
                         </button>
                         <button
                             onClick={() => setPreviewDevice('tablet')}
+                            title="Tablet (820px)"
                             className={`p-2.5 rounded-full transition-all ${previewDevice === 'tablet' ? 'bg-admin-primary text-white shadow-lg' : 'text-admin-text-muted hover:text-admin-primary'}`}
                         >
                             <Tablet size={18} />
                         </button>
                         <button
                             onClick={() => setPreviewDevice('mobile')}
+                            title="Mobile (390px)"
                             className={`p-2.5 rounded-full transition-all ${previewDevice === 'mobile' ? 'bg-admin-primary text-white shadow-lg' : 'text-admin-text-muted hover:text-admin-primary'}`}
                         >
                             <Smartphone size={18} />
@@ -1002,11 +1024,8 @@ export default function AdminContent() {
                     </div>
 
                     <div className="flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-lg border border-admin-border">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Visual Studio Connected</span>
-                        <div className="w-[1px] h-4 bg-admin-border mx-2" />
                         <button className="text-[10px] font-black text-admin-primary uppercase tracking-widest hover:underline flex items-center gap-1.5" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-                            {isSidebarOpen ? <PanelLeftClose size={12} /> : <PanelLeftOpen size={12} />}
+                            {isSidebarOpen ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
                             {isSidebarOpen ? 'Hide Editor' : 'Show Editor'}
                         </button>
                     </div>

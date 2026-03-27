@@ -22,6 +22,7 @@ class RescheduleController extends Controller
         $validated = $request->validate([
             'transaction_id' => 'required|exists:transactions,id',
             'new_date' => 'required|date|after:today',
+            'reason' => 'nullable|string',
         ]);
 
         $transaction = Transaction::findOrFail($validated['transaction_id']);
@@ -34,6 +35,7 @@ class RescheduleController extends Controller
             'transaction_id' => $transaction->id,
             'old_date' => $transaction->check_in_date,
             'new_date' => $validated['new_date'],
+            'reason' => $validated['reason'] ?? null,
             'status' => 'pending'
         ]);
 

@@ -7,7 +7,7 @@ import {
     PieChart, Megaphone, Layout, ExternalLink,
     ClipboardList, QrCode, Calendar, Menu, X,
     Bell, User, LogOut, ChevronLeft, ChevronRight,
-    CircleDollarSign, TrendingDown
+    CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import Swal from 'sweetalert2';
@@ -206,7 +206,15 @@ export default function AdminLayout() {
             {/* Main Wrapper */}
             <div className="admin-main-wrapper">
                 <header className="admin-topbar">
-                    <div className="topbar-left">
+                    <div className="topbar-left flex items-center gap-4">
+                        <button 
+                            onClick={toggleSidebar}
+                            className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-admin-primary hover:border-admin-primary/30 transition-all shadow-sm group"
+                            title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                        >
+                            {isSidebarCollapsed ? <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" /> : <PanelLeftClose size={20} className="group-hover:scale-110 transition-transform" />}
+                        </button>
+
                         <div className="topbar-search relative group">
                             <Search className="search-icon" size={18} />
                             <input 

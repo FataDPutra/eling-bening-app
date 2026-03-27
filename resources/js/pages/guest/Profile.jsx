@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 import { formatRupiah } from '../../utils/data';
 import { QRCodeCanvas } from 'qrcode.react';
 
 export default function Profile() {
-    const { user, logout, updateProfile } = useAuth();
+    const { user, logout, updateProfile, updatePassword, updatePhoto } = useAuth();
     const navigate = useNavigate();
 
     const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -18,14 +19,25 @@ export default function Profile() {
     const [rescheduleData, setRescheduleData] = useState(null); 
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+    const [publicSettings, setPublicSettings] = useState({ max_reschedule_days: 7 });
 
     useEffect(() => {
         fetchBookings();
+        fetchPublicSettings();
     }, []);
+
+    const fetchPublicSettings = async () => {
+        try {
+            const res = await axios.get('/api/settings/public');
+            setPublicSettings(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     const fetchBookings = async () => {
         try {
-            const res = await axios.get('/api/transactions');
+            const res = await axios.get('/api/transactions?mine=1');
             setBookings(res.data);
         } catch (error) {
             console.error("Failed to fetch bookings", error);
@@ -51,11 +63,58 @@ export default function Profile() {
         }
     };
 
+    const handleUpdateProfile = async (e) => {
+        e.preventDefault();
+        try {
+            await updateProfile(editForm);
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Profil Anda telah diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#2E7D32',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+            setIsEditingProfile(false);
+        } catch (error) {
+            Swal.fire({
+                title: 'Gagal!',
+                text: error.response?.data?.message || 'Gagal memperbarui profil.',
+                icon: 'error',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+        }
+    };
+
+    const [passwordForm, setPasswordForm] = useState({ current_password: '', password: '', password_confirmation: '' });
+
+    const handleUpdatePassword = async (e) => {
+        e.preventDefault();
+        try {
+            await updatePassword(passwordForm);
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Kata sandi telah diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#2E7D32',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+            setPasswordForm({ current_password: '', password: '', password_confirmation: '' });
+        } catch (error) {
+            Swal.fire({
+                title: 'Gagal!',
+                text: error.response?.data?.message || 'Gagal memperbarui kata sandi.',
+                icon: 'error',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+        }
+    };
+
     const handleReschedule = async () => {
         if (!rescheduleData.newDate) return;
         try {
             await axios.post(`/api/transactions/${rescheduleData.id}/reschedule`, {
-                new_check_in_date: rescheduleData.newDate
+                new_check_in_date: rescheduleData.newDate,
+                reason: rescheduleData.reason
             });
             Swal.fire({
                 title: 'Berhasil!',
@@ -92,12 +151,26 @@ export default function Profile() {
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 sticky top-32">
                             <div className="flex flex-col items-center mb-8">
-                                <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-eling-green mb-4">
-                                    <User size={40} />
+                                <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-eling-green mb-4 overflow-hidden border-4 border-white shadow-lg">
+                                    {user?.profile_photo_path ? (
+                                        <img src={`/storage/${user.profile_photo_path}`} className="w-full h-full object-cover" alt="Profile" />
+                                    ) : (
+                                        <User size={40} />
+                                    )}
                                 </div>
                                 <h2 className="text-xl font-bold text-gray-900 text-center">{user?.name || 'Guest User'}</h2>
                                 <p className="text-sm text-gray-500">{user?.email}</p>
                             </div>
+
+                            <button 
+                                onClick={() => {
+                                    setEditForm({ name: user?.name, email: user?.email });
+                                    setIsEditingProfile(true);
+                                }}
+                                className="w-full py-3 mb-3 text-eling-green font-bold rounded-xl bg-green-50 hover:bg-green-100 transition flex items-center justify-center gap-2"
+                            >
+                                <User size={16} /> Edit Profil
+                            </button>
 
                             <button onClick={handleLogout} className="w-full py-3 text-eling-red font-bold rounded-xl bg-red-50 hover:bg-red-100 transition">
                                 Keluar Akun
@@ -170,7 +243,26 @@ export default function Profile() {
                                                     </button>
                                                     {isResort && (
                                                         <button 
-                                                            onClick={() => setRescheduleData({ id: booking.id, oldDate: booking.check_in_date })}
+                                                            onClick={() => {
+                                                                const checkIn = new Date(booking.check_in_date);
+                                                                checkIn.setHours(0,0,0,0);
+                                                                const now = new Date();
+                                                                now.setHours(0,0,0,0);
+                                                                const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+                                                                const maxDays = Number(publicSettings.max_reschedule_days || 7);
+                                                                
+                                                                if (diff < maxDays) {
+                                                                    Swal.fire({
+                                                                        title: 'Maaf',
+                                                                        text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
+                                                                        icon: 'error',
+                                                                        confirmButtonColor: '#C62828',
+                                                                        customClass: { popup: 'rounded-[2rem]' }
+                                                                    });
+                                                                    return;
+                                                                }
+                                                                setRescheduleData({ id: booking.id, oldDate: booking.check_in_date });
+                                                            }}
                                                             className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                                                         >
                                                             <Clock size={10} className="inline mr-1" /> Reschedule
@@ -203,9 +295,14 @@ export default function Profile() {
                         <div className="space-y-6">
                             <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-3">
                                 <AlertCircle className="text-blue-500 shrink-0" size={20} />
-                                <p className="text-sm text-blue-800 leading-relaxed">
-                                    Reschedule hanya dapat dilakukan ke tanggal setelah hari ini. Permintaan Anda akan ditinjau oleh tim kami.
-                                </p>
+                                <div className="space-y-1">
+                                    <p className="text-sm text-blue-800 leading-tight font-bold">
+                                        Kebijakan Reschedule
+                                    </p>
+                                    <p className="text-[11px] text-blue-800/70 leading-relaxed">
+                                        Reschedule hanya dapat dilakukan maksimal {publicSettings.max_reschedule_days || 7} hari sebelum kedatangan. Permintaan Anda akan ditinjau oleh admin.
+                                    </p>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Order ID</label>
@@ -215,9 +312,18 @@ export default function Profile() {
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Pilih Tanggal Baru</label>
                                 <input 
                                     type="date" 
-                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all"
+                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all mb-4"
                                     onChange={(e) => setRescheduleData({ ...rescheduleData, newDate: e.target.value })}
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Alasan / Catatan</label>
+                                <textarea 
+                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all resize-none font-bold text-sm"
+                                    rows="3"
+                                    placeholder="Kenapa Anda ingin menjadwalkan ulang?"
+                                    onChange={(e) => setRescheduleData({ ...rescheduleData, reason: e.target.value })}
+                                ></textarea>
                             </div>
                             <button 
                                 onClick={handleReschedule} 
@@ -250,23 +356,35 @@ export default function Profile() {
                                         <p className="text-white/60 text-[9px] font-bold uppercase tracking-widest">{selectedTicket.check_in_date ? new Date(selectedTicket.check_in_date).toLocaleDateString() : 'Active Pass'}</p>
                                     </div>
                                     <div className="p-10 flex flex-col items-center w-full text-center">
-                                        <div className="p-6 bg-gray-50 rounded-[2.5rem] mb-8 border border-gray-100">
+                                        <div className="p-8 bg-white rounded-[3rem] mb-8 border-4 border-gray-50 shadow-inner flex items-center justify-center relative group">
+                                            <div className="absolute inset-0 bg-eling-green/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2.8rem]"></div>
                                             <QRCodeCanvas 
                                                 value={tick.ticket_id} 
-                                                size={180}
+                                                size={200}
                                                 level="H"
                                                 includeMargin={false}
-                                                className="mix-blend-multiply"
+                                                imageSettings={{
+                                                    src: "/images/logo.png",
+                                                    x: undefined,
+                                                    y: undefined,
+                                                    height: 45,
+                                                    width: 45,
+                                                    excavate: true,
+                                                }}
+                                                className="relative z-10"
                                             />
                                         </div>
                                         <div className="space-y-4 w-full">
-                                            <div>
+                                            <div className="bg-gray-50 py-4 px-6 rounded-2xl border border-gray-100">
                                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Visitor Name</p>
                                                 <h5 className="text-xl font-black text-gray-900 leading-tight uppercase tracking-tight">{tick.guest_name}</h5>
                                             </div>
-                                            <div className="pt-4 border-t border-dashed border-gray-200">
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 shadow-sm inline-block px-2 bg-gray-50 rounded">System UID</p>
-                                                <p className="font-mono text-[10px] text-gray-400 font-bold uppercase tracking-tighter">{tick.ticket_id}</p>
+                                            <div className="pt-4 border-t-4 border-dotted border-gray-100">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entry UID</p>
+                                                    <div className="w-2 h-2 rounded-full bg-eling-green animate-pulse"></div>
+                                                </div>
+                                                <p className="font-mono text-[11px] text-gray-900 font-black uppercase tracking-tighter bg-gray-50 p-3 rounded-xl border border-gray-100">{tick.ticket_id}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -355,8 +473,8 @@ export default function Profile() {
                             {/* Summary Section */}
                             <div className="pt-8 border-t border-dashed border-gray-200 space-y-3">
                                 <div className="flex justify-between text-sm text-gray-500">
-                                    <span>Subtotal Qty ({selectedOrderDetail.total_qty})</span>
-                                    <span>{formatRupiah(selectedOrderDetail.total_price + selectedOrderDetail.discount_amount)}</span>
+                                    <span>Subtotal Qty ({Number(selectedOrderDetail.total_qty || 0)})</span>
+                                    <span>{formatRupiah(Number(selectedOrderDetail.total_price || 0) + Number(selectedOrderDetail.discount_amount || 0))}</span>
                                 </div>
                                 {selectedOrderDetail.discount_amount > 0 && (
                                     <div className="flex justify-between text-sm text-eling-red font-bold">
@@ -384,6 +502,156 @@ export default function Profile() {
                                 </button>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Profile Modal */}
+            {isEditingProfile && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsEditingProfile(false)}>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                            <div>
+                                <h3 className="text-2xl font-bold font-serif text-gray-900">Pengaturan Akun</h3>
+                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Update data diri & keamanan</p>
+                            </div>
+                            <button onClick={() => setIsEditingProfile(false)} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-eling-red transition"><X size={20}/></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-8 space-y-12 no-scrollbar">
+                            {/* Photo Section */}
+                            <section>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                        <Camera size={18} />
+                                    </div>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-gray-900">Foto Profil</h4>
+                                </div>
+                                <div className="flex flex-col md:flex-row items-center gap-6 p-6 bg-gray-50 rounded-[2rem] border border-gray-100">
+                                    <div className="w-28 h-28 rounded-full overflow-hidden bg-white shadow-xl ring-4 ring-white shrink-0">
+                                        {user?.profile_photo_path ? (
+                                            <img src={`/storage/${user.profile_photo_path}`} className="w-full h-full object-cover" alt="Profile" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <User size={48} />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-3 flex-1 text-center md:text-left">
+                                        <h5 className="font-bold text-gray-900">Ubah Foto Profil</h5>
+                                        <p className="text-xs text-gray-500 max-w-xs mx-auto md:mx-0">Pilih foto terbaik Anda. Ukuran maksimal 2MB dengan format JPG atau PNG.</p>
+                                        <label className="inline-flex py-2 px-6 bg-white border border-gray-200 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition cursor-pointer shadow-sm">
+                                            Pilih Berkas
+                                            <input type="file" className="hidden" accept="image/*" onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+                                                
+                                                const formData = new FormData();
+                                                formData.append('photo', file);
+                                                
+                                                try {
+                                                    await updatePhoto(formData);
+                                                    toast.success('Foto profil berhasil diperbarui');
+                                                } catch (error) {
+                                                    toast.error('Gagal memperbarui foto');
+                                                }
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Profile Section */}
+                            <section>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 bg-green-50 text-eling-green rounded-lg flex items-center justify-center">
+                                        <User size={18} />
+                                    </div>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-gray-900">Informasi Dasar</h4>
+                                </div>
+                                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
+                                            <input 
+                                                type="text" 
+                                                value={editForm.name} 
+                                                onChange={e => setEditForm({...editForm, name: e.target.value})}
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-green/20 outline-none transition-all font-bold text-sm"
+                                                placeholder="Nama Anda"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Alamat Email</label>
+                                            <input 
+                                                type="email" 
+                                                value={editForm.email} 
+                                                onChange={e => setEditForm({...editForm, email: e.target.value})}
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-green/20 outline-none transition-all font-bold text-sm"
+                                                placeholder="email@anda.com"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full bg-eling-green text-white font-black py-4 rounded-2xl shadow-lg shadow-green-900/10 hover:bg-green-800 transition-all uppercase tracking-widest text-xs mt-2">
+                                        Simpan Perubahan
+                                    </button>
+                                </form>
+                            </section>
+
+                            <hr className="border-gray-100" />
+
+                            {/* Password Section */}
+                            <section>
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 bg-red-50 text-eling-red rounded-lg flex items-center justify-center">
+                                        <ShieldCheck size={18} />
+                                    </div>
+                                    <h4 className="text-sm font-black uppercase tracking-widest text-gray-900">Keamanan & Sandi</h4>
+                                </div>
+                                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kata Sandi Saat Ini</label>
+                                        <input 
+                                            type="password" 
+                                            value={passwordForm.current_password}
+                                            onChange={e => setPasswordForm({...passwordForm, current_password: e.target.value})}
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-red/10 outline-none transition-all font-bold text-sm"
+                                            placeholder="••••••••"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Kata Sandi Baru</label>
+                                            <input 
+                                                type="password" 
+                                                value={passwordForm.password}
+                                                onChange={e => setPasswordForm({...passwordForm, password: e.target.value})}
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-red/10 outline-none transition-all font-bold text-sm"
+                                                placeholder="Minimal 8 karakter"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Konfirmasi Sandi</label>
+                                            <input 
+                                                type="password" 
+                                                value={passwordForm.password_confirmation}
+                                                onChange={e => setPasswordForm({...passwordForm, password_confirmation: e.target.value})}
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-red/10 outline-none transition-all font-bold text-sm"
+                                                placeholder="Ulangi sandi baru"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full bg-eling-red text-white font-black py-4 rounded-2xl shadow-lg shadow-red-900/10 hover:bg-red-800 transition-all uppercase tracking-widest text-xs mt-2">
+                                        Ganti Kata Sandi
+                                    </button>
+                                </form>
+                            </section>
+                        </div>
                     </div>
                 </div>
             )}
