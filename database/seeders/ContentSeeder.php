@@ -117,10 +117,10 @@ class ContentSeeder extends Seeder
                 'key' => 'global_facilities',
                 'content' => null,
                 'data' => [
-                    ['id' => 1, 'name' => 'Kolam Renang Infinity', 'desc' => 'Kolam renang dengan pemandangan pegunungan yang menakjubkan.', 'icon' => 'swimming-pool', 'image' => '/images/hero-bg.png'],
-                    ['id' => 2, 'name' => 'Restoran & Cafe', 'desc' => 'Hidangan lezat dengan bahan lokal segar dan suasana nyaman.', 'icon' => 'utensils', 'image' => '/images/hero-bg.png'],
-                    ['id' => 3, 'name' => 'Taman Bermain', 'desc' => 'Area aman dan menyenangkan untuk aktifitas anak-anak.', 'icon' => 'child', 'image' => '/images/hero-bg.png'],
-                    ['id' => 4, 'name' => 'Spot Foto Skydeck', 'desc' => 'Sudut terbaik untuk mengabadikan momen dengan latar Rawa Pening.', 'icon' => 'camera', 'image' => '/images/hero-bg.png']
+                    ['id' => 1, 'name' => 'Kolam Renang Infinity', 'desc' => 'Kolam renang dengan pemandangan pegunungan yang menakjubkan.', 'icon' => 'Waves', 'image' => '/images/hero-bg.png'],
+                    ['id' => 2, 'name' => 'Restoran & Cafe', 'desc' => 'Hidangan lezat dengan bahan lokal segar dan suasana nyaman.', 'icon' => 'Coffee', 'image' => '/images/hero-bg.png'],
+                    ['id' => 3, 'name' => 'Taman Bermain', 'desc' => 'Area aman dan menyenangkan untuk aktifitas anak-anak.', 'icon' => 'Gamepad2', 'image' => '/images/hero-bg.png'],
+                    ['id' => 4, 'name' => 'Spot Foto Skydeck', 'desc' => 'Sudut terbaik untuk mengabadikan momen dengan latar Rawa Pening.', 'icon' => 'Camera', 'image' => '/images/hero-bg.png']
                 ],
                 'type' => 'json',
                 'page' => 'facilities'

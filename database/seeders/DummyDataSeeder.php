@@ -15,53 +15,78 @@ class DummyDataSeeder extends Seeder
         Resort::create([
             'name' => 'Villa Merbabu',
             'description' => 'Villa mewah dengan pemandangan langsung Gunung Merbabu.',
-            'facilities' => ['AC', 'Smart TV', 'Kolam Renang Privat', 'Teras Santai', 'Akses Kolam Umum', 'Sarapan 4 Pax'],
+            'facilities' => [
+                ['name' => 'AC Premium', 'icon' => 'Wind'],
+                ['name' => 'Smart TV 55"', 'icon' => 'Monitor'],
+                ['name' => 'Private Pool', 'icon' => 'Waves'],
+                ['name' => 'Teras Santai', 'icon' => 'Trees'],
+                ['name' => 'Wifi Kencang', 'icon' => 'Wifi'],
+                ['name' => 'Breakfast 4 Pax', 'icon' => 'Coffee']
+            ],
             'price' => 1500000,
             'price_weekend' => 1800000,
             'stock' => 5,
             'capacity' => 4,
             'bed_type' => '2 King Bed',
             'room_size' => '45',
-            'gallery' => [] // Kosongkan agar pakai gambar default
+            'gallery' => []
         ]);
 
         Resort::create([
             'name' => 'Glamping Rawa Pening',
             'description' => 'Pengalaman glamping unik di pinggir bukit dengan udara sejuk.',
-            'facilities' => ['AC', 'Kamar Mandi Dalam', 'Api Unggun (Share)', 'Sarapan 2 Pax', 'Mini Bar'],
+            'facilities' => [
+                ['name' => 'AC', 'icon' => 'Wind'],
+                ['name' => 'Kamar Mandi Dalam', 'icon' => 'Bath'],
+                ['name' => 'Api Unggun', 'icon' => 'Flame'],
+                ['name' => 'Breakfast 2 Pax', 'icon' => 'Coffee'],
+                ['name' => 'Mini Bar', 'icon' => 'Wine']
+            ],
             'price' => 800000,
             'price_weekend' => 1000000,
             'stock' => 10,
             'capacity' => 2,
             'bed_type' => '1 Queen Bed',
             'room_size' => '20',
-            'gallery' => [] // Kosongkan agar pakai gambar default
+            'gallery' => []
         ]);
         
         Resort::create([
             'name' => 'Family Suite Ungaran',
             'description' => 'Ruang luas untuk rombongan keluarga besar dengan fasilitas lengkap.',
-            'facilities' => ['AC', 'Smart TV 55"', 'Dapur Mini', 'Living Room', 'Sarapan 6 Pax', 'Akses Semua Wahana'],
+            'facilities' => [
+                ['name' => 'AC Central', 'icon' => 'Wind'],
+                ['name' => 'Smart TV & Sound', 'icon' => 'Tv'],
+                ['name' => 'Dapur Lengkap', 'icon' => 'Utensils'],
+                ['name' => 'Living Room', 'icon' => 'LayoutGrid'],
+                ['name' => 'Breakfast 6 Pax', 'icon' => 'Coffee'],
+                ['name' => 'Akses All-Area', 'icon' => 'MapPin']
+            ],
             'price' => 2500000,
             'price_weekend' => 3000000,
             'stock' => 2,
             'capacity' => 6,
             'bed_type' => '3 King Bed',
             'room_size' => '80',
-            'gallery' => [] // Kosongkan agar pakai gambar default
+            'gallery' => []
         ]);
 
         Resort::create([
             'name' => 'Superior Room',
             'description' => 'Kamar superior dengan fasilitas standar yang nyaman untuk pasangan atau perjalanan dinas.',
-            'facilities' => ['AC', 'TV', 'Shower Panas/Dingin', 'Sarapan 2 Pax'],
+            'facilities' => [
+                ['name' => 'AC', 'icon' => 'Wind'],
+                ['name' => 'TV', 'icon' => 'Tv'],
+                ['name' => 'Hot Shower', 'icon' => 'ShowerHead'],
+                ['name' => 'Breakfast 2 Pax', 'icon' => 'Coffee']
+            ],
             'price' => 500000,
             'price_weekend' => 650000,
             'stock' => 8,
             'capacity' => 2,
             'bed_type' => '1 Double Bed',
             'room_size' => '18',
-            'gallery' => [] // Kosongkan agar pakai gambar default
+            'gallery' => []
         ]);
 
         Ticket::create([
