@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class TransactionTicket extends Model
 {
     protected $guarded = [];
+    
+    protected $casts = [
+        'is_used' => 'boolean',
+        'used_at' => 'datetime',
+    ];
 
     public function transaction()
     {

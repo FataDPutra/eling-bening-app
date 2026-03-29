@@ -10,15 +10,17 @@ class Transaction extends Model
     use HasFactory;
 
     protected $guarded = [];
-
-    protected $keyType = 'string';
-    public $incrementing = false;
-
+    
     protected $casts = [
         'check_in_date' => 'date',
         'check_out_date' => 'date',
         'additional_facilities' => 'array',
+        'checked_in_at' => 'datetime',
+        'checked_out_at' => 'datetime',
     ];
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     public function user()
     {

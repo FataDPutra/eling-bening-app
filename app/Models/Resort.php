@@ -14,6 +14,7 @@ class Resort extends Model
 
     protected $casts = [
         'gallery' => 'array',
+        'facilities' => 'array',
     ];
 
     /**
