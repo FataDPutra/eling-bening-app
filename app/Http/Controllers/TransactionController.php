@@ -62,6 +62,7 @@ class TransactionController extends Controller
             'items.*.item_type' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric',
+            'items.*.guest_names' => 'nullable|array',
             'special_requests' => 'nullable|string',
             'booker_email' => 'nullable|email',
             'booker_phone' => 'nullable|string',
@@ -128,7 +129,7 @@ class TransactionController extends Controller
                     'quantity' => $item['quantity'],
                     'price' => $item['price'],
                     'subtotal' => $item['quantity'] * $item['price'],
-                    // Store guest_names temporarily in items if needed, but we'll use generateTickets
+                    'guest_names' => $item['guest_names'] ?? []
                 ]);
             }
 
@@ -176,7 +177,8 @@ class TransactionController extends Controller
             $itemsData = collect($transaction->items)->map(function($item) {
                 return [
                     'item_id' => $item->item_id,
-                    'quantity' => $item->quantity
+                    'quantity' => $item->quantity,
+                    'guest_names' => $item->guest_names ?? []
                 ];
             })->toArray();
             
@@ -204,9 +206,15 @@ class TransactionController extends Controller
             $requestItem = collect($itemsData)->where('item_id', $transItem->item_id)->first();
             
             for ($i = 0; $i < $transItem->quantity; $i++) {
-                $guestName = (isset($requestItem['guest_names']) && !empty($requestItem['guest_names'][$i])) 
-                    ? $requestItem['guest_names'][$i] 
-                    : $transaction->booker_name;
+                // Check in request itemData first, then in stored guest_names from DB
+                $guestName = null;
+                if (isset($requestItem['guest_names']) && !empty($requestItem['guest_names'][$i])) {
+                    $guestName = $requestItem['guest_names'][$i];
+                } else if ($transItem->guest_names && !empty($transItem->guest_names[$i])) {
+                    $guestName = $transItem->guest_names[$i];
+                } else {
+                    $guestName = $transaction->booker_name;
+                }
 
                 $prefix = 'EB-TICK-';
                 if ($transaction->booking_type === 'EVENT') {

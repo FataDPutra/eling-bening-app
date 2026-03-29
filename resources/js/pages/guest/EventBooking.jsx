@@ -10,6 +10,7 @@ import {
     Ticket, Info, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { QRCodeCanvas } from 'qrcode.react';
 import '../../styles/guest.css';
 
 const getEventImage = (event) => {
@@ -34,7 +35,7 @@ export default function EventBooking() {
     const [showPayment, setShowPayment] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [transactionId, setTransactionId] = useState('');
+    const [successData, setSuccessData] = useState(null);
 
     useEffect(() => {
         if (user) setBookerName(user.name);
@@ -143,8 +144,8 @@ export default function EventBooking() {
         };
 
         try {
-            await axios.post('/api/transactions', payload);
-            setTransactionId(txId);
+            const res = await axios.post('/api/transactions', payload);
+            setSuccessData(res.data);
             setIsProcessing(false);
             setShowSuccess(true);
         } catch (err) {
@@ -239,26 +240,28 @@ export default function EventBooking() {
                                 )}
 
                                 {/* Qty selector */}
-                                <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
-                                    <div>
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Jumlah Tiket</p>
-                                        <p className="text-3xl font-black text-eling-green">{qty} <span className="text-sm text-gray-400 font-bold">tiket</span></p>
+                                <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mt-8 pt-8 border-t border-gray-100 relative">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Jumlah Tiket</p>
+                                        <p className="text-4xl font-black text-eling-green font-serif tracking-tight leading-none">
+                                            {qty} <span className="text-sm text-gray-400 font-bold">tiket</span>
+                                        </p>
                                     </div>
-                                    <div className="flex items-center gap-4 bg-gray-50 p-2.5 rounded-2xl border border-gray-100 shadow-inner">
+                                    <div className="flex items-center justify-between sm:justify-end gap-5 bg-gray-50 p-2.5 rounded-2xl border border-gray-100 shadow-inner min-w-[160px]">
                                         <button
                                             onClick={() => handleQtyChange(-1)}
                                             disabled={qty <= 1}
-                                            className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-eling-red hover:text-white transition-all text-gray-400 hover:shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-eling-red hover:text-white transition-all text-gray-400 hover:shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed border border-gray-100"
                                         >
-                                            <b>−</b>
+                                            <b className="text-xl">−</b>
                                         </button>
                                         <span className="font-black text-2xl w-8 text-center text-gray-900">{qty}</span>
                                         <button
                                             onClick={() => handleQtyChange(1)}
                                             disabled={qty >= maxQty()}
-                                            className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 hover:shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
+                                            className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 hover:shadow-lg active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed border border-gray-100"
                                         >
-                                            <b>+</b>
+                                            <b className="text-xl">+</b>
                                         </button>
                                     </div>
                                 </div>
@@ -321,84 +324,95 @@ export default function EventBooking() {
 
                     {/* ─── RIGHT COLUMN (Sticky Summary) ─── */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 sticky top-32">
-                            <h3 className="text-xl font-black text-gray-900 mb-8 font-serif">Ringkasan Pesanan</h3>
+                        <div className="sticky top-10 space-y-6">
+                            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 relative overflow-hidden">
+                                <h3 className="text-xl font-black text-gray-900 mb-8 font-serif">Ringkasan Pesanan</h3>
 
-                            {/* Item row */}
-                            <div className="flex justify-between items-start mb-6">
-                                <div>
-                                    <p className="font-black text-gray-800 text-sm leading-tight mb-1">{event.name}</p>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{qty} × {formatRupiah(price)}</p>
-                                </div>
-                                <p className="font-black text-gray-900">{formatRupiah(subtotal)}</p>
-                            </div>
-
-                            {/* Breakdown */}
-                            <div className="pt-6 border-t border-dashed border-gray-200 space-y-4 text-sm mb-6">
-                                <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-[9px]">
-                                    <span>Biaya Layanan</span>
-                                    <span className="text-gray-900">{formatRupiah(adminFee)}</span>
-                                </div>
-                                {activePromo && (
-                                    <div className="flex justify-between text-eling-red font-bold uppercase tracking-widest text-[9px]">
-                                        <span>Diskon Promo</span>
-                                        <span>−{formatRupiah(promoDiscountAmt)}</span>
+                                {/* Item row */}
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <p className="font-black text-gray-800 text-sm leading-tight mb-1">{event.name}</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{qty} × {formatRupiah(price)}</p>
                                     </div>
-                                )}
-                            </div>
-
-                            <div className="flex justify-between items-center pt-6 border-t border-gray-100 mb-8">
-                                <span className="text-xs font-black uppercase tracking-widest text-gray-400">Total Tagihan</span>
-                                <span className="text-3xl font-black text-eling-green">{formatRupiah(total)}</span>
-                            </div>
-
-                            {/* Promo */}
-                            <div className="mb-8">
-                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-[0.2em]">
-                                    Kode Promo
-                                </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        value={promoInput}
-                                        onChange={e => setPromoInput(e.target.value)}
-                                        onKeyDown={e => e.key === 'Enter' && applyPromo()}
-                                        placeholder="KODE PROMO"
-                                        className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-eling-green/10 outline-none"
-                                    />
-                                    <button
-                                        onClick={applyPromo}
-                                        className="bg-gray-900 text-white font-black px-4 rounded-xl hover:bg-eling-green transition-all text-[10px] uppercase tracking-widest active:scale-95"
-                                    >
-                                        Klaim
-                                    </button>
+                                    <p className="font-black text-gray-900">{formatRupiah(subtotal)}</p>
                                 </div>
-                                {promoMsg.show && (
-                                    <p className={`mt-2 text-[10px] font-bold ${promoMsg.success ? 'text-eling-green' : 'text-eling-red'}`}>
-                                        {promoMsg.text}
+
+                                {/* Breakdown */}
+                                <div className="pt-6 border-t border-dashed border-gray-200 space-y-4 text-sm mb-6">
+                                    <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+                                        <span>Biaya Layanan</span>
+                                        <span className="text-gray-900">{formatRupiah(adminFee)}</span>
+                                    </div>
+                                    {activePromo && (
+                                        <div className="flex justify-between text-eling-red font-bold uppercase tracking-widest text-[9px]">
+                                            <span>Diskon Promo</span>
+                                            <span>−{formatRupiah(promoDiscountAmt)}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex justify-between items-center pt-6 border-t border-gray-100 mb-8">
+                                    <span className="text-xs font-black uppercase tracking-widest text-gray-400">Total Tagihan</span>
+                                    <span className="text-3xl font-black text-eling-green">{formatRupiah(total)}</span>
+                                </div>
+
+                                {/* Promo */}
+                                <div className="mb-8">
+                                    <label className="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-[0.2em]">
+                                        Kode Promo
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={promoInput}
+                                            onChange={e => setPromoInput(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && applyPromo()}
+                                            placeholder="KODE PROMO"
+                                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-eling-green/10 outline-none"
+                                        />
+                                        <button
+                                            onClick={applyPromo}
+                                            className="bg-gray-900 text-white font-black px-4 rounded-xl hover:bg-eling-green transition-all text-[10px] uppercase tracking-widest active:scale-95"
+                                        >
+                                            Klaim
+                                        </button>
+                                    </div>
+                                    {promoMsg.show && (
+                                        <p className={`mt-2 text-[10px] font-bold ${promoMsg.success ? 'text-eling-green' : 'text-eling-red'}`}>
+                                            {promoMsg.text}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* CTA */}
+                                <button
+                                    onClick={() => {
+                                        if (!user) { navigate('/login'); return; }
+                                        setShowPayment(true);
+                                    }}
+                                    disabled={isProcessing}
+                                    className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:bg-eling-red/90 hover:scale-[1.02] transition-all text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {isProcessing
+                                        ? <Loader2 className="animate-spin" size={16} />
+                                        : <><span>Lanjut Pembayaran</span><ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></>
+                                    }
+                                </button>
+
+                                <div className="mt-6 flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                    <ShieldCheck className="text-eling-green flex-shrink-0" size={18} />
+                                    <p className="text-[9px] text-gray-400 font-bold uppercase leading-relaxed tracking-wider">
+                                        Transaksi aman &amp; terenkripsi. E-Ticket langsung tersimpan di profil Anda.
                                     </p>
-                                )}
+                                </div>
                             </div>
 
-                            {/* CTA */}
-                            <button
-                                onClick={() => {
-                                    if (!user) { navigate('/login'); return; }
-                                    setShowPayment(true);
-                                }}
-                                disabled={isProcessing}
-                                className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:bg-eling-red/90 hover:scale-[1.02] transition-all text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {isProcessing
-                                    ? <Loader2 className="animate-spin" size={16} />
-                                    : <><span>Lanjut Pembayaran</span><ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" /></>
-                                }
-                            </button>
-
-                            <div className="mt-6 flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                <ShieldCheck className="text-eling-green flex-shrink-0" size={18} />
-                                <p className="text-[9px] text-gray-400 font-bold uppercase leading-relaxed tracking-wider">
-                                    Transaksi aman &amp; terenkripsi. E-Ticket langsung tersimpan di profil Anda.
+                            {/* Booking Policies Card */}
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
+                                <h4 className="text-xl font-black font-serif mb-3 leading-tight relative z-10 font-serif">Kebijakan Tiket</h4>
+                                <p className="text-blue-100 font-bold text-xs leading-relaxed relative z-10 opacity-80 uppercase tracking-wide">
+                                    Data manifest harus sesuai e-ticket. Tiket event yang sudah dibeli tidak dapat di-reschedule.
                                 </p>
                             </div>
                         </div>
@@ -448,53 +462,61 @@ export default function EventBooking() {
                 </div>
             )}
 
-            {/* ─── SUCCESS MODAL ─── */}
+            {/* Success Modal */}
             {showSuccess && (
-                <div className="fixed inset-0 z-[700] bg-eling-green/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-white animate-fade-in">
-                    <div className="max-w-lg w-full text-center animate-scale-up">
-                        <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
-                            <CheckCircle size={48} className="text-white" />
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-black mb-3 font-serif leading-tight">Tiket Berhasil<br/>Dipesan!</h2>
-                        <p className="text-green-100 font-bold text-sm mb-10 uppercase tracking-widest opacity-80">
-                            Pembayaran terverifikasi · E-Ticket tersimpan di profil Anda
-                        </p>
-
-                        <div className="bg-white p-10 rounded-[3rem] shadow-2xl mb-10 text-center relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-eling-green to-green-300" />
-
-                            {/* Event Thumbnail */}
-                            <div className="w-20 h-20 rounded-2xl overflow-hidden mx-auto mb-5 shadow-lg border border-gray-100">
-                                <img src={eventImage} alt={event.name} className="w-full h-full object-cover" />
+                <div className="fixed inset-0 z-[1000] bg-eling-green overflow-y-auto font-sans text-center">
+                    <div className="min-h-full flex flex-col items-center p-6 sm:p-12">
+                        <div className="max-w-4xl w-full mx-auto my-auto py-10">
+                            <div className="text-center text-white mb-6">
+                                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce text-4xl shadow-xl">
+                                    <i className="fas fa-check"></i>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black mb-2 font-serif leading-tight">Berhasil Terpesan!</h2>
+                                <p className="text-green-100 font-bold text-xs uppercase tracking-[0.3em] opacity-80">Eling Bening Experience</p>
                             </div>
 
-                            <p className="text-gray-900 font-black text-xl mb-1 font-serif tracking-tight">{event.name}</p>
-                            <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-1">{event.date_info}</p>
-
-                            {/* QR */}
-                            <div className="my-6 flex justify-center">
-                                <img
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${transactionId}&color=2E7D32`}
-                                    alt="QR Code"
-                                    className="w-40 h-40 rounded-xl"
-                                />
+                            <div className="flex gap-6 overflow-x-auto pb-10 px-4 snap-x snap-mandatory no-scrollbar mb-2 text-left">
+                                {successData.tickets.map((ticket, idx) => (
+                                    <div key={idx} className="shrink-0 w-[300px] sm:w-[320px] snap-center bg-white p-8 rounded-[2.5rem] shadow-2xl text-center relative overflow-hidden animate-slide-up" style={{ animationDelay: `${idx * 150}ms` }}>
+                                        <div className="p-4 bg-white rounded-3xl shadow-inner border border-gray-50 mb-6 w-fit mx-auto flex items-center justify-center">
+                                            <QRCodeCanvas 
+                                                value={ticket.ticket_id} 
+                                                size={180}
+                                                level="H"
+                                                includeMargin={false}
+                                                imageSettings={{
+                                                    src: "/images/logo.png",
+                                                    height: 40,
+                                                    width: 40,
+                                                    excavate: true,
+                                                }}
+                                            />
+                                        </div>
+                                        <h5 className="text-gray-900 font-black text-2xl mb-1 font-serif tracking-tight">{ticket.guest_name}</h5>
+                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-4">{ticket.ticket_id}</p>
+                                        <div className="py-2 px-6 bg-eling-green/5 rounded-2xl inline-block border border-eling-green/10">
+                                            <p className="text-eling-green font-black text-[10px] uppercase tracking-widest text-center">
+                                                {event.name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
 
-                            <p className="text-gray-400 font-black text-[10px] uppercase tracking-[0.2em] mb-4">{transactionId}</p>
-                            <div className="py-2 px-4 bg-eling-green/5 rounded-xl inline-block border border-eling-green/10">
-                                <p className="text-eling-green font-black text-xs uppercase tracking-widest">
-                                    {qty} Tiket · {bookerName || user?.name}
+                            {successData.tickets.length > 1 && (
+                                <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-8 animate-pulse text-center">
+                                    ⟵ Geser untuk tiket lainnya ⟶
                                 </p>
-                            </div>
-                        </div>
+                            )}
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <button onClick={() => window.print()} className="bg-white text-eling-green px-10 py-5 rounded-[1.5rem] font-black hover:bg-gray-100 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
-                                Cetak Tiket
-                            </button>
-                            <button onClick={() => navigate('/profile')} className="bg-black/20 text-white px-10 py-5 rounded-[1.5rem] font-black hover:bg-black/30 transition-all text-[11px] uppercase tracking-[0.2em] border border-white/20 active:scale-95">
-                                Ke Profil Saya
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button onClick={() => window.print()} className="bg-white text-eling-green px-10 py-5 rounded-[1.5rem] font-black hover:bg-gray-100 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
+                                    <i className="fas fa-print mr-2"></i> Cetak Tiket
+                                </button>
+                                <button onClick={() => navigate('/profile')} className="bg-eling-green border-2 border-white/30 text-white px-10 py-5 rounded-[1.5rem] font-black hover:bg-white/10 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
+                                    Ke Riwayat Pesanan
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

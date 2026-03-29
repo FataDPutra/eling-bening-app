@@ -49,6 +49,7 @@ import Expenses from './pages/admin/Expenses';
 import FinanceTickets from './pages/admin/FinanceTickets';
 import FinanceResort from './pages/admin/FinanceResort';
 import FinanceRecap from './pages/admin/FinanceRecap';
+import AdminFacilities from './pages/admin/Facilities';
 
 // Rooms sub-pages
 import AddRoom from './pages/admin/rooms/AddRoom';
@@ -175,6 +176,7 @@ const App = () => {
                         <Route path="finance/recap" element={<FinanceRecap />} />
                         
                         <Route path="settings" element={<Settings />} />
+                        <Route path="facilities" element={<AdminFacilities />} />
                     </Route>
 
                     {/* Fallback */}

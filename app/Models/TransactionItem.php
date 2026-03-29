@@ -10,6 +10,9 @@ class TransactionItem extends Model
     use HasFactory;
 
     protected $guarded = [];
+    protected $casts = [
+        'guest_names' => 'array',
+    ];
 
     public function transaction()
     {

@@ -4,6 +4,8 @@ import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../utils/AuthContext';
+import IconRenderer from '../../components/IconRenderer';
+import { Calendar, Search, MapPin, Check, ChevronRight, X, Lock, Info, UserCircle, Loader2 } from 'lucide-react';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
@@ -121,36 +123,50 @@ export default function Rooms() {
                     <h1 className="text-4xl font-bold mb-4 font-serif">Pilih Villa & Resort</h1>
                     <p className="text-gray-500">Temukan kenyamanan istirahat di tengah alam Ambarawa.</p>
                 </div>
-                <div className="bg-white p-4 rounded-2xl shadow-lg border border-gray-100 flex gap-4 overflow-x-auto w-full lg:w-auto">
-                    <div className="flex flex-col min-w-[120px]">
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Check In</span>
-                        <input 
-                            type="date" 
-                            className="font-bold text-sm focus:outline-none bg-transparent" 
-                            value={checkIn} 
-                            min={todayStr}
-                            onChange={e => handleCheckInChange(e.target.value)}
-                        />
+                <div className="bg-white p-6 lg:p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 w-full lg:w-auto relative z-10 transition-all hover:shadow-2xl">
+                    <div className="flex flex-1 items-center gap-4 p-4 lg:p-2 bg-gray-50/50 rounded-2xl border border-gray-100 lg:border-none lg:bg-transparent">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0">
+                            <Calendar size={18} />
+                        </div>
+                        <div className="flex flex-col flex-1">
+                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1">Check In</span>
+                            <input 
+                                type="date" 
+                                className="font-black text-sm focus:outline-none bg-transparent text-gray-700 w-full" 
+                                value={checkIn} 
+                                min={todayStr}
+                                onChange={e => handleCheckInChange(e.target.value)}
+                            />
+                        </div>
                     </div>
-                    <div className="w-px h-10 bg-gray-200 shrink-0"></div>
-                    <div className="flex flex-col min-w-[120px]">
-                        <span className="text-[10px] uppercase font-bold text-gray-400">Check Out</span>
-                        <input 
-                            type="date" 
-                            className="font-bold text-sm focus:outline-none bg-transparent" 
-                            value={checkOut}
-                            min={new Date(new Date(checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                            onChange={e => setCheckOut(e.target.value)}
-                        />
+
+                    <div className="hidden lg:block w-px h-10 bg-gray-100 shrink-0"></div>
+
+                    <div className="flex flex-1 items-center gap-4 p-4 lg:p-2 bg-gray-50/50 rounded-2xl border border-gray-100 lg:border-none lg:bg-transparent">
+                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0">
+                            <Calendar size={18} />
+                        </div>
+                        <div className="flex flex-col flex-1">
+                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1">Check Out</span>
+                            <input 
+                                type="date" 
+                                className="font-black text-sm focus:outline-none bg-transparent text-gray-700 w-full" 
+                                value={checkOut}
+                                min={new Date(new Date(checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                onChange={e => setCheckOut(e.target.value)}
+                            />
+                        </div>
                     </div>
+
                     <button 
                         onClick={() => fetchRooms(checkIn, checkOut)}
-                        className="bg-eling-green text-white px-6 rounded-xl font-bold text-sm hover:bg-green-800 transition whitespace-nowrap"
+                        className="bg-eling-green text-white px-8 h-14 lg:h-auto lg:py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-green-800 transition-all shadow-lg shadow-green-900/10 active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap"
                     >
+                        <Search size={16} strokeWidth={3} />
                         Cek Ketersediaan
                     </button>
                 </div>
-            </div>
+           </div>
 
             {/* Room cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -167,8 +183,8 @@ export default function Rooms() {
                     const currentPrice = isWeekend && r.price_weekend ? r.price_weekend : r.price;
 
                     return (
-                        <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group ${unavailable ? 'opacity-75' : ''}`}>
-                            <div className="h-64 overflow-hidden relative">
+                        <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group flex flex-col h-full hover:-translate-y-3 hover:shadow-2xl hover:border-eling-green/20 transition-all duration-500 ${unavailable ? 'opacity-75' : ''}`}>
+                            <div className="h-64 overflow-hidden relative shrink-0">
                                 <img 
                                     src={(Array.isArray(r.gallery) && r.gallery.length > 0 ? r.gallery[0] : null) || defaultImages[idx % defaultImages.length]} 
                                     className={`w-full h-full object-cover group-hover:scale-110 transition duration-700 ${unavailable ? 'grayscale' : ''}`} 
@@ -182,34 +198,55 @@ export default function Rooms() {
                                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-eling-green shadow-sm">{badgeText}</div>
                                 )}
                             </div>
-                            <div className="p-8">
-                                <h3 className="font-bold text-2xl mb-2 font-serif text-gray-900">{r.name}</h3>
-                                <div className="flex gap-4 text-gray-400 mb-6 text-sm">
-                                    {r.bed_type && <span><i className="fas fa-bed mr-2 text-eling-green"></i>{r.bed_type}</span>}
-                                    <span><i className="fas fa-user-friends mr-2 text-eling-green"></i>{r.capacity} Tamu</span>
-                                    {r.room_size && <span><i className="fas fa-expand mr-2 text-eling-green"></i>{r.room_size} m&sup2;</span>}
+                            <div className="p-8 flex flex-col flex-1">
+                                <h3 className="font-bold text-2xl mb-2 font-serif text-gray-900 line-clamp-1">{r.name}</h3>
+                                <div className="flex flex-wrap gap-4 text-gray-400 mb-6 text-sm">
+                                    {r.bed_type && <span className="flex items-center gap-1.5"><IconRenderer icon="Bed" size={14} className="text-eling-green" /> {r.bed_type}</span>}
+                                    <span className="flex items-center gap-1.5"><IconRenderer icon="Users" size={14} className="text-eling-green" /> {r.capacity} Tamu</span>
+                                    {r.room_size && <span className="flex items-center gap-1.5"><IconRenderer icon="Maximize" size={14} className="text-eling-green" /> {r.room_size} m&sup2;</span>}
                                 </div>
-                                <ul className="space-y-2 mb-8 text-sm text-gray-600">
+                                <ul className="space-y-3 mb-8 text-sm text-gray-600">
                                     {!unavailable ? (
-                                        (Array.isArray(r.facilities) ? r.facilities : []).slice(0, 3).map((a, i) => (
-                                            <li key={i}><i className="fas fa-check text-eling-green mr-2"></i>{a}</li>
-                                        ))
+                                        <>
+                                            {(Array.isArray(r.facilities) ? r.facilities : []).slice(0, 3).map((a, i) => (
+                                                <li key={i} className="flex items-center gap-3">
+                                                    <div className="w-5 h-5 flex items-center justify-center text-eling-green opacity-70">
+                                                        <IconRenderer icon={a.icon} size={14} />
+                                                    </div>
+                                                    <span className="font-medium line-clamp-1">{a.name}</span>
+                                                </li>
+                                            ))}
+                                            {r.facilities?.length > 3 && (
+                                                <li className="pl-8 text-[11px] font-bold text-eling-green/60 italic">
+                                                    + {r.facilities.length - 3} fasilitas lainnya
+                                                </li>
+                                            )}
+                                        </>
                                     ) : (
-                                        <li><i className="fas fa-calendar-times text-red-500 mr-2"></i>Tidak Tersedia</li>
+                                        <li className="flex items-center gap-3 text-red-400 font-bold bg-red-50 p-3 rounded-xl border border-red-100">
+                                            <X size={16} /> Tidak Tersedia Saat Ini
+                                        </li>
                                     )}
                                 </ul>
-                                <div className="flex justify-between items-center pt-6 border-t border-gray-100">
-                                    <p className={`text-2xl font-bold font-serif ${unavailable ? 'text-gray-400' : 'text-eling-green'}`}>
-                                        {formatRupiah(currentPrice)}<span className="text-xs text-gray-400 ml-1 font-sans font-normal">/malam</span>
-                                    </p>
+                                <div className="flex flex-col gap-4 pt-6 border-t border-gray-100 mt-auto">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none px-1">Harga Per Malam</p>
+                                        <div className={`flex items-baseline gap-1 ${unavailable ? 'text-gray-400' : 'text-eling-green'}`}>
+                                            <span className="text-lg font-black font-serif">Rp</span>
+                                            <span className="text-3xl font-black font-serif tracking-tighter">
+                                                {Number(currentPrice).toLocaleString('id-ID')}
+                                            </span>
+                                            <span className="text-xs text-gray-400 font-bold lowercase ml-1">/malam</span>
+                                        </div>
+                                    </div>
                                     {unavailable ? (
-                                        <button disabled className="bg-gray-200 text-gray-400 font-bold py-3 px-6 rounded-xl cursor-not-allowed">Habis</button>
+                                        <button disabled className="bg-gray-100 text-gray-400 font-bold py-4 px-8 rounded-2xl cursor-not-allowed w-full border border-gray-200 uppercase tracking-widest text-[11px]">Habis Dipesan</button>
                                     ) : (
                                         <button 
                                             onClick={() => handleRoomSelect(r.id)} 
-                                            className="bg-eling-red text-white font-bold py-3 px-8 rounded-xl hover:bg-red-800 hover:shadow-xl hover:shadow-red-500/20 hover:-translate-y-1 active:scale-95 transition-all duration-300 group/btn relative overflow-hidden"
+                                            className="bg-eling-red text-white font-black py-4 px-8 rounded-2xl hover:bg-red-800 hover:shadow-xl hover:shadow-red-500/20 active:scale-95 transition-all duration-300 group/btn relative overflow-hidden w-full shrink-0 flex items-center justify-center gap-2"
                                         >
-                                            <span className="relative z-10 flex items-center gap-2">Pilih <i className="fas fa-chevron-right text-xs group-hover:translate-x-1 transition-transform"></i></span>
+                                            <span className="relative z-10 flex items-center gap-2 text-[11px] uppercase tracking-wide whitespace-nowrap">Lihat Detail Kamar <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" /></span>
                                             <div className="absolute inset-0 bg-gradient-to-r from-red-600 to-red-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                         </button>
                                     )}

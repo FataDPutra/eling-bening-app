@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
@@ -348,7 +348,7 @@ export default function Profile() {
                         <div className="flex gap-6 overflow-x-auto pb-10 px-4 snap-x no-scrollbar">
                             {(selectedTicket.tickets?.length > 0 ? selectedTicket.tickets : [{ ticket_id: selectedTicket.id, guest_name: selectedTicket.booker_name }]).map((tick, idx) => (
                                 <div key={tick.id || idx} className="snap-center shrink-0 w-[320px] bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col items-center">
-                                    <div className="w-full bg-eling-green p-6 text-center relative">
+                                    <div className={`w-full ${selectedTicket.booking_type === 'EVENT' ? 'bg-eling-red' : 'bg-eling-green'} p-6 text-center relative`}>
                                         <div className="absolute -bottom-3 left-0 right-0 flex justify-center">
                                             <div className="bg-white px-4 py-1 rounded-full text-[10px] font-black text-eling-green uppercase border border-eling-green/20 shadow-sm">PASS #{idx + 1}</div>
                                         </div>
@@ -414,77 +414,241 @@ export default function Profile() {
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedOrderDetail(null)}>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                            <div>
-                                <h3 className="text-2xl font-bold font-serif text-gray-900">Detail Pesanan</h3>
-                                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{selectedOrderDetail.id}</p>
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${selectedOrderDetail.booking_type === 'RESORT' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-eling-green'}`}>
+                                    {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={24} /> : <Ticket size={24} />}
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black font-serif text-gray-900 tracking-tight leading-none">Detail Pesanan</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1.5">{selectedOrderDetail.id}</p>
+                                </div>
                             </div>
                             <button onClick={() => setSelectedOrderDetail(null)} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-eling-red transition"><X size={20}/></button>
                         </div>
                         
                         <div className="flex-1 overflow-y-auto p-8 space-y-8">
                             {/* Status Banner */}
-                            <div className={`p-4 rounded-2xl flex items-center justify-between ${selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid' ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                            <div className={`p-5 rounded-2xl flex items-center justify-between border-2 ${
+                                selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid' 
+                                ? 'bg-green-50/50 border-green-100 text-green-700' 
+                                : 'bg-amber-50/50 border-amber-100 text-amber-700'
+                            }`}>
                                 <div className="flex items-center gap-3">
-                                    <ShieldCheck size={20} />
-                                    <span className="font-bold uppercase tracking-widest text-[10px]">Status Transaksi</span>
+                                    <ShieldCheck size={20} className="shrink-0" />
+                                    <div>
+                                        <p className="text-[9px] font-black uppercase tracking-widest mb-0.5 opacity-60">Status Pembayaran</p>
+                                        <p className="font-black uppercase tracking-widest text-sm leading-none">{selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid' ? 'LUNAS (PAID)' : 'MENUNGGU'}</p>
+                                    </div>
                                 </div>
-                                <span className="font-black uppercase tracking-tight italic">{selectedOrderDetail.status}</span>
+                                <div className="text-right">
+                                    <p className="text-[9px] font-black uppercase tracking-widest mb-0.5 opacity-60">Waktu Transaksi</p>
+                                    <p className="font-bold text-xs">{new Date(selectedOrderDetail.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                {/* Booker Info */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Pemesan</h4>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><User size={14} /></div>
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Nama Lengkap</p>
+                                                <p className="font-black text-gray-900 text-sm tracking-tight">{selectedOrderDetail.booker_name}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Mail size={14} /></div>
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Alamat Email</p>
+                                                <p className="font-black text-gray-900 text-sm tracking-tight">{selectedOrderDetail.booker_email || '-'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Phone size={14} /></div>
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Nomor WhatsApp</p>
+                                                <p className="font-black text-gray-900 text-sm tracking-tight">{selectedOrderDetail.booker_phone || '-'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Booking Context (Dates/Times) */}
+                                <div className="space-y-4">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informasi Kunjungan</h4>
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Calendar size={14} /></div>
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">
+                                                    {selectedOrderDetail.booking_type === 'RESORT' ? 'Check-in (Rencana)' : 'Tanggal Kunjungan'}
+                                                </p>
+                                                <p className="font-black text-gray-900 text-sm tracking-tight leading-tight">
+                                                    {new Date(selectedOrderDetail.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                    {selectedOrderDetail.check_out_date && (
+                                                        <> - {new Date(selectedOrderDetail.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+                                                    )}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {selectedOrderDetail.booking_type === 'RESORT' && (
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Clock size={14} /></div>
+                                                <div>
+                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Perkiraan Tiba</p>
+                                                    <p className="font-black text-gray-900 text-sm tracking-tight">
+                                                        {selectedOrderDetail.arrival_time && selectedOrderDetail.arrival_time !== 'Pilih waktu kedatangan' ? selectedOrderDetail.arrival_time : '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><CreditCard size={14} /></div>
+                                            <div>
+                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Metode Pembayaran</p>
+                                                <p className="font-black text-gray-900 text-sm tracking-tight uppercase">{selectedOrderDetail.payment_method || 'Midtrans VA'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Items Section */}
                             <div className="space-y-4">
-                                <h4 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Item Terdaftar</h4>
-                                {selectedOrderDetail.items?.map((item, i) => (
-                                    <div key={i} className="flex justify-between items-center p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-eling-green shadow-sm">
-                                                {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={20} /> : <Ticket size={20} />}
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Item Dalam Pesanan</h4>
+                                <div className="space-y-3">
+                                    {selectedOrderDetail.items?.map((item, i) => (
+                                        <div 
+                                            key={i} 
+                                            onClick={() => {
+                                                if (selectedOrderDetail.booking_type === 'RESORT' && item.item?.id) {
+                                                    navigate(`/rooms/${item.item.id}`);
+                                                }
+                                            }}
+                                            className={`flex justify-between items-center p-4 rounded-2xl bg-gray-50 border border-gray-100 group transition-all ${selectedOrderDetail.booking_type === 'RESORT' ? 'cursor-pointer hover:border-eling-green/30 hover:bg-white' : ''}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-16 h-12 rounded-xl bg-white overflow-hidden shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 border border-gray-100">
+                                                    {selectedOrderDetail.booking_type === 'RESORT' && item.item?.gallery?.[0] ? (
+                                                        <img src={item.item.gallery[0]} className="w-full h-full object-cover" alt={item.item.name} />
+                                                    ) : (
+                                                        <div className={`w-full h-full flex items-center justify-center ${selectedOrderDetail.booking_type === 'RESORT' ? 'text-blue-500 bg-blue-50' : 'text-eling-green bg-green-50'}`}>
+                                                            {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={20} /> : <Ticket size={20} />}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <p className="font-black text-gray-900 leading-tight tracking-tight uppercase text-sm">{item.item?.name || 'Tiket Wisata'}</p>
+                                                    
+                                                    {selectedOrderDetail.booking_type === 'RESORT' && item.item && (
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 opacity-80">
+                                                            {item.item.bed_type && (
+                                                                <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                    <i className="fas fa-bed text-[8px] text-eling-green"></i> {item.item.bed_type}
+                                                                </span>
+                                                            )}
+                                                            <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                <i className="fas fa-user-friends text-[8px] text-eling-green"></i> {item.item.capacity || 2} Tamu
+                                                            </span>
+                                                            {item.item.room_size && (
+                                                                <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                    <i className="fas fa-expand text-[8px] text-eling-green"></i> {item.item.room_size} m&sup2;
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    <p className="text-[10px] text-gray-400 font-bold mt-1 tracking-widest">{item.quantity} Unit x {formatRupiah(item.price)}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="font-bold text-gray-900 leading-tight">{item.item?.name}</p>
-                                                <p className="text-[10px] text-gray-400 font-bold">{item.quantity} Unit x {formatRupiah(item.price)}</p>
+                                            <p className="font-black text-gray-900 font-serif tracking-tight">{formatRupiah(item.subtotal)}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Additional Info (Check-in time, Facilities, Requests) */}
+                            <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
+                                <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <Sparkles size={12} className="text-eling-green" />
+                                    Informasi Tambahan & Permintaan
+                                </h4>
+                                <div className="space-y-4">
+                                    {/* Facilities */}
+                                    {selectedOrderDetail.additional_facilities && selectedOrderDetail.additional_facilities.length > 0 && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight mb-2">Fasilitas Tambahan:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {selectedOrderDetail.additional_facilities.map((f, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-600 flex items-center gap-2">
+                                                        <Check size={10} className="text-eling-green" />
+                                                        {typeof f === 'object' ? f.name : f}
+                                                        {typeof f === 'object' && f.price > 0 && (
+                                                            <span className="text-eling-green opacity-70">({formatRupiah(f.price)})</span>
+                                                        )}
+                                                    </span>
+                                                ))}
                                             </div>
                                         </div>
-                                        <p className="font-black text-gray-900">{formatRupiah(item.subtotal)}</p>
-                                    </div>
-                                ))}
-                            </div>
+                                    )}
 
-                            {/* Details Grid */}
-                            <div className="grid grid-cols-2 gap-6 pt-4">
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Pemesan</p>
-                                    <p className="font-bold text-gray-900">{selectedOrderDetail.booker_name}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Tanggal Kunjungan</p>
-                                    <p className="font-bold text-gray-900">{new Date(selectedOrderDetail.check_in_date).toLocaleDateString('id-ID')}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Metode Pembayaran</p>
-                                    <p className="font-bold text-gray-900 uppercase">{selectedOrderDetail.payment_method || 'Midtrans VA'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Waktu Transaksi</p>
-                                    <p className="font-bold text-gray-900">{new Date(selectedOrderDetail.created_at).toLocaleString('id-ID')}</p>
+                                    {/* Special Requests */}
+                                    {selectedOrderDetail.special_requests && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tight mb-1 font-serif">Permintaan Khusus Tamu:</p>
+                                            <p className="text-xs text-slate-600 font-bold leading-relaxed italic bg-white/50 p-4 rounded-xl border border-dashed border-slate-200">
+                                                "{selectedOrderDetail.special_requests}"
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            {/* Summary Section */}
-                            <div className="pt-8 border-t border-dashed border-gray-200 space-y-3">
-                                <div className="flex justify-between text-sm text-gray-500">
-                                    <span>Subtotal Qty ({Number(selectedOrderDetail.total_qty || 0)})</span>
-                                    <span>{formatRupiah(Number(selectedOrderDetail.total_price || 0) + Number(selectedOrderDetail.discount_amount || 0))}</span>
-                                </div>
-                                {selectedOrderDetail.discount_amount > 0 && (
-                                    <div className="flex justify-between text-sm text-eling-red font-bold">
-                                        <span>Potongan Promo</span>
-                                        <span>-{formatRupiah(selectedOrderDetail.discount_amount)}</span>
+                            {/* Financial Summary Breakdown */}
+                            <div className="pt-8 border-t border-dashed border-gray-200 space-y-4">
+                                <div className="space-y-3">
+                                    {/* 1. Harga Kamar / Tiket */}
+                                    <div className="flex justify-between text-xs font-bold text-gray-400">
+                                        <span className="uppercase tracking-widest">Harga Kamar / Tiket</span>
+                                        <span className="text-gray-900">{formatRupiah(selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
                                     </div>
-                                )}
-                                <div className="flex justify-between pt-4 border-t border-gray-100">
-                                    <span className="text-xl font-black font-serif text-gray-900">Total Pembayaran</span>
-                                    <span className="text-xl font-black font-serif text-eling-green">{formatRupiah(selectedOrderDetail.total_price)}</span>
+
+                                    {/* 2. Fasilitas Tambahan (Jika ada) */}
+                                    {selectedOrderDetail.additional_facilities && selectedOrderDetail.additional_facilities.length > 0 && (
+                                        <div className="flex justify-between text-xs font-bold text-gray-400">
+                                            <span className="uppercase tracking-widest">Biaya Fasilitas Tambahan</span>
+                                            <span className="text-gray-900">{formatRupiah(selectedOrderDetail.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
+                                        </div>
+                                    )}
+
+                                    {/* 3. Pajak (Dihitung dari Dasar) */}
+                                    <div className="flex justify-between text-xs font-bold text-gray-400">
+                                        <span className="uppercase tracking-widest">Pajak (10%)</span>
+                                        <span className="text-gray-900">{formatRupiah(
+                                            ( (selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0) + 
+                                              (selectedOrderDetail.additional_facilities?.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0) || 0) 
+                                            ) * 0.1
+                                        )}</span>
+                                    </div>
+
+                                    {/* 4. Potongan Promo */}
+                                    {selectedOrderDetail.discount_amount > 0 && (
+                                        <div className="flex justify-between text-xs font-bold text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100/30">
+                                            <span className="uppercase tracking-widest">Potongan Promo</span>
+                                            <span className="font-black text-sm">- {formatRupiah(selectedOrderDetail.discount_amount)}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center bg-gray-900 p-6 rounded-[2rem] text-white shadow-xl shadow-gray-900/10">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Total Dibayar</p>
+                                        <h5 className="text-sm font-bold text-white/60">Lunas & Dikonfirmasi</h5>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-3xl font-black font-serif tracking-tight">{formatRupiah(selectedOrderDetail.total_price)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

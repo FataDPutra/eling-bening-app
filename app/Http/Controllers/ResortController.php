@@ -3,20 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Resort;
+use App\Models\TransactionItem;
 use Illuminate\Http\Request;
 
 class ResortController extends Controller
 {
     public function index(Request $request)
     {
-        $resorts = Resort::all();
-        
+        $resorts = Resort::with('facilities')->get();
+
         if ($request->has(['check_in', 'check_out'])) {
             $startDate = $request->check_in;
-            $endDate = $request->check_out;
+            $endDate   = $request->check_out;
 
             foreach ($resorts as $resort) {
-                // Calculate booked rooms for this resort in the date range
                 $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
                     ->where('item_id', $resort->id)
                     ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
@@ -29,8 +29,7 @@ class ResortController extends Controller
                     ->sum('quantity');
 
                 $resort->available_stock = max(0, $resort->stock - $bookedCount);
-                
-                // Also update status if completely full
+
                 if ($resort->available_stock <= 0) {
                     $resort->status = 'full';
                 }
@@ -43,29 +42,35 @@ class ResortController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'facilities' => 'nullable|array',
-            'price' => 'required|numeric',
-            'price_weekend' => 'nullable|numeric',
-            'stock' => 'required|integer',
-            'capacity' => 'required|integer',
-            'bed_type' => 'nullable|string|max:255',
-            'room_size' => 'nullable|string|max:255',
-            'gallery' => 'nullable|array',
+            'name'         => 'required|string|max:255',
+            'description'  => 'nullable|string',
+            'facility_ids' => 'nullable|array',
+            'facility_ids.*' => 'integer|exists:facilities,id',
+            'price'        => 'required|numeric',
+            'price_weekend'=> 'nullable|numeric',
+            'stock'        => 'required|integer',
+            'capacity'     => 'required|integer',
+            'bed_type'     => 'nullable|string|max:255',
+            'room_size'    => 'nullable|string|max:255',
+            'gallery'      => 'nullable|array',
         ]);
 
+        $facilityIds = $validated['facility_ids'] ?? [];
+        unset($validated['facility_ids']);
+
         $resort = Resort::create($validated);
-        return response()->json($resort, 201);
+        $resort->facilities()->sync($facilityIds);
+
+        return response()->json($resort->load('facilities'), 201);
     }
 
     public function show(Request $request, $id)
     {
-        $resort = Resort::findOrFail($id);
+        $resort = Resort::with('facilities')->findOrFail($id);
 
         if ($request->has(['check_in', 'check_out'])) {
             $startDate = $request->check_in;
-            $endDate = $request->check_out;
+            $endDate   = $request->check_out;
 
             $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
                 ->where('item_id', $resort->id)
@@ -87,27 +92,34 @@ class ResortController extends Controller
     public function update(Request $request, $id)
     {
         $resort = Resort::findOrFail($id);
-        
+
         $validated = $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'description' => 'nullable|string',
-            'facilities' => 'nullable|array',
-            'price' => 'sometimes|numeric',
-            'price_weekend' => 'nullable|numeric',
-            'stock' => 'sometimes|integer',
-            'capacity' => 'sometimes|integer',
-            'bed_type' => 'nullable|string|max:255',
-            'room_size' => 'nullable|string|max:255',
-            'gallery' => 'nullable|array',
+            'name'         => 'sometimes|string|max:255',
+            'description'  => 'nullable|string',
+            'facility_ids' => 'nullable|array',
+            'facility_ids.*' => 'integer|exists:facilities,id',
+            'price'        => 'sometimes|numeric',
+            'price_weekend'=> 'nullable|numeric',
+            'stock'        => 'sometimes|integer',
+            'capacity'     => 'sometimes|integer',
+            'bed_type'     => 'nullable|string|max:255',
+            'room_size'    => 'nullable|string|max:255',
+            'gallery'      => 'nullable|array',
         ]);
 
+        if (array_key_exists('facility_ids', $validated)) {
+            $resort->facilities()->sync($validated['facility_ids'] ?? []);
+            unset($validated['facility_ids']);
+        }
+
         $resort->update($validated);
-        return response()->json($resort);
+        return response()->json($resort->load('facilities'));
     }
 
     public function destroy($id)
     {
         $resort = Resort::findOrFail($id);
+        $resort->facilities()->detach(); // clean pivot
         $resort->delete();
         return response()->json(['message' => 'Resort deleted successfully']);
     }

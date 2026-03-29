@@ -7,7 +7,7 @@ import {
     PieChart, Megaphone, Layout, ExternalLink,
     ClipboardList, QrCode, Calendar, Menu, X,
     Bell, User, LogOut, ChevronLeft, ChevronRight,
-    CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen
+    CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import Swal from 'sweetalert2';
@@ -70,6 +70,7 @@ export default function AdminLayout() {
         { label: 'Statistik', to: '/admin/stats' },
         { label: 'Pemesanan Kamar', to: '/admin/bookings' },
         { label: 'Kelola Kamar', to: '/admin/rooms' },
+        { label: 'Kelola Fasilitas', to: '/admin/facilities' },
         { label: 'Reschedule', to: '/admin/reschedule' },
         { label: 'Pesanan Tiket', to: '/admin/tickets/orders' },
         { label: 'Kelola Tiket', to: '/admin/tickets' },
@@ -151,9 +152,10 @@ export default function AdminLayout() {
                             </button>
                             {!isSidebarCollapsed && (
                                 <div className={`submenu ${openMenus.booking ? 'open' : ''}`}>
-                                    <NavLink to="/admin/rooms" className="submenu-item">Kelola Kamar</NavLink>
                                     <NavLink to="/admin/bookings" className="submenu-item">Daftar Pesanan</NavLink>
                                     <NavLink to="/admin/reschedule" className="submenu-item">Kelola Reschedule</NavLink>
+                                    <NavLink to="/admin/rooms" className="submenu-item">Kelola Kamar</NavLink>
+                                    <NavLink to="/admin/facilities" className="submenu-item">Kelola Fasilitas</NavLink>
                                 </div>
                             )}
                         </li>

@@ -382,27 +382,45 @@ export default function EventOrders() {
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="flex items-center gap-3 mb-6">
-                                        <div className="w-1 h-6 bg-warning rounded-full" />
-                                        <h3 className="text-base font-black text-admin-text-main uppercase tracking-tight">Ringkasan Biaya</h3>
-                                    </div>
-                                    <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border space-y-3">
-                                        {selectedOrder.items?.map((item, idx) => {
-                                            const displayPrice = Number(item.price) || Number(item.item?.price) || 0;
-                                            const displayQty = Number(item.quantity) || 1;
-                                            return (
-                                                <div key={idx} className="flex justify-between text-xs font-medium">
-                                                    <span className="text-admin-text-muted">{displayQty}x {item.item?.name}</span>
-                                                    <span className="text-admin-text-main tabular-nums">{formatRupiah(displayPrice * displayQty)}</span>
-                                                </div>
-                                            );
-                                        })}
-                                        <div className="pt-3 mt-3 border-t border-admin-border flex justify-between">
-                                            <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Total Bayar</span>
-                                            <span className="text-lg font-black text-admin-primary tabular-nums italic">
-                                                {formatRupiah(Number(selectedOrder.total_price || 0))}
-                                            </span>
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-1 h-6 bg-warning rounded-full" />
+                                            <h3 className="text-base font-black text-admin-text-main uppercase tracking-tight">Ringkasan Biaya</h3>
                                         </div>
+                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border space-y-4">
+                                            {selectedOrder.items?.map((item, idx) => {
+                                                const displayPrice = Number(item.price) || Number(item.item?.price) || 0;
+                                                const displayQty = Number(item.quantity) || 1;
+                                                return (
+                                                    <div key={idx} className="flex justify-between text-xs font-medium">
+                                                        <span className="text-admin-text-muted">{displayQty}x {item.item?.name}</span>
+                                                        <span className="text-admin-text-main tabular-nums">{formatRupiah(displayPrice * displayQty)}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                            
+                                            <div className="pt-4 border-t border-admin-border border-dashed space-y-2">
+                                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-admin-text-muted">
+                                                    <span>Subtotal Gross</span>
+                                                    <span>{formatRupiah(Number(selectedOrder.total_price || 0) + Number(selectedOrder.discount_amount || 0) - (Number(selectedOrder.total_price || 0) * 0.1))}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-admin-text-muted">
+                                                    <span>Fiscal Tax 10%</span>
+                                                    <span>{formatRupiah(Number(selectedOrder.total_price || 0) * 0.1)}</span>
+                                                </div>
+                                                {selectedOrder.discount_amount > 0 && (
+                                                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-eling-red">
+                                                        <span>Promo Audit</span>
+                                                        <span>-{formatRupiah(selectedOrder.discount_amount)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="pt-3 border-t border-admin-border flex justify-between items-center">
+                                                <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Grand Total</span>
+                                                <span className="text-xl font-black text-admin-primary tabular-nums italic">
+                                                    {formatRupiah(Number(selectedOrder.total_price || 0))}
+                                                </span>
+                                            </div>
                                     </div>
                                 </div>
                             </div>

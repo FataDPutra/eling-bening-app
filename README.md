@@ -80,11 +80,22 @@ php artisan view:cache
 
 ## 🌟 Fitur Utama Aplikasi
 
-- **Resort Booking Engine**: Pemesanan kamar dengan meta tracking (ETA, Fasilitas Khusus, Pesan Bespoke).
+- **Resort Booking Engine**: Reservasi villa/kamar dengan meta tracking (ETA, Fasilitas Khusus, Pesan Bespoke).
+- **Interactive Villa Grid**: Daftar kamar dengan layout simetris, filter ketersediaan real-time, dan efek hover premium (`card-lift`).
 - **Ticket Audit System**: Pemindaian QR Code tiket wisata secara langsung melalui dashboard admin.
 - **Admin Intelligence Dashboard**: Monitoring transaksi, okupansi resort, dan laporan keuangan terpadu.
-- **Interactive Map Visualization**: Halaman kontak dengan estetika reaktif (fade-on-interact).
-- **Multi-Service Finance**: Manajemen biaya operasional dan pendapatan dalam satu pusat data.
+- **Modern Iconology System**: Komponen terpusat yang memetakan icon Lucide secara dinamis ke seluruh antarmuka.
+- **Automatic Multi-service Receipt**: Pengiriman resi pembayaran otomatis ke email tamu setelah transaksi berhasil.
+
+---
+
+## 🎨 Visual & UI Standard
+
+Aplikasi ini mengedepankan estetika tinggi untuk kenyamanan pengguna:
+- **Emoji-Free Environment**: Seluruh sistem ikon kuno (emoji) telah diganti dengan icon berbasis vektor (SVG) yang tajam dan profesional.
+- **Centralized Icon Selection**: Admin dapat memilih icon dari katalog modern yang telah dikurasi langsung dari modul master fasilitas.
+- **High-Fidelity Transitions**: Penggunaan micro-interactions seperti `card-lift` (hover effect) dan shadow-blooms untuk kesan platform premium.
+- **Optimized Layout Geometry**: Standarisasi ukuran grid yang simetris menjamin tampilan dashboard tetap rapi pada berbagai ukuran konten.
 
 ---
 

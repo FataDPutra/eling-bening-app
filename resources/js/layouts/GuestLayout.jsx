@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X, User, UserCircle, MapPin, Phone, Mail } from 'lucide-react';
+import { Menu, X, User, UserCircle, MapPin, Phone, Mail, ChevronDown } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useContent } from '../context/ContentContext';
 import Swal from 'sweetalert2';
@@ -97,13 +97,38 @@ export default function GuestLayout() {
                     <span className={`text-xl font-serif font-black tracking-wider ${isHeroPage && !scrolled ? 'text-white drop-shadow-sm' : 'text-eling-green'}`}>Eling Bening</span>
                 </Link>
 
-                <div className="hidden lg:flex gap-8 font-black tracking-[0.05em] uppercase text-[11px]">
+                <div className="hidden lg:flex gap-8 font-black tracking-[0.05em] uppercase text-[11px] items-center">
                     {[
                         { name: 'Home', path: '/' },
                         { name: 'Tentang Kami', path: '/about' },
                         { name: 'Resort', path: '/rooms' },
+                    ].map((item) => (
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`transition-all duration-300 relative py-1 ${
+                                location.pathname === item.path
+                                    ? 'text-eling-green font-black underline-offset-8 underline'
+                                    : `hover:text-eling-green ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
+                            }`}
+                        >
+                            {item.name}
+                        </Link>
+                    ))}
+
+                    {/* Tiket Dropdown */}
+                    <div className="relative group/tiket py-4">
+                        <button className={`flex items-center gap-1.5 transition-all duration-300 ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'} hover:text-eling-green`}>
+                            TIKET <ChevronDown size={14} className="group-hover/tiket:rotate-180 transition-transform duration-300" />
+                        </button>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-48 bg-white rounded-2xl shadow-2xl py-3 opacity-0 invisible group-hover/tiket:opacity-100 group-hover/tiket:visible transition-all duration-300 transform origin-top scale-95 group-hover/tiket:scale-100 translate-y-2 group-hover/tiket:translate-y-0 border border-gray-100">
+                            <Link to="/ticketing" className="block px-6 py-3 text-gray-800 hover:bg-gray-50 hover:text-eling-green transition text-[10px] font-black uppercase tracking-widest border-b border-gray-50">Tiket Wisata</Link>
+                            <Link to="/event-ticketing" className="block px-6 py-3 text-gray-800 hover:bg-gray-50 hover:text-eling-green transition text-[10px] font-black uppercase tracking-widest">Tiket Event</Link>
+                        </div>
+                    </div>
+
+                    {[
                         { name: 'Event', path: '/events' },
-                        { name: 'Tiket Event', path: '/event-ticketing' },
                         { name: 'Galeri', path: '/gallery' },
                         { name: 'Fasilitas', path: '/facilities' },
                         { name: 'Kontak', path: '/contact' },
@@ -113,7 +138,7 @@ export default function GuestLayout() {
                             to={item.path}
                             className={`transition-all duration-300 relative py-1 ${
                                 location.pathname === item.path
-                                    ? 'text-eling-green font-black'
+                                    ? 'text-eling-green font-black underline-offset-8 underline'
                                     : `hover:text-eling-green ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
                             }`}
                         >
@@ -197,6 +222,7 @@ export default function GuestLayout() {
                             { name: 'Tentang Kami', path: '/about' },
                             { name: 'Resort & Kamar', path: '/rooms' },
                             { name: 'Event', path: '/events' },
+                            { name: 'Tiket Wisata', path: '/ticketing' },
                             { name: 'Tiket Event', path: '/event-ticketing' },
                             { name: 'Galeri', path: '/gallery' },
                             { name: 'Fasilitas', path: '/facilities' },

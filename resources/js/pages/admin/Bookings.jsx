@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, DollarSign, LayoutGrid, Download, MessageSquare, Quote, Star, CheckCircle2, Ticket, DoorOpen, DoorClosed } from 'lucide-react';
+import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, ArrowRight, DollarSign, LayoutGrid, Download, MessageSquare, Quote, Star, CheckCircle2, Ticket, DoorOpen, DoorClosed } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
@@ -166,7 +166,12 @@ export default function Bookings() {
                                         </div>
                                         <div>
                                             <div className="leading-none">{new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
-                                            <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter">s/d {new Date(booking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                            {booking.booking_type === 'RESORT' && booking.check_out_date && (
+                                                <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter">s/d {new Date(booking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                            )}
+                                            {booking.booking_type !== 'RESORT' && (
+                                                <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter whitespace-nowrap">{booking.booking_type} PASS</div>
+                                            )}
                                         </div>
                                     </div>
                                 </td>
@@ -241,7 +246,7 @@ export default function Bookings() {
                             <div className="w-20 h-20 rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-8 shadow-inner">
                                 <ShoppingCart size={32} />
                             </div>
-                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] mb-2">Order Reference</span>
+                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] mb-2">ID Transaksi</span>
                             <h2 className="text-3xl font-black text-admin-text-main tracking-tighter mb-8 leading-none">{selectedBooking.id}</h2>
 
                             <div className={`mt-auto p-6 rounded-3xl border ${getStatusStyles(selectedBooking.status)}`}>
@@ -249,7 +254,7 @@ export default function Bookings() {
                                     <Clock size={16} />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Order Progress</span>
                                 </div>
-                                <div className="text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' ? 'Confirmed' : 'Pending Audit'}</div>
+                                <div className="text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? 'Terkonfirmasi' : 'Menunggu Audit'}</div>
                             </div>
                         </div>
 
@@ -258,13 +263,13 @@ export default function Bookings() {
                                 <div className="p-2 rounded-lg bg-admin-primary/10 text-admin-primary">
                                     <Info size={16} />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Intelligence Report</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Laporan Data Pesanan</span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-8 mb-12">
                                 <div className="space-y-6">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Lead Personnel</h4>
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Informasi Pemesan</h4>
                                         <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <User size={18} />
@@ -279,7 +284,7 @@ export default function Bookings() {
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Mission Timing</h4>
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Waktu & Lokasi Kunjungan</h4>
                                         <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
                                             <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
                                                 <Calendar size={18} />
@@ -287,9 +292,14 @@ export default function Bookings() {
                                             <div className="flex flex-col">
                                                 <span className="text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">
                                                     {new Date(selectedBooking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    {selectedBooking.check_out_date && (
+                                                        <span className="text-admin-text-muted"> - Check-out {new Date(selectedBooking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                                    )}
                                                 </span>
-                                                <span className="text-[10px] text-admin-text-muted font-bold tracking-widest uppercase">
-                                                    ETA: {selectedBooking.arrival_time || 'Standard (14:00)'}
+                                                <span className="text-[10px] text-admin-text-muted font-bold tracking-widest uppercase mt-1">
+                                                    {selectedBooking.booking_type === 'RESORT' 
+                                                        ? `Rencana Tiba: ${selectedBooking.arrival_time && selectedBooking.arrival_time !== 'Pilih waktu kedatangan' ? selectedBooking.arrival_time : '-'}` 
+                                                        : `TIPE PESANAN: ${selectedBooking.booking_type}`}
                                                 </span>
                                             </div>
                                         </div>
@@ -297,28 +307,16 @@ export default function Bookings() {
                                 </div>
                                 <div className="space-y-6">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Settlement Total</h4>
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Total Pembayaran</h4>
                                         <div className="flex items-center gap-5 p-8 rounded-[2rem] bg-admin-primary text-white shadow-xl shadow-admin-primary/30 relative overflow-hidden group">
                                             <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full -z-0 group-hover:scale-110 transition-transform duration-1000" />
                                             <DollarSign size={32} className="relative z-10" />
                                             <div className="flex flex-col relative z-10">
                                                 <span className="text-2xl font-black leading-none tracking-tighter">{formatRupiah(selectedBooking.total_price)}</span>
-                                                <span className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] mt-2">Net Valuation</span>
+                                                <span className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] mt-2">Valuasi Bersih</span>
                                             </div>
                                         </div>
                                     </div>
-                                    {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Stay Preferences</h4>
-                                            <div className="flex flex-wrap gap-2">
-                                                {selectedBooking.additional_facilities.map((fac, idx) => (
-                                                    <span key={idx} className="px-3 py-1.5 rounded-lg bg-green-50 border border-green-100 text-[9px] font-black text-green-700 uppercase tracking-widest">
-                                                        {fac}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
@@ -326,7 +324,7 @@ export default function Bookings() {
                                 <section className="mb-12">
                                     <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
                                         <MessageSquare size={12} className="text-admin-primary" />
-                                        Bespoke Guest Requests
+                                        Permintaan Khusus Tamu
                                     </h4>
                                     <div className="bg-admin-bg p-8 rounded-[2rem] border-2 border-dashed border-admin-border relative group hover:border-admin-primary/30 transition-all">
                                         <div className="absolute top-4 right-6 opacity-5 select-none">
@@ -341,19 +339,49 @@ export default function Bookings() {
 
                             <section className="mb-10">
                                 <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
-                                    Manifest Items
+                                    Detail Item Pesanan
                                     <span className="w-12 h-px bg-admin-border" />
                                 </h4>
                                 <div className="space-y-4">
                                     {(selectedBooking.items || []).map((tItem, idx) => (
                                         <div key={idx} className="bg-admin-bg border border-admin-border rounded-2xl p-6 flex flex-col gap-4 group hover:bg-white transition-all">
-                                            <div className="flex items-center justify-between">
+                                            <div 
+                                                className={`flex items-center justify-between ${selectedBooking.booking_type === 'RESORT' ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                                onClick={() => {
+                                                    if (selectedBooking.booking_type === 'RESORT' && tItem.item?.id) {
+                                                        window.location.href = `/rooms/${tItem.item.id}`;
+                                                    }
+                                                }}
+                                            >
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm group-hover:scale-110 transition-transform">
-                                                        <ShoppingCart size={18} />
+                                                    <div className="w-16 h-12 rounded-xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm overflow-hidden shrink-0">
+                                                        {selectedBooking.booking_type === 'RESORT' && tItem.item?.gallery?.[0] ? (
+                                                            <img src={tItem.item.gallery[0]} className="w-full h-full object-cover" alt="" />
+                                                        ) : (
+                                                            <ShoppingCart size={18} />
+                                                        )}
                                                     </div>
                                                     <div>
                                                         <span className="text-xs font-black text-admin-text-main uppercase">{tItem.item?.name || 'Unknown Item'}</span>
+                                                        
+                                                        {selectedBooking.booking_type === 'RESORT' && tItem.item && (
+                                                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 opacity-70">
+                                                                {tItem.item.bed_type && (
+                                                                    <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide italic">
+                                                                        {tItem.item.bed_type}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                    • {tItem.item.capacity || 2} Tamu
+                                                                </span>
+                                                                {tItem.item.room_size && (
+                                                                    <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        • {tItem.item.room_size} m&sup2;
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+
                                                         <div className="text-[9px] font-bold text-admin-text-muted uppercase tracking-widest flex items-center gap-2 mt-1">
                                                             <span>{tItem.item_type.split('\\').pop()}</span>
                                                             <span className="w-1 h-1 bg-admin-border rounded-full" />
@@ -393,6 +421,94 @@ export default function Bookings() {
                                 </div>
                             </section>
 
+                            {/* Additional Facilities (Add-ons) */}
+                            {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
+                                <section className="mb-10">
+                                    <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
+                                        Fasilitas Tambahan (Add-ons)
+                                        <span className="w-12 h-px bg-admin-border" />
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {selectedBooking.additional_facilities.map((fac, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-4 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-eling-green/30 transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-green-50 text-eling-green flex items-center justify-center">
+                                                        <Check size={14} />
+                                                    </div>
+                                                    <span className="text-xs font-bold text-admin-text-main uppercase">{typeof fac === 'object' ? fac.name : fac}</span>
+                                                </div>
+                                                <span className="text-[10px] font-black text-eling-green">{typeof fac === 'object' ? formatRupiah(fac.price) : '-'}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Special Requests */}
+                            {selectedBooking.special_requests && (
+                                <section className="mb-12">
+                                    <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
+                                        <MessageSquare size={12} className="text-admin-primary" />
+                                        Permintaan Khusus Tamu
+                                    </h4>
+                                    <div className="bg-admin-bg p-8 rounded-[2rem] border-2 border-dashed border-admin-border relative group hover:border-admin-primary/30 transition-all">
+                                        <div className="absolute top-4 right-6 opacity-5 select-none">
+                                            <Quote size={48} className="text-admin-text-main" />
+                                        </div>
+                                        <p className="text-sm font-bold text-admin-text-main leading-relaxed italic relative z-10">
+                                            "{selectedBooking.special_requests}"
+                                        </p>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Final Pricing Summary Breakdown */}
+                            <section className="mb-10">
+                                <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
+                                    Rincian Pembayaran
+                                    <span className="w-12 h-px bg-admin-border" />
+                                </h4>
+                                <div className="mt-4 pt-8 border-t border-dashed border-admin-border/50 space-y-3">
+                                    {/* 1. Harga Dasar Kamar/Tiket */}
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
+                                        <span>Harga Kamar / Tiket</span>
+                                        <span>{formatRupiah(selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
+                                    </div>
+
+                                    {/* 2. Biaya Fasilitas Tambahan */}
+                                    {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
+                                            <span>Biaya Fasilitas Tambahan</span>
+                                            <span>{formatRupiah(selectedBooking.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
+                                        </div>
+                                    )}
+
+                                    {/* 3. Pajak 10% (Dihitung dari Dasar, bukan dari Total) */}
+                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
+                                        <span>Estimasi Pajak (10%)</span>
+                                        <span>{formatRupiah(
+                                            ( (selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0) + 
+                                              (selectedBooking.additional_facilities?.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0) || 0) 
+                                            ) * 0.1
+                                        )}</span>
+                                    </div>
+
+                                    {/* 4. Potongan Promo jika ada */}
+                                    {selectedBooking.discount_amount > 0 && (
+                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-eling-red">
+                                            <span>Potongan Promo</span>
+                                            <span>-{formatRupiah(selectedBooking.discount_amount)}</span>
+                                        </div>
+                                    )}
+
+                                    {/* 5. Total Akhir (Sesuai Database) */}
+                                    <div className="flex justify-between pt-3 border-t border-admin-border text-xs font-black uppercase tracking-widest text-admin-text-main">
+                                        <span>Total Akhir Dibayar</span>
+                                        <span className="text-admin-primary">{formatRupiah(selectedBooking.total_price)}</span>
+                                    </div>
+                                </div>
+                            </section>
+
                             {selectedBooking.promo && (
                                 <section className="mb-10 p-6 bg-admin-primary/5 border-2 border-dashed border-admin-primary/20 rounded-[2rem] flex items-center justify-between">
                                     <div className="flex items-center gap-4">
@@ -406,7 +522,7 @@ export default function Bookings() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="text-right">
+                                        <div className="text-right">
                                         <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1 font-serif">Valuation Savings</span>
                                         <div className="text-lg font-black text-admin-primary">-{formatRupiah(selectedBooking.discount_amount)}</div>
                                     </div>
@@ -419,26 +535,35 @@ export default function Bookings() {
                                         {selectedBooking.stay_status === 'pending' && (
                                             <button
                                                 onClick={() => handleCheckAction('check-in')}
-                                                className="flex-1 bg-eling-green text-white py-5 rounded-[2rem] shadow-xl shadow-green-900/10 active:scale-95 transition-all text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3"
+                                                className="flex-1 bg-eling-green text-white py-5 rounded-[2rem] shadow-xl shadow-green-900/10 active:scale-95 transition-all duration-300 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-between px-10 group hover:scale-[1.02] hover:shadow-2xl hover:bg-green-600"
                                             >
-                                                <DoorOpen size={18} />
-                                                Confirm Check-In
+                                                <div className="flex items-center gap-4 transition-transform duration-300 group-hover:translate-x-1">
+                                                    <DoorOpen size={20} className="group-hover:rotate-6 transition-transform" />
+                                                    <span>Konfirmasi Check-In</span>
+                                                </div>
+                                                <ChevronRight size={20} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300" />
                                             </button>
                                         )}
                                         {selectedBooking.stay_status === 'checked_in' && (
                                             <button
                                                 onClick={() => handleCheckAction('check-out')}
-                                                className="flex-1 bg-slate-900 text-white py-5 rounded-[2rem] shadow-xl shadow-slate-900/10 active:scale-95 transition-all text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3"
+                                                className="flex-1 bg-slate-900 text-white py-5 rounded-[2rem] shadow-xl shadow-slate-900/10 active:scale-95 transition-all duration-300 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-between px-10 group hover:scale-[1.02] hover:shadow-2xl hover:bg-black"
                                             >
-                                                <DoorClosed size={18} />
-                                                Process Check-Out
+                                                <div className="flex items-center gap-4 transition-transform duration-300 group-hover:translate-x-1">
+                                                    <DoorClosed size={20} className="group-hover:-rotate-6 transition-transform" />
+                                                    <span>Proses Check-Out</span>
+                                                </div>
+                                                <ChevronRight size={20} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300" />
                                             </button>
                                         )}
                                         {selectedBooking.stay_status === 'checked_out' && (
-                                            <div className="flex-1 bg-slate-50 border border-slate-200 text-slate-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                                                <Check size={18} />
-                                                Stay Completed
-                                            </div>
+                                            <button
+                                                onClick={() => setSelectedBooking(null)}
+                                                className="flex-1 bg-white border-2 border-slate-100 text-slate-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 group hover:border-eling-green/30 hover:text-eling-green transition-all duration-300 hover:scale-[1.02]"
+                                            >
+                                                <span>Kunjungan Selesai</span>
+                                                <Check size={18} className="group-hover:scale-125 transition-transform" />
+                                            </button>
                                         )}
                                     </>
                                 ) : (
@@ -446,15 +571,9 @@ export default function Bookings() {
                                         disabled
                                         className="flex-1 bg-gray-100 text-gray-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] cursor-not-allowed"
                                     >
-                                        Payment Required
+                                        Menunggu Pembayaran
                                     </button>
                                 )}
-                                <button
-                                    onClick={() => setSelectedBooking(null)}
-                                    className="w-20 h-20 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted flex items-center justify-center hover:bg-white transition-all shadow-xl"
-                                >
-                                    <ChevronRight size={32} />
-                                </button>
                             </div>
                         </div>
                     </div>

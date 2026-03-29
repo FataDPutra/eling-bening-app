@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
+import IconRenderer from '../../components/IconRenderer';
 
 export default function RoomDetails() {
     const { id } = useParams();
@@ -150,385 +151,316 @@ export default function RoomDetails() {
         const d = new Date(startDate);
         d.setDate(d.getDate() + 1);
         return d.toISOString().split('T')[0];
-    })() : '';
+    })() : new Date(new Date().getTime() + 86400000).toISOString().split('T')[0];
+
+    const fetchRoomDetails = async () => {
+        try {
+            const response = await axios.get(`/api/resorts/${id}`);
+            setRoom(response.data);
+        } catch (error) {
+            console.error('Error fetching room details:', error);
+        } finally {
+            setIsInitialLoading(false);
+            setIsUpdating(false);
+        }
+    };
 
     useEffect(() => {
-        if (!room) setIsInitialLoading(true);
-        else setIsUpdating(true);
-
-        axios.get(`/api/resorts/${id}`, {
-            params: {
-                check_in: startDate,
-                check_out: endDate
-            }
-        })
-            .then(res => {
-                setRoom(res.data);
-                setIsInitialLoading(false);
-                setIsUpdating(false);
-            })
-            .catch(err => {
-                console.error("Failed to fetch room details", err);
-                setIsInitialLoading(false);
-                setIsUpdating(false);
-            });
-    }, [id, startDate, endDate]);
+        if (id) {
+            fetchRoomDetails();
+        }
+    }, [id]);
 
     const handleBooking = () => {
-        navigate('/booking', { 
-            state: { 
-                room, 
-                checkIn: startDate, 
-                checkOut: endDate, 
-                guests,
-                roomsNeeded,
-                totalNights: Math.max(1, (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))
-            } 
-        }); 
+        const guestsNum = parseInt(guests);
+        const days = Math.floor((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+        const roomsNeeded = room ? Math.ceil(guestsNum / room.capacity) : 1;
+        
+        const bookingData = {
+            id: room.id,
+            name: room.name,
+            original_price: room.price,
+            price: currentPrice,
+            startDate,
+            endDate,
+            guests: guestsNum,
+            days: days,
+            rooms: roomsNeeded,
+            image: galleryToDisplay[0],
+            capacity: room.capacity
+        };
+
+        navigate('/booking', { state: { bookingData } });
     };
 
     if (isInitialLoading) {
         return (
-            <div className="pt-32 flex flex-col items-center justify-center min-h-screen animate-fade-in">
-                <div className="w-16 h-16 border-4 border-eling-green/20 border-t-eling-green rounded-full animate-spin mb-6"></div>
-                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Menyiapkan Pengalaman Anda...</p>
+            <div className="min-h-screen pt-32 flex flex-col items-center justify-center bg-slate-50">
+                <div className="w-20 h-20 relative mb-8">
+                    <div className="absolute inset-0 border-4 border-eling-green/20 rounded-full"></div>
+                    <div className="absolute inset-0 border-4 border-eling-green border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-bold font-serif text-gray-900 animate-pulse">Menyiapkan Kamar Impian Anda...</h3>
             </div>
         );
     }
 
     if (!room) {
-        return <div className="pt-32 text-center text-xl text-gray-500 font-bold min-h-screen">Kamar tidak ditemukan.</div>;
+        return (
+            <div className="min-h-screen pt-32 flex flex-col items-center justify-center px-4 bg-slate-50">
+                <div className="w-24 h-24 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+                    <i className="fas fa-exclamation-triangle text-3xl"></i>
+                </div>
+                <h2 className="text-2xl font-bold font-serif mb-4 text-center">Kamar Tidak Ditemukan</h2>
+                <p className="text-gray-500 text-center mb-8 max-w-md">Maaf, kami tidak dapat menemukan informasi kamar yang Anda cari. Silakan kembali ke daftar resort kami.</p>
+                <button 
+                    onClick={() => navigate('/resorts')} 
+                    className="bg-eling-green text-white px-8 py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-lg"
+                >
+                    Kembali ke Daftar Resort
+                </button>
+            </div>
+        );
     }
 
-    // Dynamic Pricing Logic
-    const today = new Date().getDay();
-    const isWeekend = today === 0 || today === 5 || today === 6; // 0=Sun, 5=Fri, 6=Sat
-    const currentPrice = isWeekend && room.price_weekend ? room.price_weekend : room.price;
-
-    const roomsNeeded = Math.ceil(guests / (room.capacity || 2));
-    const isRoomAvailable = room.available_stock !== undefined ? room.available_stock >= roomsNeeded : room.stock >= roomsNeeded;
+    const guestsNum = parseInt(guests);
+    const roomsNeeded = Math.ceil(guestsNum / room.capacity);
+    const isRoomAvailable = room.available_stock >= roomsNeeded;
+    const currentPrice = room.price;
 
     return (
-        <main className="pt-24 pb-20 px-6 max-w-7xl mx-auto animate-fade-in">
-            {/* Room Headline */}
-            <div className="mb-6">
-                <h1 className="text-4xl font-serif font-bold mb-2 text-gray-900">{room.name}</h1>
-                <div className="flex items-center text-sm text-gray-500 gap-4">
-                    <span className="flex items-center text-yellow-400">
-                        <i className="fas fa-star text-sm"></i>
-                        <i className="fas fa-star text-sm"></i>
-                        <i className="fas fa-star text-sm"></i>
-                        <i className="fas fa-star text-sm"></i>
-                        <i className="fas fa-star-half-alt text-sm"></i>
-                        <span className="text-gray-900 font-bold ml-2">4.8</span>
-                        <span className="text-gray-400 ml-1">(124 Penilaian)</span>
-                    </span>
-                    <span className="text-gray-300">|</span>
-                    <span><i className="fas fa-map-marker-alt mr-1 text-eling-green"></i> Ambarawa, Jawa Tengah</span>
-                </div>
-            </div>
-
-            {/* Image Gallery Grid */}
-            <div className="mb-10 group/gallery">
-                <div className="grid grid-cols-1 md:grid-cols-4 grid-rows-2 gap-4 h-auto md:h-[450px] overflow-hidden rounded-3xl relative">
-                    {/* Main Slot */}
-                    <div className="md:col-span-2 md:row-span-2 relative h-full overflow-hidden">
-                        {renderMedia(galleryToDisplay[0], "Main")}
+        <div className="bg-slate-50 min-h-screen">
+            {/* Gallery Section */}
+            <div className="pt-24 pb-12 bg-white">
+                <div className="container mx-auto px-4 max-w-7xl">
+                    <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 animate-fade-in">
+                        <div>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="bg-eling-green/10 text-eling-green px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Resort & Spa</span>
+                                <div className="flex text-yellow-400 text-xs">
+                                    <i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i>
+                                </div>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-bold font-serif text-gray-900 mb-2 leading-tight">{room.name}</h1>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                <span className="flex items-center gap-1.5"><i className="fas fa-map-marker-alt text-eling-green"></i> Eling Bening, Semarang</span>
+                                <span className="flex items-center gap-1.5"><i className="fas fa-user-friends text-eling-green"></i> Kapasitas: {room.capacity} Orang</span>
+                                <span className="flex items-center gap-1.5"><i className="fas fa-expand-arrows-alt text-eling-green"></i> Luas: {room.room_size} m&sup2;</span>
+                            </div>
+                        </div>
+                        <div className="flex gap-3">
+                            <button className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition shadow-sm text-gray-400">
+                                <i className="far fa-heart"></i>
+                            </button>
+                            <button className="w-12 h-12 rounded-full border border-gray-100 flex items-center justify-center hover:bg-gray-50 transition shadow-sm text-gray-400">
+                                <i className="fas fa-share-alt"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Secondary Slots (Adaptive) */}
-                    {galleryToDisplay.slice(1, 4).map((media, idx) => (
-                        <div key={idx} className={`relative overflow-hidden hidden md:block ${idx === 2 ? 'md:col-span-2 md:row-span-1' : 'md:col-span-1 md:row-span-1'}`}>
-                            {renderMedia(media, `Detail ${idx+1}`)}
+                    {/* Image Grid Optimized */}
+                    <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[400px] md:h-[550px] rounded-[2.5rem] overflow-hidden group shadow-2xl relative animate-fade-in-up">
+                        <div className="col-span-4 md:col-span-2 row-span-2 relative overflow-hidden">
+                            {renderMedia(galleryToDisplay[0], room.name)}
                         </div>
-                    ))}
-
-                    {/* View All Button Overlay */}
-                    {hasGallery && (
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
+                            {renderMedia(galleryToDisplay[1] || galleryToDisplay[0], "Gallery 1")}
+                        </div>
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
+                            {renderMedia(galleryToDisplay[2] || galleryToDisplay[0], "Gallery 2")}
+                        </div>
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
+                            {renderMedia(galleryToDisplay[3] || galleryToDisplay[0], "Gallery 3")}
+                        </div>
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden group/last">
+                            {renderMedia(galleryToDisplay[4] || galleryToDisplay[0], "Gallery 4")}
+                            {galleryToDisplay.length > 5 && (
+                                <div 
+                                    className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center text-white cursor-pointer group-hover/last:bg-black/40 transition-all duration-500"
+                                    onClick={() => setShowFullGallery(true)}
+                                >
+                                    <div className="text-center">
+                                        <p className="text-2xl font-bold">+{galleryToDisplay.length - 4}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest">Foto Lainnya</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Overlay Show All Images Button */}
                         <button 
                             onClick={() => setShowFullGallery(true)}
-                            className="absolute bottom-6 right-6 bg-white/90 backdrop-blur-md text-gray-900 px-6 py-3 rounded-2xl font-black text-xs shadow-2xl hover:bg-white hover:scale-105 transition-all flex items-center gap-3 border border-white/50 uppercase tracking-[0.2em] group"
+                            className="absolute bottom-6 right-6 px-6 py-3 bg-white/90 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-800 hover:bg-white transition-all shadow-xl active:scale-95 duration-300"
                         >
-                            <i className="fas fa-th-large text-eling-green group-hover:rotate-90 transition-transform duration-500"></i> 
-                            {room.gallery.length > 4 ? `Explore ${room.gallery.length} Media` : 'Lihat Semua Foto'}
+                            <i className="fas fa-th-large"></i> Lihat Semua Foto
                         </button>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative">
-                {/* Left Content: Description, Features, Reviews */}
-                <div className="lg:col-span-2 space-y-10">
-
-                    {/* Quick Stats */}
-                    <div className="flex flex-wrap gap-6 py-6 border-y border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-eling-green text-xl">
-                                <i className="fas fa-user-friends"></i>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Kapasitas</p>
-                                <p className="font-medium text-gray-900">{room.capacity || 2} Tamu</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-eling-green text-xl">
-                                <i className="fas fa-bed"></i>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Tipe Ranjang</p>
-                                <p className="font-medium text-gray-900">{room.bed_type || '1 Queen Bed'}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-eling-green text-xl">
-                                <i className="fas fa-expand"></i>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-bold">Ukuran Kamar</p>
-                                <p className="font-medium text-gray-900">{room.room_size || '24'} m&sup2;</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <h2 className="text-2xl font-bold mb-4 font-serif text-gray-900">Tentang Kamar Ini</h2>
-                        <p className="text-gray-600 leading-relaxed mb-4 text-justify">
-                            {room.description || `Nikmati pemandangan spektakuler Rawa Pening dan pegunungan sekitarnya langsung dari balkon pribadi Anda. ${room.name} menawarkan keseimbangan sempurna antara kemewahan modern dan sentuhan alam yang menenangkan.`}
-                        </p>
-                    </div>
-
-                    {/* Facilities */}
-                    <div>
-                        <h2 className="text-2xl font-bold mb-6 font-serif text-gray-900">Fasilitas Lengkap</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-                            {(room.facilities || []).map((a, i) => (
-                                <div key={i} className="flex items-start gap-4">
-                                    <i className="fas fa-check text-xl text-eling-green w-6"></i>
-                                    <span className="text-gray-700 text-sm">{a}</span>
+            {/* Content Section */}
+            <div className="container mx-auto px-4 py-16 max-w-7xl">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
+                    {/* Left: Info Details */}
+                    <div className="lg:col-span-2 space-y-16">
+                        {/* Quick Stats */}
+                        <div className="flex flex-wrap gap-12 py-10 px-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.05)] animate-fade-in-up">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-eling-green/5 text-eling-green flex items-center justify-center">
+                                    <i className="fas fa-user-friends text-xl"></i>
                                 </div>
-                            ))}
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black mb-1">Max Tamu</p>
+                                    <p className="font-bold text-gray-900">{room.capacity} Orang</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
+                                    <i className="fas fa-bed text-xl"></i>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black mb-1">Tipe Bed</p>
+                                    <p className="font-bold text-gray-900">{room.bed_type || 'King Bed'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <i className="fas fa-expand-arrows-alt text-xl"></i>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black mb-1">Luas Kamar</p>
+                                    <p className="font-bold text-gray-900">{room.room_size || '24'} m&sup2;</p>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Reviews Dummy Content */}
-                    <div className="pt-6 border-t border-gray-100">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-2xl font-bold font-serif text-gray-900">Penilaian Tamu</h2>
-                            <button className="text-eling-green font-bold text-sm hover:underline">Lihat Semua Ulasan</button>
-                        </div>
-
+                        {/* Description */}
                         <div className="space-y-6">
-                            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
-                                            R
+                            <h2 className="text-3xl font-bold font-serif text-gray-900 tracking-tight">Tentang Kamar Ini</h2>
+                            <p className="text-gray-600 leading-[1.8] text-lg text-justify font-light italic">
+                                "{room.description || `Nikmati pemandangan spektakuler Rawa Pening dan pegunungan sekitarnya langsung dari balkon pribadi Anda. ${room.name} menawarkan keseimbangan sempurna antara kemewahan modern dan sentuhan alam yang menenangkan.`}"
+                            </p>
+                        </div>
+
+                        {/* Facilities: The Modern Lucide Version */}
+                        <div className="space-y-8">
+                            <h2 className="text-3xl font-bold font-serif text-gray-900 tracking-tight">Fasilitas Premium</h2>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-10">
+                                {(room.facilities || []).map((a, i) => (
+                                    <div key={i} className="flex items-center gap-5 group">
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 text-eling-green flex items-center justify-center group-hover:bg-eling-green group-hover:text-white transition-all duration-500 shadow-sm group-hover:shadow-xl group-hover:shadow-eling-green/20 group-hover:-translate-y-1.5">
+                                            <IconRenderer icon={a.icon} size={28} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-gray-900">Rina Gunawan</h4>
-                                            <p className="text-xs text-gray-500">2 hari yang lalu</p>
+                                            <p className="text-sm font-black text-gray-900 uppercase tracking-wide group-hover:text-eling-green transition-colors">{a.name}</p>
+                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Fasilitas Kamar</p>
                                         </div>
                                     </div>
-                                    <div className="flex text-yellow-400 text-sm">
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Reviews Section */}
+                        <div className="pt-16 border-t border-gray-100 flex flex-col gap-10">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-3xl font-bold font-serif text-gray-900">Ulasan Pengalaman</h2>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex text-yellow-500">
                                         <i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i>
                                     </div>
+                                    <span className="font-bold text-gray-900">4.9 / 5.0</span>
                                 </div>
-                                <p className="text-gray-600 text-sm leading-relaxed text-justify">"Kamarnya sangat bersih dan wangi! Pemandangannya langsung ke danau dan gunung sangat luar biasa untuk dinikmati saat pagi hari."</p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-8 text-6xl text-slate-50 font-serif rotate-12 pointer-events-none group-hover:text-eling-green/10 transition-colors">"</div>
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div className="flex items-center gap-5">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-eling-green to-emerald-700 text-white flex items-center justify-center font-serif text-3xl shadow-lg">
+                                                R
+                                            </div>
+                                            <div>
+                                                <h4 className="font-black text-gray-900 uppercase tracking-tight">Rina Gunawan</h4>
+                                                <p className="text-xs text-gray-400 font-bold">Terverifikasi • 2 hari yang lalu</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-gray-600 text-lg leading-relaxed text-left italic font-light font-serif">"Pengalaman menginap yang tak terlupakan. Kamarnya jauh lebih bagus dari foto. Staff sangat ramah dan pemandangan paginya benar-benar tiada tanding..."</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Right Widget: Sticky Booking */}
-                <div className="lg:col-span-1 hidden lg:block">
-                    <div className={`bg-white rounded-3xl p-8 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-500 ${isUpdating ? 'opacity-60 grayscale-[0.2] scale-[0.98]' : 'opacity-100'}`}>
-                        {isUpdating && (
-                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/40 backdrop-blur-[2px] rounded-3xl">
-                                <div className="flex gap-1.5">
-                                    <div className="w-2 h-2 bg-eling-green rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                                    <div className="w-2 h-2 bg-eling-green rounded-full animate-bounce [animation-delay:-0.15s]"></div>
-                                    <div className="w-2 h-2 bg-eling-green rounded-full animate-bounce"></div>
+                    {/* Right Sticky Widget */}
+                    <div className="lg:col-span-1 hidden lg:block">
+                        <div className={`bg-white rounded-[3rem] p-10 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-700 ${isUpdating ? 'opacity-50 grayscale scale-[0.98]' : 'opacity-100'}`}>
+                            <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2 text-center">Harga per Malam</p>
+                                <div className="flex items-center justify-center gap-2">
+                                    <span className="text-4xl font-black font-serif text-gray-900">{formatRupiah(currentPrice)}</span>
                                 </div>
                             </div>
-                        )}
-                        <div className="mb-6 flex items-end gap-1">
-                            <span className="text-3xl font-bold font-serif text-eling-green">{formatRupiah(currentPrice)}</span>
-                            <span className="text-gray-400 text-sm mb-1">/ malam</span>
-                        </div>
 
-                        {/* Date & Guest Picker */}
-                        <div className="border border-gray-200 rounded-2xl mb-6 overflow-hidden bg-white relative">
-                            <div className="grid grid-cols-2 border-b border-gray-200">
-                                <div className="border-r border-gray-200 hover:bg-gray-50 focus-within:bg-gray-50 transition">
-                                    <label className="block p-4 cursor-pointer">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Check-in</span>
-                                        <input 
-                                            type="date" 
-                                            value={startDate} 
-                                            min={new Date().toISOString().split('T')[0]}
+                            <div className="space-y-6 mb-10">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
+                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Check-In</label>
+                                        <input type="date" value={startDate} min={new Date().toISOString().split('T')[0]}
                                             onChange={e => handleStartDateChange(e.target.value)} 
-                                            className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" 
-                                        />
-                                    </label>
-                                </div>
-                                <div className="hover:bg-gray-50 focus-within:bg-gray-50 transition">
-                                    <label className="block p-4 cursor-pointer">
-                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Check-out</span>
-                                        <input 
-                                            type="date" 
-                                            value={endDate} 
-                                            min={minCheckoutDate}
+                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer" />
+                                    </div>
+                                    <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
+                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Check-Out</label>
+                                        <input type="date" value={endDate} min={minCheckoutDate}
                                             onChange={e => setEndDate(e.target.value)} 
-                                            className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer focus:ring-0 p-0 border-0" 
-                                        />
-                                    </label>
+                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer" />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="relative hover:bg-gray-50 focus-within:bg-gray-50 transition">
-                                <label className="block p-4 cursor-pointer">
-                                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1 block">Tamu</span>
-                                    <select value={guests} onChange={e => setGuests(parseInt(e.target.value))} className="w-full font-bold text-sm text-gray-800 bg-transparent outline-none cursor-pointer appearance-none focus:ring-0 p-0 border-0">
+                                <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
+                                    <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Jumlah Tamu Dewasa</label>
+                                    <select value={guests} onChange={e => setGuests(parseInt(e.target.value))} 
+                                        className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer appearance-none bg-transparent">
                                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                                            <option key={n} value={n}>{n} Dewasa</option>
+                                            <option key={n} value={n}>{n} Orang</option>
                                         ))}
                                     </select>
-                                </label>
-                                <i className="fas fa-chevron-down text-gray-400 text-xs absolute right-4 top-1/2 translate-y-1 pointer-events-none"></i>
+                                </div>
                             </div>
-                        </div>
 
-                        {roomsNeeded > 1 && isRoomAvailable && (
-                            <div className="mb-6 p-4 bg-eling-red/5 border border-eling-red/10 rounded-2xl flex gap-3 items-start animate-fade-in">
-                                <i className="fas fa-info-circle text-eling-red mt-1"></i>
-                                <p className="text-[11px] text-eling-red leading-relaxed">
-                                    Kapasitas kamar ini {room.capacity} orang. Anda memerlukan <strong>{roomsNeeded} unit kamar</strong> untuk menampung {guests} tamu.
-                                </p>
-                            </div>
-                        )}
+                            <button onClick={handleBooking} disabled={!isRoomAvailable}
+                                className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all duration-300 active:scale-95 ${isRoomAvailable ? 'bg-eling-green text-white hover:bg-emerald-800 hover:shadow-eling-green/30' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                                {isRoomAvailable ? 'Amankan Kamar Sekarang' : 'Stok Menipis/Habis'}
+                            </button>
 
-                        {!isRoomAvailable && (
-                            <div className="mb-6 p-4 bg-red-100 border border-red-200 rounded-2xl flex gap-3 items-start animate-pulse">
-                                <i className="fas fa-exclamation-triangle text-red-600 mt-1"></i>
-                                <p className="text-[11px] text-red-700 leading-relaxed font-bold">
-                                    Maaf, stok unit tidak mencukupi untuk tanggal dan jumlah unit yang dipilih. Tersisa {room.available_stock} unit.
-                                </p>
-                            </div>
-                        )}
-
-                        <button 
-                            onClick={handleBooking} 
-                            disabled={!isRoomAvailable}
-                            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg mb-4 transition ${isRoomAvailable ? 'bg-eling-red text-white hover:bg-red-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                        >
-                            {isRoomAvailable ? 'Pesan Sekarang' : 'Stok Tidak Cukup'}
-                        </button>
-                        <p className="text-center text-xs text-gray-500 mb-6">Anda belum akan dikenakan biaya</p>
-
-                        {/* Price breakdown */}
-                        <div className="space-y-3 pt-6 border-t border-dashed border-gray-200 text-sm">
-                            <div className="flex justify-between text-gray-600">
-                                <span className="underline decoration-dotted text-gray-500">{formatRupiah(currentPrice)} x {roomsNeeded} unit</span>
-                                <span>{formatRupiah(currentPrice * roomsNeeded)}</span>
-                            </div>
-                            <div className="flex justify-between text-gray-600">
-                                <span className="underline decoration-dotted text-gray-500">Pajak & Layanan (10%)</span>
-                                <span>{formatRupiah((currentPrice * roomsNeeded) * 0.1)}</span>
-                            </div>
-                            <div className="flex justify-between pt-4 font-bold text-lg text-eling-green border-t border-gray-100">
-                                <span>Total Harga</span>
-                                <span>{formatRupiah((currentPrice * roomsNeeded) * 1.1)}</span>
+                            <div className="mt-8 space-y-4 pt-8 border-t border-dashed border-slate-100">
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-400 font-bold uppercase tracking-widest">Total Unit Kamar</span>
+                                    <span className="font-black text-gray-900">{roomsNeeded} Unit</span>
+                                </div>
+                                <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-400 font-bold uppercase tracking-widest">Pajak Negara (10%)</span>
+                                    <span className="font-black text-gray-900">TERMASUK</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Mobile Sticky Bottom Booking Bar */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 px-6 flex justify-between items-center z-50 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
-                    <div>
-                        <span className="text-xs text-gray-500 block mb-0.5">{roomsNeeded} Unit x 1 Malam</span>
-                        <span className="text-lg font-bold font-serif text-eling-green">{formatRupiah(currentPrice * roomsNeeded)}</span>
-                        <span className="text-gray-400 text-[10px]">/total</span>
-                    </div>
-                    <button 
-                        onClick={handleBooking} 
-                        disabled={!isRoomAvailable}
-                        className={`px-8 py-3 rounded-xl font-bold text-sm shadow-md transition ${isRoomAvailable ? 'bg-eling-red text-white hover:bg-red-800' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                    >
-                        {isRoomAvailable ? 'Pesan' : 'Habis'}
-                    </button>
                 </div>
             </div>
 
-            {/* View All Gallery Modal */}
-            {showFullGallery && (
-                <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-fade-in">
-                    <div className="px-6 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                        <div>
-                            <h2 className="text-xl font-serif font-black text-gray-900 tracking-tight">{room.name}</h2>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{room.gallery?.length || 0} Media Terunggah</p>
-                        </div>
-                        <button 
-                            onClick={() => setShowFullGallery(false)}
-                            className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-eling-red hover:text-white transition-all shadow-sm"
-                        >
-                            <i className="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-6 md:p-12">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto pb-20">
-                            {Array.isArray(room.gallery) && room.gallery.map((media, i) => (
-                                <div key={i} className="aspect-[4/3] rounded-3xl overflow-hidden bg-gray-100 group shadow-sm hover:shadow-xl transition-all">
-                                    {renderMedia(media, `Gallery ${i+1}`)}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Lightbox Modal */}
+            {/* Lightbox / Sidebar Overlays */}
             {lightboxMedia && (
-                <div className="fixed inset-0 z-[110] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in">
-                    <button 
-                        onClick={() => setLightboxMedia(null)}
-                        className="absolute top-8 right-8 w-14 h-14 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all backdrop-blur-md border border-white/20"
-                    >
-                        <i className="fas fa-times text-xl"></i>
+                <div className="fixed inset-0 z-[2000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxMedia(null)}>
+                    <button className="absolute top-8 right-10 text-white hover:text-eling-green transition-colors z-[2100]" onClick={() => setLightboxMedia(null)}>
+                        <X size={40} strokeWidth={1} />
                     </button>
-                    
-                    <div className="w-full max-w-6xl max-h-[85vh] flex items-center justify-center">
-                        {lightboxMedia.type === 'iframe' ? (
-                            <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl">
-                                <iframe 
-                                    src={lightboxMedia.url.replace('mute=1', 'mute=0&autoplay=1')} 
-                                    className="w-full h-full" 
-                                    allow="autoplay; encrypted-media; fullscreen"
-                                    allowFullScreen
-                                ></iframe>
-                            </div>
-                        ) : lightboxMedia.type === 'video' ? (
-                            <video 
-                                src={lightboxMedia.url} 
-                                className="max-w-full max-h-full rounded-2xl shadow-2xl" 
-                                controls 
-                                autoPlay 
-                            />
-                        ) : (
-                            <img 
-                                src={lightboxMedia.url} 
-                                className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain animate-scale-up" 
-                                alt="Detail" 
-                            />
-                        )}
-                    </div>
-
-                    <div className="absolute bottom-8 left-0 right-0 text-center">
-                        <p className="text-white/60 text-xs font-bold uppercase tracking-[0.3em] font-serif">Detail Media • Eling Bening Resort</p>
+                    <div className="w-full h-full max-w-7xl max-h-[85vh] flex items-center justify-center relative shadow-2xl" onClick={e => e.stopPropagation()}>
+                        {lightboxMedia.type === 'image' && <img src={lightboxMedia.url} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-scale-up" alt="Lightbox" />}
+                        {lightboxMedia.type === 'iframe' && <iframe src={lightboxMedia.url} className="w-full h-full rounded-2xl shadow-2xl border-0 animate-scale-up" allowFullScreen allow="autoplay"></iframe>}
+                        {lightboxMedia.type === 'video' && <video src={lightboxMedia.url} className="max-w-full max-h-full rounded-2xl shadow-2xl animate-scale-up" controls autoPlay loop></video>}
                     </div>
                 </div>
             )}
-        </main>
+        </div>
     );
 }

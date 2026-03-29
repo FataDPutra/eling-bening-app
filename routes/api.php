@@ -15,6 +15,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\StatController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FacilityController;
 
 // Breeze Auth Routes
 require __DIR__.'/auth.php';
@@ -30,6 +31,8 @@ Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCa
     Route::get('/tickets/{id}', [TicketController::class, 'show']);
     Route::post('/promos/validate', [PromoController::class, 'validatePromo']);
     Route::get('/settings/public', [SystemSettingController::class, 'publicSettings']);
+    Route::get('/facilities', [FacilityController::class, 'index']);
+    Route::get('/facilities/{id}', [FacilityController::class, 'show']);
 
 // Dynamic CMS Content & Events
 Route::get('/events', [EventController::class, 'index']);
@@ -88,4 +91,7 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function() {
     Route::apiResource('events', EventController::class)->except(['index']);
     Route::post('/contents/upsert', [ContentController::class, 'upsert']);
     Route::post('/contents/bulk', [ContentController::class, 'bulkUpdate']);
+
+    // Facilities CRUD
+    Route::apiResource('facilities', FacilityController::class)->except(['index', 'show']);
 });

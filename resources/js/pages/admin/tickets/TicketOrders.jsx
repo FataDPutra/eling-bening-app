@@ -23,11 +23,11 @@ export default function TicketOrders() {
             const res = await axios.get('/api/transactions');
             
             // Revert to ONLY TICKET (Resort)
-            const resortOrders = (res.data || []).filter(b => 
+            const ticketOrders = (res.data || []).filter(b => 
                 String(b.booking_type).toUpperCase() === 'TICKET'
             );
             
-            setOrders(resortOrders);
+            setOrders(ticketOrders);
             setIsLoading(false);
         } catch (error) {
             console.error("Critical: Failed to sync ticket records", error);
@@ -154,7 +154,7 @@ export default function TicketOrders() {
                             <ShoppingBag size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Resort Orders</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Ticket Orders</p>
                             <p className="text-3xl font-black text-admin-text-main leading-none tabular-nums">{stats.total}</p>
                         </div>
                     </div>
@@ -401,12 +401,30 @@ export default function TicketOrders() {
                                 </div>
                                 <div className="space-y-8">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><DollarSign size={12}/> Settlement Breakdown</h4>
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><DollarSign size={12}/> Settlement Summary</h4>
                                         <div className="p-8 rounded-[2.5rem] bg-admin-primary text-white shadow-2xl shadow-admin-primary/30 relative overflow-hidden group">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700" />
-                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-2 block font-serif">Valuation Balance</span>
+                                            
+                                            <div className="space-y-2 mb-6 opacity-70">
+                                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
+                                                    <span>Subtotal Gross</span>
+                                                    <span>{formatRupiah(Number(selectedOrder.total_price || 0) + Number(selectedOrder.discount_amount || 0) - (Number(selectedOrder.total_price || 0) * 0.1))}</span>
+                                                </div>
+                                                <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
+                                                    <span>Fiscal Tax 10%</span>
+                                                    <span>{formatRupiah(Number(selectedOrder.total_price || 0) * 0.1)}</span>
+                                                </div>
+                                                {selectedOrder.discount_amount > 0 && (
+                                                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-eling-red">
+                                                        <span>Promo Audit</span>
+                                                        <span>-{formatRupiah(selectedOrder.discount_amount)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1 block font-serif leading-none">Net Valuation</span>
                                             <div className="text-3xl font-black tracking-tighter tabular-nums mb-1">{formatRupiah(selectedOrder.total_price)}</div>
-                                            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest">via {selectedOrder.payment_method || 'Midtrans VA'}</div>
+                                            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Final Order Balance</div>
                                         </div>
                                     </div>
                                 </div>

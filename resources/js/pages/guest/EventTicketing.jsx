@@ -6,6 +6,7 @@ import { useAuth } from '../../utils/AuthContext';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { Calendar, Users, ShoppingCart, Tag, CreditCard, QrCode, University, CheckCircle, ArrowRight, Loader2, X } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import '../../styles/guest.css';
 
 export default function EventTicketing() {
@@ -179,12 +180,12 @@ export default function EventTicketing() {
         };
 
         try {
-            await axios.post('/api/transactions', payload);
+            const res = await axios.post('/api/transactions', payload);
             setIsProcessing(false);
             setSuccessOrderInfo({
-                id: transId,
-                name: bookerName || user.name,
-                items: orderItems
+                id: res.data.id,
+                name: res.data.booker_name,
+                tickets: res.data.tickets // This contains individual guest names and actual ticket IDs
             });
             setShowSuccess(true);
         } catch (error) {
@@ -210,8 +211,8 @@ export default function EventTicketing() {
             {/* Header / Hero */}
             <header className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <span className="px-4 py-1.5 rounded-full bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-widest mb-4 inline-block">Official Box Office</span>
-                    <h1 className="text-4xl md:text-5xl font-black mb-4 font-serif text-gray-900">Tiket Event & Konser</h1>
+                    <span className="px-4 py-1.5 rounded-full bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-widest mb-4 inline-block">Official Event Pass</span>
+                    <h1 className="text-4xl md:text-5xl font-black mb-4 font-serif text-gray-900 leading-tight">Tiket Event & Konser</h1>
                     <p className="text-gray-400 font-bold text-sm uppercase tracking-widest">Pilih paket event dan amankan e-ticket Anda sekarang.</p>
                 </div>
 
@@ -220,26 +221,24 @@ export default function EventTicketing() {
                     <div className="lg:col-span-2 space-y-8">
                         {events.length === 0 ? (
                             <div className="bg-white rounded-[2.5rem] p-20 text-center text-gray-500 shadow-xl border border-gray-100 flex flex-col items-center">
-                                <div className="p-6 bg-gray-50 rounded-full mb-6">
-                                    <ShoppingCart size={48} className="text-gray-200" />
+                                <div className="p-6 bg-gray-50 rounded-full mb-6 text-gray-200">
+                                    <ShoppingCart size={48} />
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">Belum Tersedia Event Berbayar</h3>
-                                <p className="text-sm">Silakan cek kembali secara berkala untuk info event mendatang.</p>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2 font-serif">Belum Tersedia Event</h3>
+                                <p className="text-sm font-bold uppercase tracking-widest text-gray-400">Silakan cek kembali secara berkala.</p>
                             </div>
                         ) : (
                             events.map(event => (
                                 <div key={event.id} className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green/30 transition-all group overflow-hidden relative">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-eling-green/5 rounded-full -mr-16 -mt-16 blur-xl group-hover:bg-eling-green/10 transition-colors"></div>
-                                    
-                                    <div className="md:w-1/3 h-48 bg-gray-100 rounded-3xl overflow-hidden relative border border-gray-50 shadow-inner">
+                                    <div className="md:w-1/3 h-52 bg-slate-100 rounded-3xl overflow-hidden relative border border-gray-50 uppercase font-black text-[10px] tracking-widest text-slate-300 flex items-center justify-center shrink-0">
                                         <img 
                                             src={(Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : (event.image || "/images/hero-bg.png"))} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" 
                                             alt={event.name} 
                                         />
                                         <div className="absolute top-4 left-4">
-                                            <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-eling-green shadow-sm">
-                                                {event.category}
+                                            <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-eling-green shadow-sm border border-eling-green/10">
+                                                {event.category || 'Special Event'}
                                             </span>
                                         </div>
                                     </div>
@@ -247,27 +246,35 @@ export default function EventTicketing() {
                                     <div className="flex-1 flex flex-col justify-between relative z-10">
                                         <div>
                                             <div className="flex items-start justify-between mb-2">
-                                                <h3 className="font-black text-2xl font-serif text-gray-900 group-hover:text-eling-green transition-colors">{event.name}</h3>
-                                                <div className="flex items-center gap-1.5 text-eling-red font-black text-[10px] uppercase tracking-widest">
-                                                    <Calendar size={13} />
+                                                <h3 className="font-black text-2xl font-serif text-gray-900 group-hover:text-eling-green transition-colors leading-tight">{event.name}</h3>
+                                                <div className="flex items-center gap-1.5 text-eling-red font-black text-[10px] uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg">
+                                                    <Calendar size={12} />
                                                     {event.date_info}
                                                 </div>
                                             </div>
-                                            <p className="text-gray-400 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">{event.description}</p>
+                                            <p className="text-gray-400 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">{event.description || 'Nikmati acara spesial di Eling Bening dengan pemandangan alam yang menakjubkan.'}</p>
                                         </div>
                                         
-                                        <div className="flex justify-between items-center bg-gray-50/50 p-4 rounded-2xl border border-gray-100/50">
-                                            <div>
-                                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-0.5">Mulai Dari</p>
-                                                <p className="text-2xl font-black text-eling-green">{formatRupiah(event.price)}</p>
+                                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50">
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-0.5 leading-none">Mulai Dari</p>
+                                                <p className="text-3xl font-black text-eling-green font-serif tracking-tight leading-none">
+                                                    {formatRupiah(event.price)}
+                                                </p>
                                             </div>
-                                            <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-                                                <button onClick={() => updateQty(event.id, -1)} className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 active:scale-95">
-                                                    <b>-</b>
+                                            <div className="flex items-center justify-between sm:justify-end gap-5 bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 min-w-[140px]">
+                                                <button 
+                                                    onClick={() => updateQty(event.id, -1)} 
+                                                    className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-red hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
+                                                >
+                                                    <b className="text-xl leading-none">−</b>
                                                 </button>
-                                                <span className="font-black text-lg w-6 text-center text-gray-900">{qtys[event.id] || 0}</span>
-                                                <button onClick={() => updateQty(event.id, 1)} className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 active:scale-95">
-                                                    <b>+</b>
+                                                <span className="font-black text-xl w-6 text-center text-gray-900">{qtys[event.id] || 0}</span>
+                                                <button 
+                                                    onClick={() => updateQty(event.id, 1)} 
+                                                    className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
+                                                >
+                                                    <b className="text-xl leading-none">+</b>
                                                 </button>
                                             </div>
                                         </div>
@@ -275,132 +282,148 @@ export default function EventTicketing() {
                                 </div>
                             ))
                         )}
-                    </div>
 
-                    {/* Right: Payment Summary */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 sticky top-32">
-                            <h3 className="font-black text-xl mb-8 font-serif text-gray-900">Ringkasan Pesanan</h3>
-
-                            <div className="space-y-6 mb-8 text-sm min-h-[60px]">
-                                {!hasItems ? (
-                                    <div className="text-center py-6 flex flex-col items-center">
-                                        <ShoppingCart size={32} className="text-gray-200 mb-3" />
-                                        <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Belum ada tiket terpilih</p>
+                        {/* Guest Names Section (Manifest) */}
+                        {hasItems && (
+                            <div className="animate-slide-up bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl mt-12">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                                        <Users size={24} />
                                     </div>
-                                ) : (
-                                    orderItems.map((item, idx) => (
-                                        <div key={idx} className="flex justify-between items-start animate-fade-in">
-                                            <div className="flex flex-col">
-                                                <span className="font-black text-gray-800 text-sm leading-tight mb-1">{item.name}</span>
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.qty}x {formatRupiah(item.price)}</span>
-                                            </div>
-                                            <span className="font-black text-gray-900">{formatRupiah(item.amount)}</span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <div className="border-t border-dashed border-gray-200 pt-8 space-y-4">
-                                <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-[9px]">
-                                    <span>Subtotal</span>
-                                    <span className="text-gray-900">{formatRupiah(subtotal)}</span>
-                                </div>
-                                {activePromo && (
-                                    <div className="flex justify-between text-eling-red font-bold uppercase tracking-widest text-[9px]">
-                                        <span>Promo Discount</span>
-                                        <span>-{formatRupiah(promoDiscountAmt)}</span>
-                                    </div>
-                                )}
-                                <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-[9px]">
-                                    <span>Biaya Layanan</span>
-                                    <span className="text-gray-900">{formatRupiah(adminFee)}</span>
-                                </div>
-                                <div className="flex justify-between text-3xl font-black text-eling-green pt-6 border-t border-gray-100">
-                                    <span className="text-xs font-black uppercase tracking-widest text-gray-400">Total Tagihan</span>
-                                    <span>{formatRupiah(total)}</span>
-                                </div>
-                            </div>
-
-                            {/* Form Pilihan Tanggal dan Nama */}
-                            {hasItems && (
-                                <div className="space-y-6 pt-10 mt-10 border-t border-gray-100">
                                     <div>
-                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Nama Pemesan Utama</label>
-                                        <input
-                                            type="text"
-                                            placeholder={`Otomatis: ${user?.name || 'Nama Akun'}`}
-                                            value={bookerName}
-                                            onChange={(e) => setBookerName(e.target.value)}
-                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:bg-white focus:ring-2 focus:ring-eling-green/10 outline-none transition-all"
-                                        />
+                                        <h2 className="text-2xl font-black text-gray-900 font-serif leading-tight">Data Manifest Pengunjung</h2>
+                                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Detail identitas untuk e-ticket Anda</p>
                                     </div>
+                                </div>
 
-                                    {/* Individual Guest Name Inputs */}
-                                    <div className="space-y-6">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <div className="w-6 h-1 bg-eling-green rounded-full"></div>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Manifest Pengunjung</p>
-                                        </div>
-                                        {orderItems.map((item) => (
-                                            <div key={item.id} className="space-y-3">
-                                                <p className="text-[11px] font-black text-eling-green uppercase tracking-wide px-3 py-1 bg-eling-green/5 rounded-lg inline-block">{item.name}</p>
+                                <div className="space-y-8">
+                                    {orderItems.map((item) => (
+                                        <div key={item.id} className="space-y-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-eling-green/10 flex items-center justify-center text-eling-green">
+                                                    <Tag size={14} />
+                                                </div>
+                                                <h4 className="text-sm font-black text-gray-900 uppercase tracking-wide">{item.name}</h4>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {Array.from({ length: item.qty }).map((_, idx) => (
-                                                    <div key={`${item.id}-${idx}`} className="relative">
-                                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-[10px] text-gray-300">#{idx+1}</div>
+                                                    <div key={`${item.id}-${idx}`} className="relative group">
+                                                        <div className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-[10px] text-gray-300 group-focus-within:text-eling-green transition-colors uppercase tracking-widest">
+                                                            Pass #{idx+1}
+                                                        </div>
                                                         <input 
                                                             type="text"
-                                                            placeholder="Nama Lengkap"
+                                                            placeholder="Nama Lengkap Pengunjung"
                                                             value={guestNamesData[item.id]?.[idx] || ''}
                                                             onChange={(e) => updateGuestName(item.id, idx, e.target.value)}
-                                                            className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-12 pr-4 py-3 text-xs font-bold focus:ring-2 focus:ring-eling-green/10 outline-none transition-all"
+                                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-20 pr-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-eling-green/10 focus:border-eling-green outline-none transition-all shadow-sm"
                                                         />
                                                     </div>
                                                 ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Promo Code */}
-                            {hasItems && (
-                                <div className="pt-8 mb-8 border-t border-gray-100">
-                                    <label className="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Punya Kode Promo?</label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={promoInput}
-                                            onChange={(e) => setPromoInput(e.target.value)}
-                                            placeholder="MASUKKAN KODE"
-                                            className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-black uppercase tracking-widest focus:ring-2 focus:ring-eling-green/10 outline-none transition-all"
-                                        />
-                                        <button
-                                            onClick={applyPromo}
-                                            className="bg-gray-900 text-white font-black px-6 rounded-xl hover:bg-eling-green transition-all text-[10px] uppercase tracking-widest active:scale-95"
-                                        >
-                                            Klaim
-                                        </button>
-                                    </div>
-                                    {promoMsg.show && (
-                                        <div className={`mt-2 text-[10px] font-bold ${promoMsg.success ? 'text-eling-green' : 'text-eling-red'}`}>
-                                            {promoMsg.text}
                                         </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Payment Summary */}
+                    <div className="lg:col-span-1">
+                        <div className="sticky top-10 space-y-6">
+                            <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl border border-gray-100 overflow-hidden relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-eling-green/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                                <h3 className="font-black text-xl mb-8 font-serif text-gray-900 relative">Ringkasan Pesanan</h3>
+
+                                <div className="space-y-6 mb-8 text-sm min-h-[60px] relative">
+                                    {!hasItems ? (
+                                        <div className="text-center py-6 flex flex-col items-center">
+                                            <ShoppingCart size={32} className="text-gray-100 mb-3" />
+                                            <p className="text-gray-400 font-bold uppercase text-[9px] tracking-[0.2em] italic">Belum ada tiket terpilih</p>
+                                        </div>
+                                    ) : (
+                                        orderItems.map((item, idx) => (
+                                            <div key={idx} className="flex justify-between items-start animate-fade-in group">
+                                                <div className="flex flex-col flex-1">
+                                                    <span className="font-black text-gray-800 text-sm leading-tight mb-0.5 group-hover:text-eling-green transition-colors">{item.name}</span>
+                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.qty}x Tiket</span>
+                                                </div>
+                                                <span className="font-black text-gray-900">{formatRupiah(item.amount)}</span>
+                                            </div>
+                                        ))
                                     )}
                                 </div>
-                            )}
 
-                            <button
-                                onClick={() => setShowPayment(true)}
-                                disabled={!hasItems || isProcessing || isLoading}
-                                className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
-                            >
-                                {isProcessing ? (
-                                    <Loader2 size={16} className="animate-spin" />
-                                ) : (
-                                    <>Lanjut Pembayaran <ArrowRight size={14} /></>
+                                <div className="border-t border-dashed border-gray-200 pt-8 space-y-4 relative">
+                                    <div className="flex justify-between text-gray-400 font-black uppercase tracking-widest text-[9px]">
+                                        <span>Subtotal</span>
+                                        <span className="text-gray-900">{formatRupiah(subtotal)}</span>
+                                    </div>
+                                    {activePromo && (
+                                        <div className="flex justify-between text-eling-red font-black uppercase tracking-widest text-[9px]">
+                                            <span>Promo Discount</span>
+                                            <span>-{formatRupiah(promoDiscountAmt)}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-gray-400 font-black uppercase tracking-widest text-[9px]">
+                                        <span>Biaya Layanan</span>
+                                        <span className="text-gray-900">{formatRupiah(adminFee)}</span>
+                                    </div>
+                                    <div className="flex flex-col pt-6 border-t border-gray-100">
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1 text-center">Total Tagihan</span>
+                                        <span className="text-3xl font-black text-eling-green text-center font-serif tracking-tight">{formatRupiah(total)}</span>
+                                    </div>
+                                </div>
+
+                                {/* Promo Code */}
+                                {hasItems && (
+                                    <div className="pt-8 mt-8 border-t border-gray-100 relative">
+                                        <label className="block text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest ml-1 text-center">Punya Kode Promo?</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={promoInput}
+                                                onChange={(e) => setPromoInput(e.target.value)}
+                                                placeholder="KODE"
+                                                className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest focus:bg-white focus:ring-2 focus:ring-eling-green/10 outline-none transition-all"
+                                            />
+                                            <button
+                                                onClick={applyPromo}
+                                                className="bg-gray-900 text-white font-black px-5 rounded-xl hover:bg-eling-green transition-all text-[9px] uppercase tracking-widest active:scale-95 shadow-lg shadow-gray-900/10"
+                                            >
+                                                Klaim
+                                            </button>
+                                        </div>
+                                        {promoMsg.show && (
+                                            <div className={`mt-2 text-[9px] font-black uppercase text-center tracking-widest ${promoMsg.success ? 'text-eling-green' : 'text-eling-red'}`}>
+                                                {promoMsg.text}
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
-                            </button>
+
+                                <button
+                                    onClick={() => setShowPayment(true)}
+                                    disabled={!hasItems || isProcessing || isLoading}
+                                    className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mt-8"
+                                >
+                                    {isProcessing ? (
+                                        <Loader2 size={16} className="animate-spin" />
+                                    ) : (
+                                        <>Lanjut Pembayaran <ArrowRight size={14} /></>
+                                    )}
+                                </button>
+                            </div>
+
+                            {/* Booking Policies Card */}
+                            <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-2xl relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:scale-110 transition-transform"></div>
+                                <h4 className="text-xl font-black font-serif mb-3 leading-tight relative z-10">Kebijakan Tiket</h4>
+                                <p className="text-blue-100 font-bold text-xs leading-relaxed relative z-10 opacity-80 uppercase tracking-wide">
+                                    Data manifest harus sesuai e-ticket. Tiket event yang sudah dibeli tidak dapat di-reschedule.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -451,37 +474,53 @@ export default function EventTicketing() {
 
             {/* Success Modal */}
             {showSuccess && successOrderInfo && (
-                <div className="fixed inset-0 z-[700] bg-eling-green/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-white animate-fade-in">
-                    <div className="max-w-lg w-full text-center animate-scale-up">
-                        <div className="w-28 h-28 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-10 shadow-2xl">
-                            <CheckCircle size={56} className="text-white animate-bounce" />
-                        </div>
-                        <h2 className="text-4xl md:text-5xl font-black mb-4 font-serif leading-tight">Berhasil Terpesan!</h2>
-                        <p className="text-green-100 font-bold text-sm mb-12 uppercase tracking-widest opacity-80">Terima kasih telah memesan di Eling Bening</p>
-
-                        <div className="bg-white p-10 rounded-[3rem] shadow-2xl mb-12 text-center relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-eling-green to-green-300"></div>
-                            <div className="mb-6 flex justify-center transform hover:scale-105 transition-transform duration-500">
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${successOrderInfo.id}&color=2E7D32`} alt="QR Code" className="w-48 h-48" />
+                <div className="fixed inset-0 z-[1000] bg-eling-green overflow-y-auto font-sans">
+                    <div className="min-h-full flex flex-col items-center p-6 sm:p-12">
+                        <div className="max-w-4xl w-full mx-auto my-auto py-10">
+                            <div className="text-center text-white mb-6">
+                                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce text-4xl shadow-xl">
+                                    <i className="fas fa-check"></i>
+                                </div>
+                                <h2 className="text-4xl md:text-5xl font-black mb-2 font-serif leading-tight text-white">Berhasil Terpesan!</h2>
+                                <p className="text-green-100 font-bold text-xs uppercase tracking-[0.3em] opacity-80">Eling Bening Experience</p>
                             </div>
-                            <p className="text-gray-900 font-black text-xl mb-1 font-serif tracking-tight">{successOrderInfo.name}</p>
-                            <p className="text-gray-400 font-black text-xs uppercase tracking-[0.2em] mb-4">{successOrderInfo.id}</p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                                {successOrderInfo.items.map(item => (
-                                    <div key={item.id} className="py-2 px-4 bg-gray-50 rounded-xl border border-gray-100">
-                                        <p className="text-eling-green font-black text-[10px] uppercase tracking-widest">{item.qty}x {item.name}</p>
+
+                            <div className="flex gap-6 overflow-x-auto pb-10 px-4 snap-x snap-mandatory no-scrollbar mb-8 text-left">
+                                {successOrderInfo.tickets.map((ticket, idx) => (
+                                    <div key={idx} className="shrink-0 w-[300px] sm:w-[320px] snap-center bg-white p-8 rounded-[2.5rem] shadow-2xl text-center relative overflow-hidden animate-slide-up" style={{ animationDelay: `${idx * 150}ms` }}>
+                                        <div className="p-4 bg-white rounded-3xl shadow-inner border border-gray-50 mb-6 w-fit mx-auto flex items-center justify-center">
+                                             <QRCodeCanvas 
+                                                  value={ticket.ticket_id} 
+                                                  size={180}
+                                                  level="H"
+                                                  includeMargin={false}
+                                                  imageSettings={{
+                                                      src: "/images/logo.png",
+                                                      height: 40,
+                                                      width: 40,
+                                                      excavate: true,
+                                                  }}
+                                             />
+                                         </div>
+                                         <h5 className="text-gray-900 font-black text-2xl mb-1 font-serif tracking-tight">{ticket.guest_name}</h5>
+                                         <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-4">{ticket.ticket_id}</p>
+                                         <div className="inline-block py-2 px-6 bg-eling-green/5 rounded-2xl border border-eling-green/10">
+                                             <p className="text-eling-green font-black text-[10px] uppercase tracking-widest text-center">
+                                                 {ticket.transaction_item?.item?.name || 'Tiket Event'}
+                                             </p>
+                                         </div>
                                     </div>
                                 ))}
                             </div>
-                        </div>
 
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
-                            <button onClick={() => window.print()} className="bg-white text-eling-green px-10 py-4.5 rounded-[1.5rem] font-black hover:bg-gray-100 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
-                                Cetak Tiket
-                            </button>
-                            <button onClick={() => navigate('/profile')} className="bg-black/20 text-white px-10 py-4.5 rounded-[1.5rem] font-black hover:bg-black/30 transition-all text-[11px] uppercase tracking-[0.2em] border border-white/20 active:scale-95">
-                                Ke Profil Saya
-                            </button>
+                            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                                <button onClick={() => window.print()} className="bg-white text-eling-green px-10 py-5 rounded-[1.5rem] font-black hover:bg-gray-100 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
+                                    <i className="fas fa-print mr-2"></i> Cetak Tiket
+                                </button>
+                                <button onClick={() => navigate('/profile')} className="bg-eling-green border-2 border-white/30 text-white px-10 py-5 rounded-[1.5rem] font-black hover:bg-white/10 transition-all text-[11px] uppercase tracking-[0.2em] shadow-xl active:scale-95">
+                                    Ke Riwayat Pesanan
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

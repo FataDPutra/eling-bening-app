@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Facility;
 
 class Resort extends Model
 {
@@ -12,7 +13,14 @@ class Resort extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'facilities' => 'array',
         'gallery' => 'array',
     ];
+
+    /**
+     * The facilities attached to this resort room.
+     */
+    public function facilities()
+    {
+        return $this->belongsToMany(Facility::class, 'facility_resort');
+    }
 }
