@@ -10,10 +10,23 @@ export default function Bookings() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
+    const [resortFilter, setResortFilter] = useState('all');
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
 
     const fetchBookings = async () => {
         try {
-            const res = await axios.get('/api/transactions');
+            const period = isAllTime ? 'all' : selectedMonth;
+            const res = await axios.get(`/api/transactions?month=${period}&year=${selectedYear}`);
             // Filter only resort bookings
             const resortBookings = (res.data || []).filter(b => b.booking_type === 'RESORT');
             setBookings(resortBookings);
@@ -38,14 +51,23 @@ export default function Bookings() {
 
     useEffect(() => {
         fetchBookings();
-    }, []);
+    }, [selectedMonth, selectedYear, isAllTime]);
+
+    const uniqueResortNames = Array.from(new Set(
+        bookings.map(b => b.items?.[0]?.item?.name).filter(Boolean)
+    ));
 
     const filteredBookings = bookings.filter(b => {
         const matchesSearch = b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (b.user && b.user.name.toLowerCase().includes(searchTerm.toLowerCase()));
         
         const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
-        return matchesSearch && matchesStatus;
+
+        const matchesResort = resortFilter === 'all'
+            ? true
+            : b.items?.some(item => item.item?.name === resortFilter);
+
+        return matchesSearch && matchesStatus && matchesResort;
     });
 
     const getStatusStyles = (status) => {
@@ -69,6 +91,60 @@ export default function Bookings() {
                     <p>Monitoring arus kas masuk, verifikasi status pemesanan, dan audit log transaksi pelanggan secara real-time.</p>
                 </div>
                 <div className="flex gap-4">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-full"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                        </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} className="rotate-180" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} /></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                     <button className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm">
                         <Download size={18} className="text-admin-primary" /> Export Data
                     </button>
@@ -100,6 +176,18 @@ export default function Bookings() {
                         <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Transaction Records</h3>
                     </div>
                     <div className="flex gap-4">
+                        <div className="flex-1 max-w-[200px]">
+                            <select 
+                                value={resortFilter}
+                                onChange={(e) => setResortFilter(e.target.value)}
+                                className="w-full h-full bg-admin-bg border border-admin-border rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-widest text-admin-text-main focus:outline-none focus:border-admin-primary shadow-sm"
+                            >
+                                <option value="all">Semua Resort</option>
+                                {uniqueResortNames.map(name => (
+                                    <option key={name} value={name}>{name}</option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input

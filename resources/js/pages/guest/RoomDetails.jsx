@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import IconRenderer from '../../components/IconRenderer';
+import { X } from 'lucide-react';
 
 export default function RoomDetails() {
     const { id } = useParams();
@@ -267,17 +268,37 @@ export default function RoomDetails() {
                         <div className="col-span-4 md:col-span-2 row-span-2 relative overflow-hidden">
                             {renderMedia(galleryToDisplay[0], room.name)}
                         </div>
-                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
-                            {renderMedia(galleryToDisplay[1] || galleryToDisplay[0], "Gallery 1")}
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden bg-gray-100">
+                            {galleryToDisplay[1] ? renderMedia(galleryToDisplay[1], "Gallery 1") : (
+                                <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
+                                    <i className="fas fa-mountain text-3xl mb-1"></i>
+                                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">Scenic View</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
-                            {renderMedia(galleryToDisplay[2] || galleryToDisplay[0], "Gallery 2")}
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden bg-gray-100">
+                            {galleryToDisplay[2] ? renderMedia(galleryToDisplay[2], "Gallery 2") : (
+                                <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
+                                    <i className="fas fa-bed text-3xl mb-1"></i>
+                                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">Comfort Stay</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden">
-                            {renderMedia(galleryToDisplay[3] || galleryToDisplay[0], "Gallery 3")}
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden bg-gray-100">
+                            {galleryToDisplay[3] ? renderMedia(galleryToDisplay[3], "Gallery 3") : (
+                                <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
+                                    <i className="fas fa-camera text-3xl mb-1"></i>
+                                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">Eling Bening</span>
+                                </div>
+                            )}
                         </div>
-                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden group/last">
-                            {renderMedia(galleryToDisplay[4] || galleryToDisplay[0], "Gallery 4")}
+                        <div className="hidden md:block col-span-1 row-span-1 relative overflow-hidden group/last bg-gray-100">
+                            {galleryToDisplay[4] ? renderMedia(galleryToDisplay[4], "Gallery 4") : (
+                                <div className="w-full h-full flex flex-col items-center justify-center opacity-20">
+                                    <i className="fas fa-leaf text-3xl mb-1"></i>
+                                    <span className="text-[8px] font-black uppercase tracking-widest leading-none">Nature Haven</span>
+                                </div>
+                            )}
                             {galleryToDisplay.length > 5 && (
                                 <div 
                                     className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center text-white cursor-pointer group-hover/last:bg-black/40 transition-all duration-500"
@@ -397,8 +418,8 @@ export default function RoomDetails() {
                     </div>
 
                     {/* Right Sticky Widget */}
-                    <div className="lg:col-span-1 hidden lg:block">
-                        <div className={`bg-white rounded-[3rem] p-10 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-700 ${isUpdating ? 'opacity-50 grayscale scale-[0.98]' : 'opacity-100'}`}>
+                    <div className="lg:col-span-1 mt-12 lg:mt-0">
+                        <div className={`bg-white rounded-[3rem] p-8 lg:p-10 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-700 ${isUpdating ? 'opacity-50 grayscale scale-[0.98]' : 'opacity-100'}`}>
                             <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2 text-center">Harga per Malam</p>
                                 <div className="flex items-center justify-center gap-2">
@@ -433,8 +454,12 @@ export default function RoomDetails() {
                             </div>
 
                             <button onClick={handleBooking} disabled={!isRoomAvailable}
-                                className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all duration-300 active:scale-95 ${isRoomAvailable ? 'bg-eling-green text-white hover:bg-emerald-800 hover:shadow-eling-green/30' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
-                                {isRoomAvailable ? 'Amankan Kamar Sekarang' : 'Stok Menipis/Habis'}
+                                className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all duration-500 active:scale-95 group relative overflow-hidden ${isRoomAvailable ? 'bg-eling-green text-white hover:bg-emerald-800 hover:shadow-emerald-500/40 hover:-translate-y-1' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                                {isRoomAvailable ? (
+                                    <span className="relative z-10 flex items-center justify-center gap-3">
+                                        Amankan Sekarang <i className="fas fa-arrow-right group-hover:translate-x-2 transition-transform duration-500"></i>
+                                    </span>
+                                ) : 'Stok Menipis/Habis'}
                             </button>
 
                             <div className="mt-8 space-y-4 pt-8 border-t border-dashed border-slate-100">
@@ -462,6 +487,34 @@ export default function RoomDetails() {
                         {lightboxMedia.type === 'image' && <img src={lightboxMedia.url} className="max-w-full max-h-full object-contain rounded-xl shadow-2xl animate-scale-up" alt="Lightbox" />}
                         {lightboxMedia.type === 'iframe' && <iframe src={lightboxMedia.url} className="w-full h-full rounded-2xl shadow-2xl border-0 animate-scale-up" allowFullScreen allow="autoplay"></iframe>}
                         {lightboxMedia.type === 'video' && <video src={lightboxMedia.url} className="max-w-full max-h-full rounded-2xl shadow-2xl animate-scale-up" controls autoPlay loop></video>}
+                    </div>
+                </div>
+            )}
+
+            {/* Full Gallery Overlay */}
+            {showFullGallery && (
+                <div className="fixed inset-0 z-[1500] bg-white overflow-y-auto animate-fade-in-up">
+                    <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-6 py-6 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <button onClick={() => setShowFullGallery(false)} className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900 hover:bg-gray-100 transition shadow-sm">
+                                <i className="fas fa-chevron-left"></i>
+                            </button>
+                            <div>
+                                <h3 className="font-bold font-serif text-xl text-gray-900">{room.name}</h3>
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest leading-none mt-1">Semua Foto & Media</p>
+                            </div>
+                        </div>
+                        <span className="bg-eling-green/10 text-eling-green px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">{galleryToDisplay.length} Media</span>
+                    </div>
+
+                    <div className="container mx-auto px-6 py-12 max-w-7xl">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {galleryToDisplay.map((item, idx) => (
+                                <div key={idx} className="aspect-[4/3] rounded-[2rem] overflow-hidden shadow-xl hover:shadow-2xl transition duration-500 group relative cursor-pointer border border-gray-50">
+                                    {renderMedia(item, `Gallery Item ${idx}`)}
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             )}

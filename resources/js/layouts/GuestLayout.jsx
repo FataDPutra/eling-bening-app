@@ -93,8 +93,8 @@ export default function GuestLayout() {
             {/* Header / Navbar */}
             <nav className={`fixed w-full z-50 transition-all duration-500 py-4 px-6 lg:px-12 flex justify-between items-center ${isHeroPage && !scrolled ? 'glass text-white' : 'bg-white/95 text-gray-900 shadow-xl backdrop-blur-md'}`}>
                 <Link to="/" className="flex items-center gap-2 group">
-                    <img src="/images/logo.png" alt="Logo" className={`h-10 transition-transform group-hover:scale-110 duration-500`} />
-                    <span className={`text-xl font-serif font-black tracking-wider ${isHeroPage && !scrolled ? 'text-white drop-shadow-sm' : 'text-eling-green'}`}>Eling Bening</span>
+                    <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className={`h-10 transition-transform group-hover:scale-110 duration-500`} />
+                    <span className={`text-xl font-serif font-black tracking-wider ${isHeroPage && !scrolled ? 'text-white drop-shadow-sm' : 'text-eling-green'}`}>{content.layout.siteTitle || 'Eling Bening'}</span>
                 </Link>
 
                 <div className="hidden lg:flex gap-8 font-black tracking-[0.05em] uppercase text-[11px] items-center">
@@ -199,8 +199,8 @@ export default function GuestLayout() {
                     {/* Drawer Header */}
                     <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
                         <div className="flex items-center gap-2">
-                            <img src="/images/logo.png" alt="Logo" className="h-8" />
-                            <span className="text-lg font-serif font-black text-eling-green">Eling Bening</span>
+                            <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className="h-8" />
+                            <span className="text-lg font-serif font-black text-eling-green">{content.layout.siteTitle || 'Eling Bening'}</span>
                         </div>
                         <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all">
                             <X size={22} />
@@ -244,7 +244,7 @@ export default function GuestLayout() {
                     </nav>
 
                     {/* Bottom Auth Actions */}
-                    <div className="px-4 pb-8 pt-4 border-t border-gray-100 space-y-3">
+                    <div className="px-4 pb-10 pt-4 border-t border-gray-100 space-y-3">
                         {user ? (
                             <>
                                 <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 w-full px-5 py-3.5 bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-eling-green/10 hover:text-eling-green transition-all">
@@ -278,11 +278,11 @@ export default function GuestLayout() {
                     {/* Column 1: Logo + Description */}
                     <div className="space-y-6">
                         <div className="flex items-center gap-2">
-                            <img src="/images/logo.png" alt="Logo" className="h-10" />
-                            <span className="text-2xl font-serif font-bold tracking-wider text-white">Eling Bening</span>
+                            <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className="h-10" />
+                            <span className="text-2xl font-serif font-bold tracking-wider text-white">{content.layout.siteTitle || 'Eling Bening'}</span>
                         </div>
                         <p className="text-green-100 text-sm leading-relaxed">
-                            {content.contact.supportDesc || "Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat."}
+                            {content.layout.footerDesc || "Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat."}
                         </p>
                     </div>
 
@@ -322,20 +322,20 @@ export default function GuestLayout() {
                         <h4 className="font-bold text-xl mb-8">Media Sosial</h4>
                         <p className="text-green-100 text-sm mb-6">Ikuti kami untuk informasi terbaru.</p>
                         <div className="flex gap-4">
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                            <a href={content.layout.socialIg || '#'} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
                                 <i className="fab fa-instagram"></i>
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                            <a href={content.layout.socialTt || '#'} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
                                 <i className="fab fa-tiktok"></i>
                             </a>
-                            <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                            <a href={content.layout.socialYt || '#'} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
                                 <i className="fab fa-youtube"></i>
                             </a>
                         </div>
                     </div>
                 </div>
                 <div className="mt-20 pt-8 border-t border-white/10 text-center text-green-200 text-sm">
-                    <p>&copy; {new Date().getFullYear()} Eling Bening Ambarawa. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} {content.layout.siteTitle || 'Eling Bening'} Ambarawa. All rights reserved.</p>
                 </div>
             </footer>
         </div>

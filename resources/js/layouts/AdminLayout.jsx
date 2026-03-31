@@ -10,11 +10,13 @@ import {
     CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
+import { useContent } from '../context/ContentContext';
 import Swal from 'sweetalert2';
 import '../styles/admin.css';
 
 export default function AdminLayout() {
     const { logout } = useAuth();
+    const { content } = useContent();
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -126,9 +128,9 @@ export default function AdminLayout() {
                 <div className="sidebar-header">
                     <div className="sidebar-logo flex-1">
                         <div className="p-1.5 bg-admin-primary rounded-lg">
-                            <img src="/images/logo.png" alt="Logo" className="h-6 brightness-0 invert" />
+                            <img src={content?.layout?.logo || "/images/logo.png"} alt="Logo" className="h-6 brightness-0 invert" />
                         </div>
-                        {!isSidebarCollapsed && <h2 className="ml-3">Eling Bening</h2>}
+                        {!isSidebarCollapsed && <h2 className="ml-3 text-white">{content?.layout?.siteTitle || "Eling Bening"}</h2>}
                     </div>
                     <button className="lg:hidden p-2 text-white/60 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
                         <X size={20} />

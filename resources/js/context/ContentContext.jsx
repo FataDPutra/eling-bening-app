@@ -76,7 +76,16 @@ const defaultContent = {
         { id: 4, name: 'Spot Foto Skydeck', desc: 'Sudut terbaik untuk mengabadikan momen dengan latar Rawa Pening.', icon: 'camera', image: '/images/hero-bg.png' }
     ],
     mapImage: '/images/hero-bg.png',
-    eventHeroImage: '/images/hero-bg.png'
+    eventHeroImage: '/images/hero-bg.png',
+    layout: {
+        siteTitle: 'Eling Bening',
+        favicon: '/images/logo.png',
+        logo: '/images/logo.png',
+        footerDesc: 'Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat.',
+        socialIg: 'https://instagram.com/eling_bening',
+        socialTt: 'https://tiktok.com/@elingbening_ambarawa',
+        socialYt: 'https://youtube.com/'
+    }
 };
 
 export const ContentProvider = ({ children }) => {
@@ -138,7 +147,25 @@ export const ContentProvider = ({ children }) => {
                 if (item.key === 'global_facilities') newContent.facilities = item.data;
                 if (item.key === 'global_map_image') newContent.mapImage = item.content;
                 if (item.key === 'event_hero_image') newContent.eventHeroImage = item.content;
+                
+                if (item.key === 'layout_site_title') newContent.layout.siteTitle = item.content;
+                if (item.key === 'layout_favicon') newContent.layout.favicon = item.content;
+                if (item.key === 'layout_logo') newContent.layout.logo = item.content;
+                if (item.key === 'layout_footer_desc') newContent.layout.footerDesc = item.content;
+                if (item.key === 'layout_social_ig') newContent.layout.socialIg = item.content;
+                if (item.key === 'layout_social_tt') newContent.layout.socialTt = item.content;
+                if (item.key === 'layout_social_yt') newContent.layout.socialYt = item.content;
             });
+            
+            // set dynamic document title and favicon
+            document.title = newContent.layout.siteTitle || 'Eling Bening';
+            let link = document.querySelector("link[rel~='icon']");
+            if (!link) {
+                link = document.createElement('link');
+                link.rel = 'icon';
+                document.getElementsByTagName('head')[0].appendChild(link);
+            }
+            link.href = newContent.layout.favicon || '/favicon.ico';
             
             setContent(newContent);
         } catch (error) {
@@ -217,6 +244,14 @@ export const ContentProvider = ({ children }) => {
                 { key: 'global_facilities', data: content.facilities, type: 'json', page: 'facilities' },
                 { key: 'global_map_image', content: content.mapImage, type: 'image', page: 'facilities' },
                 { key: 'event_hero_image', content: content.eventHeroImage, type: 'image', page: 'facilities' },
+
+                { key: 'layout_site_title', content: content.layout.siteTitle, type: 'text', page: 'layout' },
+                { key: 'layout_favicon', content: content.layout.favicon, type: 'image', page: 'layout' },
+                { key: 'layout_logo', content: content.layout.logo, type: 'image', page: 'layout' },
+                { key: 'layout_footer_desc', content: content.layout.footerDesc, type: 'text', page: 'layout' },
+                { key: 'layout_social_ig', content: content.layout.socialIg, type: 'text', page: 'layout' },
+                { key: 'layout_social_tt', content: content.layout.socialTt, type: 'text', page: 'layout' },
+                { key: 'layout_social_yt', content: content.layout.socialYt, type: 'text', page: 'layout' }
             ];
 
             await axios.post('/api/contents/bulk', { contents: bulkPayload });

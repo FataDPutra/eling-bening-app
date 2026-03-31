@@ -12,21 +12,24 @@ class StatController extends Controller
 {
     public function getStats(Request $request)
     {
+        $isAllTime = $request->get('month') === 'all';
         $month = $request->get('month', date('m'));
         $year = $request->get('year', date('Y'));
         
-        $selectedDate = Carbon::create($year, $month, 1);
-        $startOfPeriod = $selectedDate->copy()->startOfMonth();
-        $endOfPeriod = $selectedDate->copy()->endOfMonth();
+        $selectedDate = Carbon::create($year, $isAllTime ? 1 : $month, 1);
+        $startOfPeriod = $isAllTime ? Carbon::create(2023, 1, 1) : $selectedDate->copy()->startOfMonth();
+        $endOfPeriod = $isAllTime ? Carbon::now() : $selectedDate->copy()->endOfMonth();
         
         $lastMonth = $selectedDate->copy()->subMonth();
         $startOfLastMonth = $lastMonth->copy()->startOfMonth();
         $endOfLastMonth = $lastMonth->copy()->endOfMonth();
 
         // 1. Basic Stats (For selected period)
-        $revenue = Transaction::whereIn('status', ['paid', 'success'])
-            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->sum('total_price');
+        $revenueQuery = Transaction::whereIn('status', ['paid', 'success']);
+        if (!$isAllTime) {
+            $revenueQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+        }
+        $revenue = $revenueQuery->sum('total_price');
 
         $lastMonthRevenue = Transaction::whereIn('status', ['paid', 'success'])
             ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
@@ -36,53 +39,67 @@ class StatController extends Controller
             ? (($revenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 
             : ($revenue > 0 ? 100 : 0);
 
-        $ticketSold = Transaction::where('booking_type', 'TICKET')
-            ->whereIn('status', ['paid', 'success'])
-            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->sum('total_qty');
+        $ticketSoldQuery = Transaction::where('booking_type', 'TICKET')->whereIn('status', ['paid', 'success']);
+        if (!$isAllTime) {
+            $ticketSoldQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+        }
+        $ticketSold = $ticketSoldQuery->sum('total_qty');
 
-        $resortBookings = Transaction::where('booking_type', 'RESORT')
-            ->whereIn('status', ['paid', 'success'])
-            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->count();
+        $resortBookingsQuery = Transaction::where('booking_type', 'RESORT')->whereIn('status', ['paid', 'success']);
+        if (!$isAllTime) {
+            $resortBookingsQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+        }
+        $resortBookings = $resortBookingsQuery->count();
 
-        // 2. Occupancy Rate (Average across the selected month)
+        // 2. Occupancy Rate (Average across the selected period)
         $totalStock = Resort::sum('stock');
-        $daysInMonth = $selectedDate->daysInMonth;
+        $daysInPeriod = $isAllTime ? Carbon::now()->diffInDays(Carbon::create(2023, 1, 1)) : $selectedDate->daysInMonth;
         
-        $occupiedDaysAcrossMonth = DB::table('transaction_items')
+        $occupancyQuery = DB::table('transaction_items')
             ->join('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
             ->where('transactions.booking_type', 'RESORT')
-            ->whereIn('transactions.status', ['paid', 'success'])
-            ->where(function($query) use ($startOfPeriod, $endOfPeriod) {
+            ->whereIn('transactions.status', ['paid', 'success']);
+        
+        if (!$isAllTime) {
+            $occupancyQuery->where(function($query) use ($startOfPeriod, $endOfPeriod) {
                 $query->whereBetween('transactions.check_in_date', [$startOfPeriod->toDateString(), $endOfPeriod->toDateString()])
                       ->orWhereBetween('transactions.check_out_date', [$startOfPeriod->toDateString(), $endOfPeriod->toDateString()]);
-            })
-            ->sum('transaction_items.quantity');
+            });
+        }
+        $occupiedDaysAcrossPeriod = $occupancyQuery->sum('transaction_items.quantity');
 
-        // Simple occupancy representation (Occupied items across total possible unit-nights)
-        $potentialCapacity = $totalStock * $daysInMonth;
-        $occupancyRate = $potentialCapacity > 0 ? ($occupiedDaysAcrossMonth / $potentialCapacity) * 100 : 0;
+        $potentialCapacity = $totalStock * $daysInPeriod;
+        $occupancyRate = $potentialCapacity > 0 ? ($occupiedDaysAcrossPeriod / $potentialCapacity) * 100 : 0;
 
-        // 3. Daily Tickets (Last 30 days of the selected period if current, or full month if past)
-        $dailyTickets = DB::table('transactions')
+        // 3. Daily Tickets
+        $dailyTicketsQuery = DB::table('transactions')
             ->where('booking_type', 'TICKET')
-            ->whereIn('status', ['paid', 'success'])
-            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->select(DB::raw('DATE_FORMAT(created_at, "%d") as day'), DB::raw('SUM(total_qty) as val'))
+            ->whereIn('status', ['paid', 'success']);
+        
+        if (!$isAllTime) {
+            $dailyTicketsQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+        } else {
+             // In all time, maybe show month-wise instead of day-wise?
+             // But for now, let's just show top active dates or similar
+             $dailyTicketsQuery->limit(30);
+        }
+
+        $dailyTickets = $dailyTicketsQuery->select(DB::raw('DATE_FORMAT(created_at, "%d") as day'), DB::raw('SUM(total_qty) as val'))
             ->groupBy('day')
             ->orderBy('day')
             ->get();
 
         // 4. Booking Types (Market Share for selected period)
-        $totalTransactions = Transaction::whereIn('status', ['paid', 'success'])
-            ->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])
-            ->count();
+        $totalTransactionsQuery = Transaction::whereIn('status', ['paid', 'success']);
+        if (!$isAllTime) {
+            $totalTransactionsQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+        }
+        $totalTransactions = $totalTransactionsQuery->count();
 
         $typeShare = [
-            'ticket' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'TICKET')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
-            'resort' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'RESORT')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
-            'event' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'EVENT')->whereIn('status', ['paid', 'success'])->whereBetween('created_at', [$startOfPeriod, $endOfPeriod])->count() / $totalTransactions) * 100 : 0,
+            'ticket' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'TICKET')->whereIn('status', ['paid', 'success'])->where(fn($q) => $isAllTime ? $q : $q->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]))->count() / $totalTransactions) * 100 : 0,
+            'resort' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'RESORT')->whereIn('status', ['paid', 'success'])->where(fn($q) => $isAllTime ? $q : $q->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]))->count() / $totalTransactions) * 100 : 0,
+            'event' => $totalTransactions > 0 ? (Transaction::where('booking_type', 'EVENT')->whereIn('status', ['paid', 'success'])->where(fn($q) => $isAllTime ? $q : $q->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]))->count() / $totalTransactions) * 100 : 0,
         ];
 
         return response()->json([

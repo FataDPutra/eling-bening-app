@@ -12,14 +12,26 @@ class TransactionController extends Controller
     {
         $user = $request->user();
         $isMine = $request->query('mine') === '1';
+        $month = $request->query('month');
+        $year = $request->query('year');
 
-        if ($user && $user->role === 'admin' && !$isMine) {
-            return response()->json(Transaction::with(['user', 'items.item', 'promo', 'tickets.transactionItem.item'])->orderBy('created_at', 'desc')->get());
-        } elseif ($user) {
-            return response()->json(Transaction::with(['items.item', 'promo', 'tickets.transactionItem.item'])->whereUserId($user->id)->orderBy('created_at', 'desc')->get());
+        $query = Transaction::with(['user', 'items.item', 'promo', 'tickets.transactionItem.item'])
+            ->orderBy('created_at', 'desc');
+
+        if ($user && $user->role !== 'admin' || $isMine) {
+            $query->where('user_id', $user->id);
+        } elseif (!$user || ($user->role !== 'admin' && !$isMine)) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-        
-        return response()->json(['message' => 'Unauthorized'], 401);
+
+        if ($month && $month !== 'all') {
+            $query->whereMonth('check_in_date', $month);
+        }
+        if ($year && $month !== 'all') {
+            $query->whereYear('check_in_date', $year);
+        }
+
+        return response()->json($query->get());
     }
 
     public function checkBooking(Request $request, $id)

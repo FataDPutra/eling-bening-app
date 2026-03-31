@@ -1,75 +1,93 @@
 # 🏔️ Eling Bening - Integrated Resort & Tourism Management System
 
-Sistem manajemen terpadu untuk destinasi wisata **Eling Bening**, mencakup reservasi resort mewah, manajemen tiket wisata, audit keuangan, dan pangkalan data tamu yang diproses secara real-time.
+Sistem manajemen terpadu untuk destinasi wisata **Eling Bening**, mencakup reservasi resort mewah, manajemen tiket wisata (Wisata & Event), audit keuangan, pendataan tamu real-time, dan **Sistem CMS Mandiri**.
 
 ---
 
 ## 🛠️ Persyaratan Sistem (Prerequisites)
 
 Sebelum melakukan instalasi, pastikan server Anda memenuhi spesifikasi berikut:
-- **PHP** >= 8.2
+- **PHP** >= 8.2 (Ekstensi: BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML)
 - **Node.js** >= 20.x & **NPM**
 - **Composer** (PHP Dependency Manager)
 - **Database**: MySQL 8.0+ atau PostgreSQL 15+
-- **Web Server**: Nginx atau Apache (dengan dukungan HTTPS)
+- **Web Server**: Nginx (direkomendasikan) atau Apache
+- **SSL Certificate**: Wajib (HTTPS) untuk fitur Scanner QR Code dan Google Login.
 
 ---
 
-## 🚀 Panduan Instalasi (Step-by-Step)
+## 🚀 Panduan Instalasi (Step-by-Step Deployment)
 
-Ikuti langkah-langkah di bawah ini untuk memasang aplikasi di lingkungan produksi atau pengembangan:
+Ikuti langkah-langkah di bawah ini untuk memastikan seluruh fitur (CMS, Google Auth, Scanner) berfungsi sempurna di lingkungan produksi:
 
-### 1. Clone Repositori
+### 1. Persiapan Repositori & Dependensi
 ```bash
 git clone https://github.com/username/eling-bening-app.git
 cd eling-bening-app
-```
 
-### 2. Instalasi Dependensi
-Instal paket-paket PHP dan JavaScript yang diperlukan:
-```bash
-# Instal dependensi PHP
+# Instal dependensi PHP (Optimalkan untuk produksi)
 composer install --optimize-autoloader --no-dev
 
-# Instal dependensi JavaScript
+# Instal dependensi JavaScript & Build Aset
 npm install
+npm run build
 ```
 
-### 3. Konfigurasi Lingkungan (.env)
-Salin file contoh konfigurasi dan buat kunci aplikasi:
+### 2. Konfigurasi Lingkungan (.env)
+Salin konfigurasi dan generate key:
 ```bash
 cp .env.example .env
 php artisan key:generate
 ```
-**PENTING**: Edit file `.env` dan sesuaikan bagian database (`DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`), serta kredensial provider (Midtrans, Google Socialite).
+**Konfigurasi Wajib di `.env`:**
+- `APP_URL`: Pastikan menggunakan `https://`
+- `DB_`: Sesuaikan kredensial database Anda.
+- `MAIL_`: Konfigurasi SMTP untuk fitur pengiriman tiket ke email tamu.
+- `MIDTRANS_`: Masukkan Client Key & Server Key untuk gateway pembayaran.
 
-### 4. Setup Database & Seeding
-Jalankan migrasi untuk membuat struktur tabel dan isi data awal (admin & dummy):
+### 3. Setup Database & Seeding Awal
+Fitur **CMS Content** memerlukan data awal agar tampilan website tidak kosong:
 ```bash
+# Migrasi table dan seeding konten awal (Logo, Judul, Fasilitas Default)
 php artisan migrate --force --seed
 ```
 
-### 5. Kompilasi Aset Frontend (Production)
-Bangun bundle aset React menggunakan Vite:
+### 4. Konfigurasi Izin Folder & Link Storage
+PENTING agar gambar yang diupload via CMS dapat tampil:
 ```bash
-npm run build
-```
-
-### 6. Konfigurasi Storage & Permissions
-```bash
-# Buat symlink untuk folder storage
+# Link folder storage ke public
 php artisan storage:link
 
-# Pastikan folder storage dan bootstrap/cache memiliki izin tulis
+# Izin akses folder (Linux/Unix)
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data .
 ```
 
+### 5. Aktivasi Fitur Khusus (Pasca Instalasi)
+
+#### **A. Google Login (Socialite Dinamis)**
+Aplikasi ini menggunakan sistem **Dynamic Socialite**. Anda tidak perlu mengisi Client ID Google di `.env`. 
+1. Login ke Panel Admin (`/admin`).
+2. Buka menu **System Settings**.
+3. Masukkan `Google Client ID` dan `Google Client Secret` di form yang tersedia.
+4. Klik Simpan. Fitur login Google akan aktif otomatis.
+
+#### **B. CMS & Live Preview**
+1. Buka menu **Konten CMS**.
+2. Ubah Logo, Favicon, atau Deskripsi di sidebar editor.
+3. Gunakan **Device Switcher** (Desktop/Tablet/Mobile) untuk mengecek responsivitas.
+4. Klik tombol **Simpan & Publikasikan** untuk memperbarui tampilan di sisi tamu.
+
+#### **C. Scanner QR Code**
+Fitur scanner memerlukan akses kamera. Pastikan:
+1. Website diakses melalui **HTTPS**.
+2. Browser telah memberikan izin (Permission) akses kamera.
+3. Scanner sudah dioptimasi untuk menghilangkan background biru dan memiliki animasi pemindaian modern.
+
 ---
 
 ## 🏗️ Optimasi Produksi (Recommended)
-
-Untuk performa maksimal di server produksi, jalankan perintah optimasi berikut:
+Jalankan setiap kali ada update kode atau konfigurasi:
 ```bash
 php artisan config:cache
 php artisan route:cache
@@ -78,29 +96,16 @@ php artisan view:cache
 
 ---
 
-## 🌟 Fitur Utama Aplikasi
+## 🌟 Fitur Unggulan Versi Terbaru
 
-- **Resort Booking Engine**: Reservasi villa/kamar dengan meta tracking (ETA, Fasilitas Khusus, Pesan Bespoke).
-- **Interactive Villa Grid**: Daftar kamar dengan layout simetris, filter ketersediaan real-time, dan efek hover premium (`card-lift`).
-- **Ticket Audit System**: Pemindaian QR Code tiket wisata secara langsung melalui dashboard admin.
-- **Admin Intelligence Dashboard**: Monitoring transaksi, okupansi resort, dan laporan keuangan terpadu.
-- **Modern Iconology System**: Komponen terpusat yang memetakan icon Lucide secara dinamis ke seluruh antarmuka.
-- **Automatic Multi-service Receipt**: Pengiriman resi pembayaran otomatis ke email tamu setelah transaksi berhasil.
-
----
-
-## 🎨 Visual & UI Standard
-
-Aplikasi ini mengedepankan estetika tinggi untuk kenyamanan pengguna:
-- **Emoji-Free Environment**: Seluruh sistem ikon kuno (emoji) telah diganti dengan icon berbasis vektor (SVG) yang tajam dan profesional.
-- **Centralized Icon Selection**: Admin dapat memilih icon dari katalog modern yang telah dikurasi langsung dari modul master fasilitas.
-- **High-Fidelity Transitions**: Penggunaan micro-interactions seperti `card-lift` (hover effect) dan shadow-blooms untuk kesan platform premium.
-- **Optimized Layout Geometry**: Standarisasi ukuran grid yang simetris menjamin tampilan dashboard tetap rapi pada berbagai ukuran konten.
+- **Real-time CMS Builder**: Editor visual dengan pratinjau interaktif (klik menu di preview untuk navigasi editor).
+- **Dynamic Google Auth**: Konfigurasi OAuth via database (tanpa restart server/.env).
+- **Advanced Finance Filter**: Laporan bulanan/tahunan di Dashboard, Pesanan Resort, Tiket Wisata, dan Tiket Event.
+- **Futuristic QR Scanner**: Scanner tanpa refresh, UI transparan, dan overlay animasi modern.
+- **Zebra-Themed Layout**: Tampilan guest yang dinamis dengan selang-seling seksi terang dan gelap secara otomatis.
 
 ---
 
-## 📄 Lisensi
+## 📄 Lisensi & Support
 Sistem ini dikembangkan secara eksklusif untuk **Eling Bening Resort**. Seluruh hak cipta terlindungi.
-
----
 *Developed by Antigravity AI for Advancing Hospitality Experience.*

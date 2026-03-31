@@ -10,10 +10,26 @@ export default function Dashboard() {
         activeTickets: 0,
         totalRooms: 0,
         availableRooms: 0,
+        periodRevenue: 0,
         todayRevenue: 0
     });
     const [bookings, setBookings] = useState([]);
+    const [allTransactions, setAllTransactions] = useState([]);
+    const [allRooms, setAllRooms] = useState([]);
+    const [allTickets, setAllTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
+    const [showAllFeeds, setShowAllFeeds] = useState(false);
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
 
     const fetchData = async () => {
         try {
@@ -23,22 +39,12 @@ export default function Dashboard() {
                 axios.get('/api/transactions')
             ]);
 
-            const tickets = ticketsRes.data;
-            const rooms = resortsRes.data;
-            const allBookings = transactionsRes.data;
-            setBookings(allBookings);
-
-            const today = new Date().toISOString().split('T')[0];
-            const todayRev = allBookings
-                .filter(b => b.check_in_date && b.check_in_date.startsWith(today) && (b.status === 'success' || b.status === 'paid'))
-                .reduce((sum, b) => sum + Number(b.total_price), 0);
-
-            setStats({
-                activeTickets: tickets.filter(t => t.is_active).length,
-                totalRooms: rooms.length,
-                availableRooms: rooms.filter(r => r.stock > 0).length,
-                todayRevenue: todayRev
-            });
+            setAllRooms(resortsRes.data);
+            setAllTickets(ticketsRes.data);
+            setAllTransactions(transactionsRes.data);
+            
+            updateDashboardStats(transactionsRes.data, isAllTime ? 'all' : `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`, resortsRes.data, ticketsRes.data);
+            
             setIsLoading(false);
         } catch (error) {
             console.error("Failed to fetch dashboard data", error);
@@ -47,9 +53,40 @@ export default function Dashboard() {
         }
     };
 
+    const updateDashboardStats = (transactions, period, rooms, tickets) => {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const filtered = period === 'all' 
+            ? transactions 
+            : transactions.filter(t => t.created_at && t.created_at.startsWith(period));
+
+        const periodRev = filtered
+            .filter(b => (b.status === 'success' || b.status === 'paid'))
+            .reduce((sum, b) => sum + Number(b.total_price), 0);
+
+        const todayRev = transactions
+            .filter(b => b.created_at && b.created_at.startsWith(today) && (b.status === 'success' || b.status === 'paid'))
+            .reduce((sum, b) => sum + Number(b.total_price), 0);
+
+        setBookings(filtered);
+        setStats({
+            activeTickets: tickets.filter(t => t.is_active).length,
+            totalRooms: rooms.length,
+            availableRooms: rooms.filter(r => r.stock > 0).length,
+            periodRevenue: periodRev,
+            todayRevenue: todayRev
+        });
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (allTransactions.length > 0) {
+            updateDashboardStats(allTransactions, isAllTime ? 'all' : `${selectedYear}-${selectedMonth.toString().padStart(2, '0')}`, allRooms, allTickets);
+        }
+    }, [selectedMonth, selectedYear, isAllTime]);
 
     const downloadReport = () => {
         const headers = ['Order ID', 'Pelanggan', 'Item', 'Tanggal', 'Total', 'Status'];
@@ -59,7 +96,7 @@ export default function Dashboard() {
                 b.id,
                 b.user?.name || 'Guest',
                 `"${b.item?.name || 'Unknown Item'}"`,
-                new Date(b.check_in_date).toLocaleDateString('id-ID'),
+                new Date(b.created_at).toLocaleDateString('id-ID'),
                 b.total_price,
                 b.status
             ].join(','))
@@ -70,7 +107,7 @@ export default function Dashboard() {
         const a = document.createElement('a');
         a.setAttribute('hidden', '');
         a.setAttribute('href', url);
-        a.setAttribute('download', `laporan_eling_bening_${new Date().toISOString().split('T')[0]}.csv`);
+        a.setAttribute('download', `laporan_eling_bening_${isAllTime ? 'all' : selectedYear+'-'+selectedMonth}.csv`);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -78,10 +115,10 @@ export default function Dashboard() {
     };
 
     const statCards = [
-        { title: 'Today Revenue', value: formatRupiah(stats.todayRevenue), icon: Wallet, color: '#C62828', sub: '+12.5%', trend: 'up' },
+        { title: isAllTime ? 'Total Revenue' : `Revenue ${months.find(m => m.value === selectedMonth).name}`, value: formatRupiah(stats.periodRevenue), icon: Wallet, color: '#C62828', sub: '+12.5%', trend: 'up' },
         { title: 'Kamar Tersedia', value: `${stats.availableRooms}/${stats.totalRooms}`, icon: Building, color: '#2E7D32', sub: 'Optimal', trend: 'up' },
         { title: 'Tiket Aktif', value: stats.activeTickets, icon: Ticket, color: '#F59E0B', sub: '-2.4%', trend: 'down' },
-        { title: 'Pengunjung', value: '1,245', icon: Users, color: '#3B82F6', sub: '+5.2%', trend: 'up' }
+        { title: 'Today Revenue', value: formatRupiah(stats.todayRevenue), icon: Activity, color: '#3B82F6', sub: 'Hari Ini', trend: 'up' }
     ];
 
     const weeklyData = [
@@ -98,13 +135,64 @@ export default function Dashboard() {
             <div className="admin-page-header">
                 <div>
                     <h1>Dashboard Overview</h1>
-                    <p>Selamat datang kembali, Administrator. Berikut ringkasan operasional hari ini.</p>
+                    <p>Selamat datang kembali, Administrator. Berikut ringkasan operasional berdasarkan periode.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-admin-bg transition-all">
-                        <Calendar size={16} className="text-admin-primary" /> Maret 2024
-                    </button>
-                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20" onClick={downloadReport}>
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                        </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="rotate-90" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="-rotate-90" /></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px]" onClick={downloadReport}>
                         <Download size={18} /> Export Data
                     </button>
                 </div>
@@ -246,8 +334,8 @@ export default function Dashboard() {
                                     </div>
                                 ))}
                             </div>
-                        ) : bookings.slice(0, 8).map((b, i) => (
-                            <div key={i} className="flex gap-5 items-start">
+                        ) : bookings.slice(0, showAllFeeds ? 20 : 4).map((b, i) => (
+                            <div key={i} className="flex gap-5 items-start animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                                 <div className="relative">
                                     <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs uppercase shadow-inner">
                                         {b.user?.name?.charAt(0) || '?'}
@@ -257,10 +345,10 @@ export default function Dashboard() {
                                 <div className="flex-1 min-w-0">
                                     <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.user?.name || 'Guest User'}</h4>
                                     <p className="text-[11px] text-admin-text-muted font-bold leading-tight truncate">
-                                        Pesan <span className="text-admin-text-main">{b.item?.name || 'Item'}</span>
+                                        Pesan <span className="text-admin-text-main">{b.item_name || b.item?.name || 'Item'}</span>
                                     </p>
                                     <p className="text-[9px] text-admin-text-light font-black uppercase tracking-widest mt-1">
-                                        {new Date(b.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • CLOUD SYNC
+                                        {new Date(b.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {b.booking_type || 'TRANSACTION'}
                                     </p>
                                 </div>
                                 <div className="text-right">
@@ -270,9 +358,12 @@ export default function Dashboard() {
                         ))}
                     </div>
                     
-                    <Link to="/admin/bookings" className="mt-10 py-4 w-full rounded-2xl bg-admin-bg text-admin-text-main font-black text-[10px] uppercase tracking-[0.2em] border border-admin-border hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all text-center">
-                        Lihat Semua Aktivitas
-                    </Link>
+                    <button 
+                        onClick={() => setShowAllFeeds(!showAllFeeds)}
+                        className="mt-10 py-4 w-full rounded-2xl bg-admin-bg text-admin-text-main font-black text-[10px] uppercase tracking-[0.2em] border border-admin-border hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all text-center"
+                    >
+                        {showAllFeeds ? 'Sembunyikan' : `Lihat ${bookings.length > 4 ? bookings.length - 4 : ''} Aktivitas Lainnya`}
+                    </button>
                 </div>
             </div>
 

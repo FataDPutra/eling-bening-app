@@ -230,7 +230,10 @@ export default function EventTicketing() {
                         ) : (
                             events.map(event => (
                                 <div key={event.id} className="bg-white rounded-[2.5rem] p-8 shadow-xl border border-gray-100 flex flex-col md:flex-row gap-8 hover:border-eling-green/30 transition-all group overflow-hidden relative">
-                                    <div className="md:w-1/3 h-52 bg-slate-100 rounded-3xl overflow-hidden relative border border-gray-50 uppercase font-black text-[10px] tracking-widest text-slate-300 flex items-center justify-center shrink-0">
+                                    <div 
+                                        className="md:w-1/3 h-52 bg-slate-100 rounded-3xl overflow-hidden relative border border-gray-50 uppercase font-black text-[10px] tracking-widest text-slate-300 flex items-center justify-center shrink-0 cursor-pointer"
+                                        onClick={() => navigate('/events', { state: { openId: event.id } })}
+                                    >
                                         <img 
                                             src={(Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : (event.image || "/images/hero-bg.png"))} 
                                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s]" 
@@ -238,7 +241,7 @@ export default function EventTicketing() {
                                         />
                                         <div className="absolute top-4 left-4">
                                             <span className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest text-eling-green shadow-sm border border-eling-green/10">
-                                                {event.category || 'Special Event'}
+                                                 {event.category || 'Special Event'}
                                             </span>
                                         </div>
                                     </div>
@@ -246,13 +249,24 @@ export default function EventTicketing() {
                                     <div className="flex-1 flex flex-col justify-between relative z-10">
                                         <div>
                                             <div className="flex items-start justify-between mb-2">
-                                                <h3 className="font-black text-2xl font-serif text-gray-900 group-hover:text-eling-green transition-colors leading-tight">{event.name}</h3>
+                                                <h3 
+                                                    className="font-black text-2xl font-serif text-gray-900 group-hover:text-eling-green transition-colors leading-tight cursor-pointer"
+                                                    onClick={() => navigate('/events', { state: { openId: event.id } })}
+                                                >
+                                                    {event.name}
+                                                </h3>
                                                 <div className="flex items-center gap-1.5 text-eling-red font-black text-[10px] uppercase tracking-widest bg-red-50 px-2 py-1 rounded-lg">
                                                     <Calendar size={12} />
                                                     {event.date_info}
                                                 </div>
                                             </div>
-                                            <p className="text-gray-400 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">{event.description || 'Nikmati acara spesial di Eling Bening dengan pemandangan alam yang menakjubkan.'}</p>
+                                            <p className="text-gray-400 text-sm font-medium mb-4 line-clamp-2 leading-relaxed">{event.description || 'Nikmati acara spesial di Eling Bening dengan pemandangan alam yang menakjubkan.'}</p>
+                                            <button 
+                                                onClick={() => navigate('/events', { state: { openId: event.id } })}
+                                                className="text-[10px] font-black uppercase tracking-wider text-eling-green hover:underline flex items-center gap-1.5 mb-2 transition-all active:scale-95"
+                                            >
+                                                Lihat Detail Event <ArrowRight size={12} />
+                                            </button>
                                         </div>
                                         
                                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100/50">

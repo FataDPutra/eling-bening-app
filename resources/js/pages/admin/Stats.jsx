@@ -9,6 +9,7 @@ export default function Stats() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
 
     const months = [
         { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
@@ -20,7 +21,8 @@ export default function Stats() {
     const fetchStats = async () => {
         setIsLoading(true);
         try {
-            const { data } = await axios.get(`/api/admin/stats?month=${selectedMonth}&year=${selectedYear}`);
+            const period = isAllTime ? 'all' : selectedMonth;
+            const { data } = await axios.get(`/api/admin/stats?month=${period}&year=${selectedYear}`);
             setRealStats(data);
         } catch (error) {
             console.error('Failed to fetch stats:', error);
@@ -31,7 +33,7 @@ export default function Stats() {
 
     useEffect(() => {
         fetchStats();
-    }, [selectedMonth, selectedYear]);
+    }, [selectedMonth, selectedYear, isAllTime]);
 
     if (isLoading && !realStats) return (
         <div className="h-[60vh] flex items-center justify-center">
@@ -62,19 +64,33 @@ export default function Stats() {
                     <div className="relative">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-bold text-sm hover:bg-admin-bg transition-all shadow-sm min-w-[160px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
                         >
-                            <Calendar size={16} className="text-admin-primary" /> {months.find(m => m.value === selectedMonth).name} {selectedYear}
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-4 z-50 animate-scale-up">
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
                                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
-                                        <button onClick={() => setSelectedYear(y => y - 1)} className="p-1 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ArrowDownRight className="rotate-[135deg]" size={16}/></button>
-                                        <span className="font-black text-admin-text-main">{selectedYear}</span>
-                                        <button onClick={() => setSelectedYear(y => y + 1)} className="p-1 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ArrowUpRight className="rotate-[45deg]" size={16}/></button>
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreHorizontal size={14} className="rotate-90" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreHorizontal size={14} className="-rotate-90" /></button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {months.map(m => (
@@ -82,10 +98,11 @@ export default function Stats() {
                                                 key={m.value}
                                                 onClick={() => {
                                                     setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
                                                     setShowMonthPicker(false);
                                                 }}
-                                                className={`py-2 rounded-xl text-[11px] font-black uppercase transition-all ${
-                                                    selectedMonth === m.value 
+                                                className={`py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
                                                     ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
                                                     : 'hover:bg-admin-bg text-admin-text-muted'
                                                 }`}
@@ -179,15 +196,26 @@ export default function Stats() {
                     <div className="relative h-48 flex items-center justify-center translate-y-4">
                         <svg width="200" height="200" viewBox="0 0 42 42" className="transform -rotate-90">
                             <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="#F1F5F9" strokeWidth="4"></circle>
+                            
+                            {/* Tiket Wisata */}
                             <circle 
                                 cx="21" cy="21" r="15.915" fill="transparent" stroke="#C62828" strokeWidth="5.5" 
                                 strokeDasharray={`${bookingTypes[0]?.val || 0} ${100 - (bookingTypes[0]?.val || 0)}`} 
                                 strokeDashoffset="25" className="transition-all duration-1000"
                             ></circle>
+
+                            {/* Resort Booking */}
                             <circle 
                                 cx="21" cy="21" r="15.915" fill="transparent" stroke="#2E7D32" strokeWidth="5.5" 
                                 strokeDasharray={`${bookingTypes[1]?.val || 0} ${100 - (bookingTypes[1]?.val || 0)}`} 
                                 strokeDashoffset={25 - (bookingTypes[0]?.val || 0)} className="transition-all duration-1000"
+                            ></circle>
+
+                            {/* Event / Konser */}
+                            <circle 
+                                cx="21" cy="21" r="15.915" fill="transparent" stroke="#0284c7" strokeWidth="5.5" 
+                                strokeDasharray={`${bookingTypes[2]?.val || 0} ${100 - (bookingTypes[2]?.val || 0)}`} 
+                                strokeDashoffset={25 - (bookingTypes[0]?.val || 0) - (bookingTypes[1]?.val || 0)} className="transition-all duration-1000"
                             ></circle>
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">

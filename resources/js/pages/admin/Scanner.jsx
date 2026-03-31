@@ -129,12 +129,15 @@ export default function Scanner() {
                         
                         {/* Futuristic Scanner Overlays */}
                         {isScanning && (
-                            <div className="absolute inset-0 pointer-events-none">
-                                <div className="absolute top-10 left-10 w-8 h-8 border-t-4 border-l-4 border-admin-primary rounded-tl-xl" />
-                                <div className="absolute top-10 right-10 w-8 h-8 border-t-4 border-r-4 border-admin-primary rounded-tr-xl" />
-                                <div className="absolute bottom-10 left-10 w-8 h-8 border-b-4 border-l-4 border-admin-primary rounded-bl-xl" />
-                                <div className="absolute bottom-10 right-10 w-8 h-8 border-b-4 border-r-4 border-admin-primary rounded-br-xl" />
-                                <div className="absolute top-1/2 left-0 w-full h-[2px] bg-admin-primary/30 animate-[scan_2s_ease-in-out_infinite]" />
+                            <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+                                <div className="w-[280px] h-[280px] relative">
+                                    <div className="absolute -top-4 -left-4 w-10 h-10 border-t-4 border-l-4 border-admin-primary rounded-tl-2xl shadow-[0_0_15px_rgba(var(--admin-primary-rgb),0.3)]" />
+                                    <div className="absolute -top-4 -right-4 w-10 h-10 border-t-4 border-r-4 border-admin-primary rounded-tr-2xl shadow-[0_0_15px_rgba(var(--admin-primary-rgb),0.3)]" />
+                                    <div className="absolute -bottom-4 -left-4 w-10 h-10 border-b-4 border-l-4 border-admin-primary rounded-bl-2xl shadow-[0_0_15px_rgba(var(--admin-primary-rgb),0.3)]" />
+                                    <div className="absolute -bottom-4 -right-4 w-10 h-10 border-b-4 border-r-4 border-admin-primary rounded-br-2xl shadow-[0_0_15px_rgba(var(--admin-primary-rgb),0.3)]" />
+                                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-admin-primary to-transparent animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_10px_rgba(var(--admin-primary-rgb),0.5)]" />
+                                </div>
+                                <div className="absolute inset-0 bg-slate-900/40" />
                             </div>
                         )}
 
@@ -151,14 +154,14 @@ export default function Scanner() {
                         )}
 
                         {scanResult && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center bg-success/90 backdrop-blur-md animate-fade-in">
-                                <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center text-success mb-6 shadow-2xl shadow-white/20">
+                            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-10 text-center bg-success/95 backdrop-blur-xl animate-fade-in">
+                                <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center text-success mb-6 shadow-[0_0_50px_rgba(255,255,255,0.3)] animate-scale-up">
                                     <CheckCircle2 size={56} />
                                 </div>
                                 <h3 className="text-3xl font-black text-white uppercase tracking-widest mb-2">Authenticated</h3>
-                                <p className="text-sm text-white/80 font-mono font-bold">{scanResult.id}</p>
+                                <p className="text-sm text-white/80 font-mono font-bold tracking-widest">{scanResult.id}</p>
                                 <button 
-                                    className="mt-10 px-8 py-4 bg-white text-success rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 transition-all"
+                                    className="mt-10 px-8 py-4 bg-white text-success rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all"
                                     onClick={() => setScanResult(null)}
                                 >
                                     Scan Next Ticket
@@ -290,10 +293,30 @@ export default function Scanner() {
             </div>
 
             <style>{`
+                :root {
+                    --admin-primary-rgb: 79, 70, 229; /* Default Indigo RGB */
+                }
                 @keyframes scan {
-                    0% { top: 10%; opacity: 0; }
-                    50% { opacity: 1; }
-                    100% { top: 90%; opacity: 0; }
+                    0% { top: 0%; opacity: 0; }
+                    20% { opacity: 1; }
+                    80% { opacity: 1; }
+                    100% { top: 100%; opacity: 0; }
+                }
+                #qr-reader {
+                    background: transparent !important;
+                    border: none !important;
+                    width: 100% !important;
+                    height: 100% !important;
+                }
+                #qr-reader video {
+                    width: 100% !important;
+                    height: 100% !important;
+                    object-fit: cover !important;
+                    background: transparent !important;
+                }
+                /* Hide html5-qrcode labels/buttons that might appear */
+                #qr-reader__dashboard, #qr-reader__status_span, #qr-reader img {
+                    display: none !important;
                 }
             `}</style>
         </div>

@@ -17,10 +17,23 @@ export default function EventOrders() {
     const [eventFilter, setEventFilter] = useState('all'); // Filter by specific event name
     const [selectedOrder, setSelectedOrder] = useState(null);
 
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
+
     const fetchOrders = async () => {
         try {
             setIsLoading(true);
-            const res = await axios.get('/api/transactions');
+            const period = isAllTime ? 'all' : selectedMonth;
+            const res = await axios.get(`/api/transactions?month=${period}&year=${selectedYear}`);
             
             // FILTER ONLY EVENT
             const eventOrders = (res.data || []).filter(b => 
@@ -71,7 +84,7 @@ export default function EventOrders() {
 
     useEffect(() => {
         fetchOrders();
-    }, []);
+    }, [selectedMonth, selectedYear, isAllTime]);
 
     const uniqueEventNames = Array.from(new Set(
         orders.map(o => o.items?.[0]?.item?.name).filter(Boolean)
@@ -116,13 +129,60 @@ export default function EventOrders() {
                     <p>Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button 
-                        onClick={fetchOrders}
-                        className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm active:scale-95"
-                    >
-                        <Clock size={18} className={isLoading ? 'animate-spin text-admin-primary' : 'text-success'} /> 
-                        {isLoading ? 'Synchronizing...' : 'Manual Sync'}
-                    </button>
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-admin-border text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px]"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                        </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} className="rotate-180" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} /></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

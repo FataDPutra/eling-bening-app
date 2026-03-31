@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { Save, Home as HomeIcon, Info, Phone as PhoneIcon, PanelLeftClose, PanelLeftOpen, Mountain, Utensils, BedDouble, Waves, MapPin, Phone, Mail, Layout, Eye, Sparkles, Smartphone, Tablet, Monitor, Star, ArrowRight, Camera, Users, Calendar, ArrowUpRight, CheckCircle, X } from 'lucide-react';
+import { Save, Home as HomeIcon, Info, Phone as PhoneIcon, PanelLeftClose, PanelLeftOpen, Mountain, Utensils, BedDouble, Waves, MapPin, Phone, Mail, Layout, Eye, Sparkles, Smartphone, Tablet, Monitor, Star, ArrowRight, Camera, Users, Calendar, ArrowUpRight, CheckCircle, X, UserCircle, Menu } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useContent } from '../../context/ContentContext';
 
 // High-fidelity preview component that matches Guest pages exactly
-const PreviewRenderer = ({ activeTab, content, previewDevice }) => {
+const PreviewRenderer = ({ activeTab, content, previewDevice, onTabChange }) => {
+    const [previewMobileMenuOpen, setPreviewMobileMenuOpen] = React.useState(false);
     const styles = `
         .hero-gradient { background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3)); }
         .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
         .font-serif { font-family: 'Playfair Display', serif; }
-        .bg-eling-green { background-color: #065f46; }
-        .text-eling-green { color: #065f46; }
-        .bg-eling-red { background-color: #991b1b; }
-        .text-eling-red { color: #991b1b; }
+        .bg-eling-green { background-color: #2E7D32; }
+        .text-eling-green { color: #2E7D32; }
+        .bg-eling-red { background-color: #C62828; }
+        .text-eling-red { color: #C62828; }
         @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .animate-slide-up { animation: slide-up 0.8s ease-out forwards; opacity: 1 !important; }
         .section-container { padding: 4rem 1.5rem; }
@@ -34,6 +35,15 @@ const PreviewRenderer = ({ activeTab, content, previewDevice }) => {
         .preview-container.tablet h2 { font-size: 2.5rem !important; }
         .preview-container.tablet .section-container { padding: 4rem 2rem !important; }
         .preview-container.tablet .flex-col-tablet { flex-direction: column !important; gap: 3rem !important; }
+
+        /* Responsive Layout Preview Sim */
+        .preview-container .burger-icon { display: none !important; }
+        .preview-container.mobile .lg-nav-menu, .preview-container.tablet .lg-nav-menu { display: none !important; }
+        .preview-container.mobile .burger-icon, .preview-container.tablet .burger-icon { display: block !important; }
+        .preview-container.mobile .nav-logo-text { font-size: 1rem !important; }
+        .preview-container.mobile .footer-grid { grid-template-columns: 1fr !important; gap: 2rem !important; text-align: center !important; }
+        .preview-container.mobile .footer-grid > * { display: flex; flex-direction: column; align-items: center; }
+        .preview-container.mobile .preview-nav { padding: 1rem !important; }
     `;
 
     if (activeTab === 'home') {
@@ -310,6 +320,132 @@ const PreviewRenderer = ({ activeTab, content, previewDevice }) => {
         );
     }
 
+    if (activeTab === 'layout') {
+        const l = content.layout;
+        return (
+            <div className={`preview-container font-sans text-gray-900 bg-white ${previewDevice}`}>
+                <style>{styles}</style>
+                {/* Navbar Preview */}
+                <nav className="preview-nav w-full bg-white/95 text-gray-900 shadow-lg py-4 px-6 lg:px-12 flex justify-between items-center sticky top-0 z-50 transition-all">
+                    <div className="flex items-center gap-2">
+                        <img src={l.logo || '/images/logo.png'} alt="Logo" className="h-8" />
+                        <span className="text-xl font-serif font-black text-eling-green nav-logo-text transition-all">{l.siteTitle || 'Eling Bening'}</span>
+                    </div>
+                    <div className="lg-nav-menu hidden lg:flex gap-6 font-black tracking-widest uppercase text-[10px] items-center text-gray-500">
+                        <button onClick={() => onTabChange('home')} className={`${activeTab === 'home' ? 'text-eling-green border-b-2 border-eling-green' : ''} pb-1 hover:text-eling-green transition-all`}>Home</button>
+                        <button onClick={() => onTabChange('about')} className={`${activeTab === 'about' ? 'text-eling-green border-b-2 border-eling-green' : ''} pb-1 hover:text-eling-green transition-all`}>Tentang Kami</button>
+                        <button className="pb-1 hover:text-eling-green transition-all">Resort</button>
+                        <div className="flex items-center gap-1 cursor-pointer hover:text-eling-green transition-all">TIKET <i className="fas fa-chevron-down text-[8px]"></i></div>
+                        <button className="pb-1 hover:text-eling-green transition-all">Event</button>
+                        <button className="pb-1 hover:text-eling-green transition-all">Galeri</button>
+                        <button onClick={() => onTabChange('facilities')} className={`${activeTab === 'facilities' ? 'text-eling-green border-b-2 border-eling-green' : ''} pb-1 hover:text-eling-green transition-all`}>Fasilitas</button>
+                        <button onClick={() => onTabChange('contact')} className={`${activeTab === 'contact' ? 'text-eling-green border-b-2 border-eling-green' : ''} pb-1 hover:text-eling-green transition-all`}>Kontak</button>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setPreviewMobileMenuOpen(true)} className="burger-icon text-gray-400">
+                            <Menu size={22} />
+                        </button>
+                        <div className="w-8 h-8 rounded-full bg-eling-red flex items-center justify-center text-white shrink-0">
+                            <UserCircle size={18} />
+                        </div>
+                    </div>
+                </nav>
+
+                {/* Mobile Drawer Simulation */}
+                {previewMobileMenuOpen && (
+                    <div className="absolute inset-0 z-[60] animate-fade-in">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewMobileMenuOpen(false)} />
+                        <div className="absolute right-0 top-0 bottom-0 w-[85%] bg-white shadow-2xl animate-[slide_0.3s_ease-out] flex flex-col">
+                            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                                <div className="flex items-center gap-2">
+                                    <img src={l.logo || '/images/logo.png'} alt="Logo" className="h-6" />
+                                    <span className="text-sm font-serif font-black text-eling-green">{l.siteTitle || 'Eling Bening'}</span>
+                                </div>
+                                <button onClick={() => setPreviewMobileMenuOpen(false)} className="text-gray-400">
+                                    <X size={20} />
+                                </button>
+                            </div>
+                            <div className="flex-1 py-6 px-4 space-y-1">
+                                {[
+                                    { label: 'Home', id: 'home' },
+                                    { label: 'Tentang Kami', id: 'about' },
+                                    { label: 'Resort', id: null },
+                                    { label: 'Tiket Wisata', id: null },
+                                    { label: 'Tiket Event', id: null },
+                                    { label: 'Event', id: null },
+                                    { label: 'Galeri', id: null },
+                                    { label: 'Fasilitas', id: 'facilities' },
+                                    { label: 'Kontak', id: 'contact' }
+                                ].map((m) => (
+                                    <button 
+                                        key={m.label} 
+                                        onClick={() => {
+                                            if(m.id) onTabChange(m.id);
+                                            setPreviewMobileMenuOpen(false);
+                                        }}
+                                        className={`w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === m.id ? 'bg-eling-green/10 text-eling-green' : 'text-gray-600 hover:bg-gray-50'}`}
+                                    >
+                                        {m.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                        <style>{`
+                            @keyframes slide { from { transform: translateX(100%); } to { transform: translateX(0); } }
+                        `}</style>
+                    </div>
+                )}
+
+                {/* Main Body Placeholder */}
+                <div className="min-h-[400px] flex items-center justify-center bg-gray-50 border-y border-dashed border-gray-200 p-8 text-center">
+                    <div>
+                        <div className="w-16 h-16 bg-white rounded-2xl shadow-xl flex items-center justify-center text-admin-primary mx-auto mb-4">
+                            <Layout size={32} />
+                        </div>
+                        <h3 className="font-serif text-2xl font-black text-gray-800 italic">Layout & Identity View</h3>
+                        <p className="text-gray-400 text-[10px] mt-2 uppercase tracking-[0.2em] font-black max-w-[200px] mx-auto">Toggle device icons below to see responsive behavior</p>
+                    </div>
+                </div>
+
+                {/* Footer Preview */}
+                <footer className="bg-eling-green text-white py-16 px-6 lg:px-20 text-left">
+                    <div className="footer-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 max-w-7xl mx-auto transition-all">
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2">
+                                <img src={l.logo || '/images/logo.png'} alt="Logo" className="h-8 opacity-90" />
+                                <span className="text-xl font-serif font-bold text-white nav-logo-text whitespace-nowrap">{l.siteTitle || 'Eling Bening'}</span>
+                            </div>
+                            <p className="text-green-100/70 text-xs leading-relaxed italic max-w-xs">
+                                {l.footerDesc || "Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat."}
+                            </p>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="font-bold text-xs tracking-[0.2em] text-white uppercase opacity-50">Sitemap</h4>
+                            <ul className="space-y-2 text-green-100 text-xs opacity-80 font-bold">
+                                <li>Beranda</li>
+                                <li>Tentang Kami</li>
+                                <li>Fasilitas</li>
+                            </ul>
+                        </div>
+                        <div className="space-y-6">
+                            <h4 className="font-bold text-xs tracking-[0.2em] text-white uppercase opacity-50">Connect</h4>
+                            <div className="flex gap-4">
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"><Smartphone size={16} /></div>
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"><Monitor size={16} /></div>
+                                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all cursor-pointer"><Tablet size={16} /></div>
+                            </div>
+                            <p className="text-[9px] text-green-100/40 uppercase tracking-[0.2em] font-black italic">Social media synced</p>
+                        </div>
+                        <div className="space-y-4">
+                            <h4 className="font-bold text-xs tracking-[0.2em] text-white uppercase opacity-50">Office</h4>
+                            <p className="text-green-100 text-[10px] leading-relaxed opacity-60 italic">{content.contact.address}</p>
+                        </div>
+                    </div>
+                </footer>
+            </div>
+        );
+    }
+
     return null;
 };
 
@@ -320,7 +456,7 @@ export default function AdminContent() {
     const [previewDevice, setPreviewDevice] = useState('desktop');
 
     const handleChange = (key, value) => {
-        const tabKey = activeTab === 'home' || activeTab === 'about' || activeTab === 'contact' ? activeTab : null;
+        const tabKey = ['home', 'about', 'contact', 'layout', 'facilities'].includes(activeTab) ? activeTab : null;
         updateContent(tabKey, key, value);
     };
 
@@ -334,6 +470,7 @@ export default function AdminContent() {
         { id: 'gallery', label: 'Showcase', icon: Camera },
         { id: 'facilities', label: 'Fasilitas', icon: Sparkles },
         { id: 'contact', label: 'Connect', icon: PhoneIcon },
+        { id: 'layout', label: 'Layout', icon: Layout },
     ];
 
     const ImageUpload = ({ label, value, onChange, placeholder = "Input URL atau upload gambar" }) => {
@@ -905,6 +1042,61 @@ export default function AdminContent() {
                         </div>
                     </div>
                 );
+            case 'layout':
+                return (
+                    <div className="space-y-8 animate-fade-in">
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Layout size={14} /> Identitas & Navigasi
+                            </h4>
+                            <ImageUpload
+                                label="Favicon (Icon Browser Title)"
+                                value={content.layout.favicon || '/favicon.ico'}
+                                onChange={val => handleChange('favicon', val)}
+                                placeholder="/favicon.ico"
+                            />
+                            <div className="mt-4">
+                                <ImageUpload
+                                    label="Logo Website (Navbar & Footer)"
+                                    value={content.layout.logo || '/images/logo.png'}
+                                    onChange={val => handleChange('logo', val)}
+                                />
+                            </div>
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Site Title / Nama Website</label>
+                                <input className="admin-input !bg-white" value={content.layout.siteTitle} onChange={e => handleChange('siteTitle', e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Info size={14} /> Konten Footer
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter">Deskripsi / Slogan Footer</label>
+                                <textarea className="admin-textarea !bg-white" rows={3} value={content.layout.footerDesc} onChange={e => handleChange('footerDesc', e.target.value)} />
+                            </div>
+                        </div>
+
+                        <div className="p-5 rounded-2xl bg-admin-primary/5 border border-admin-primary/10">
+                            <h4 className="flex items-center gap-2 text-xs font-black text-admin-primary uppercase tracking-widest mb-3">
+                                <Users size={14} /> Social Media Links (Footer)
+                            </h4>
+                            <div className="form-group">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter"><i className="fab fa-instagram mr-2"></i>Instagram URL</label>
+                                <input className="admin-input !bg-white" value={content.layout.socialIg} onChange={e => handleChange('socialIg', e.target.value)} />
+                            </div>
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter"><i className="fab fa-tiktok mr-2"></i>TikTok URL</label>
+                                <input className="admin-input !bg-white" value={content.layout.socialTt} onChange={e => handleChange('socialTt', e.target.value)} />
+                            </div>
+                            <div className="form-group mt-4">
+                                <label className="form-label !text-xs !font-black uppercase tracking-tighter"><i className="fab fa-youtube mr-2"></i>YouTube URL</label>
+                                <input className="admin-input !bg-white" value={content.layout.socialYt} onChange={e => handleChange('socialYt', e.target.value)} />
+                            </div>
+                        </div>
+                    </div>
+                );
             default: return null;
         }
     };
@@ -993,6 +1185,7 @@ export default function AdminContent() {
                             activeTab={activeTab} 
                             content={content} 
                             previewDevice={previewDevice} 
+                            onTabChange={setActiveTab}
                         />
                     </div>
                 </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, MapPin, ArrowRight, Tag, Loader2, X, Phone, Mail, Clock, Star, ChevronLeft, ChevronRight, Users, CheckCircle, CreditCard } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { formatRupiah } from '../../utils/data';
 
 export default function Events() {
@@ -11,12 +11,24 @@ export default function Events() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedEvent, setSelectedEvent] = useState(null);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const location = useLocation();
 
     useEffect(() => {
         const fetchEvents = async () => {
             try {
                 const { data } = await axios.get('/api/events');
-                setEvents(data.filter(e => e.is_active));
+                const activeOnes = data.filter(e => e.is_active);
+                setEvents(activeOnes);
+                
+                // Check for auto-open ID from navigation state
+                if (location.state?.openId) {
+                    const target = activeOnes.find(e => e.id == location.state.openId);
+                    if (target) {
+                        setSelectedEvent(target);
+                        setActiveImageIndex(0);
+                        document.body.style.overflow = 'hidden';
+                    }
+                }
             } catch (error) {
                 console.error('Failed to fetch events:', error);
             } finally {
@@ -24,7 +36,7 @@ export default function Events() {
             }
         };
         fetchEvents();
-    }, []);
+    }, [location.state]);
 
     const openDetail = (event) => {
         setSelectedEvent(event);
