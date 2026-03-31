@@ -154,8 +154,14 @@ export default function RoomDetails() {
     })() : new Date(new Date().getTime() + 86400000).toISOString().split('T')[0];
 
     const fetchRoomDetails = async () => {
+        if (!isInitialLoading) setIsUpdating(true);
         try {
-            const response = await axios.get(`/api/resorts/${id}`);
+            const response = await axios.get(`/api/resorts/${id}`, {
+                params: {
+                    check_in: startDate,
+                    check_out: endDate
+                }
+            });
             setRoom(response.data);
         } catch (error) {
             console.error('Error fetching room details:', error);
@@ -169,28 +175,26 @@ export default function RoomDetails() {
         if (id) {
             fetchRoomDetails();
         }
-    }, [id]);
+    }, [id, startDate, endDate]);
 
     const handleBooking = () => {
         const guestsNum = parseInt(guests);
         const days = Math.floor((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
         const roomsNeeded = room ? Math.ceil(guestsNum / room.capacity) : 1;
         
-        const bookingData = {
-            id: room.id,
-            name: room.name,
-            original_price: room.price,
-            price: currentPrice,
-            startDate,
-            endDate,
+        const payload = {
+            room: {
+                ...room,
+                image: galleryToDisplay[0] || "/images/resort-room.png"
+            },
+            checkIn: startDate,
+            checkOut: endDate,
             guests: guestsNum,
-            days: days,
-            rooms: roomsNeeded,
-            image: galleryToDisplay[0],
-            capacity: room.capacity
+            totalNights: days,
+            roomsNeeded: roomsNeeded
         };
 
-        navigate('/booking', { state: { bookingData } });
+        navigate('/booking', { state: payload });
     };
 
     if (isInitialLoading) {

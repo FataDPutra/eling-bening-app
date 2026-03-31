@@ -6,6 +6,7 @@ import { useAuth } from '../../utils/AuthContext';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { QRCodeCanvas } from 'qrcode.react';
+import { Loader2 } from 'lucide-react';
 import '../../styles/guest.css';
 
 export default function Ticketing() {
