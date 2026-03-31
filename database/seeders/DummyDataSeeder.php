@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Resort;
+use App\Models\Facility;
 use App\Models\Ticket;
 use App\Models\Promo;
 use App\Models\Expense;
@@ -12,17 +13,13 @@ class DummyDataSeeder extends Seeder
 {
     public function run(): void
     {
-        Resort::create([
+        // 1. Ambil data fasilitas dari Master Fasilitas
+        $allFacs = Facility::all();
+
+        // 2. Seed Resorts
+        $resort1 = Resort::create([
             'name' => 'Villa Merbabu',
             'description' => 'Villa mewah dengan pemandangan langsung Gunung Merbabu.',
-            'facilities' => [
-                ['name' => 'AC Premium', 'icon' => 'Wind'],
-                ['name' => 'Smart TV 55"', 'icon' => 'Monitor'],
-                ['name' => 'Private Pool', 'icon' => 'Waves'],
-                ['name' => 'Teras Santai', 'icon' => 'Trees'],
-                ['name' => 'Wifi Kencang', 'icon' => 'Wifi'],
-                ['name' => 'Breakfast 4 Pax', 'icon' => 'Coffee']
-            ],
             'price' => 1500000,
             'price_weekend' => 1800000,
             'stock' => 5,
@@ -31,17 +28,14 @@ class DummyDataSeeder extends Seeder
             'room_size' => '45',
             'gallery' => []
         ]);
+        // Attach facilities by name (mapping from seeder)
+        $resort1->facilities()->sync(
+            $allFacs->whereIn('name', ['AC Premium', 'Smart TV 55"', 'Private Pool', 'Wifi Kencang', 'Breakfast 4 Pax'])->pluck('id')
+        );
 
-        Resort::create([
+        $resort2 = Resort::create([
             'name' => 'Glamping Rawa Pening',
             'description' => 'Pengalaman glamping unik di pinggir bukit dengan udara sejuk.',
-            'facilities' => [
-                ['name' => 'AC', 'icon' => 'Wind'],
-                ['name' => 'Kamar Mandi Dalam', 'icon' => 'Bath'],
-                ['name' => 'Api Unggun', 'icon' => 'Flame'],
-                ['name' => 'Breakfast 2 Pax', 'icon' => 'Coffee'],
-                ['name' => 'Mini Bar', 'icon' => 'Wine']
-            ],
             'price' => 800000,
             'price_weekend' => 1000000,
             'stock' => 10,
@@ -50,18 +44,13 @@ class DummyDataSeeder extends Seeder
             'room_size' => '20',
             'gallery' => []
         ]);
+        $resort2->facilities()->sync(
+            $allFacs->whereIn('name', ['AC Premium', 'Kamar Mandi Dalam', 'Api Unggun', 'Breakfast 2 Pax', 'Mini Bar'])->pluck('id')
+        );
         
-        Resort::create([
+        $resort3 = Resort::create([
             'name' => 'Family Suite Ungaran',
             'description' => 'Ruang luas untuk rombongan keluarga besar dengan fasilitas lengkap.',
-            'facilities' => [
-                ['name' => 'AC Central', 'icon' => 'Wind'],
-                ['name' => 'Smart TV & Sound', 'icon' => 'Tv'],
-                ['name' => 'Dapur Lengkap', 'icon' => 'Utensils'],
-                ['name' => 'Living Room', 'icon' => 'LayoutGrid'],
-                ['name' => 'Breakfast 6 Pax', 'icon' => 'Coffee'],
-                ['name' => 'Akses All-Area', 'icon' => 'MapPin']
-            ],
             'price' => 2500000,
             'price_weekend' => 3000000,
             'stock' => 2,
@@ -70,16 +59,13 @@ class DummyDataSeeder extends Seeder
             'room_size' => '80',
             'gallery' => []
         ]);
+        $resort3->facilities()->sync(
+            $allFacs->whereIn('name', ['AC Premium', 'Smart TV 55"', 'Dapur Lengkap', 'Living Room', 'Breakfast 6 Pax', 'Akses All-Area'])->pluck('id')
+        );
 
-        Resort::create([
+        $resort4 = Resort::create([
             'name' => 'Superior Room',
             'description' => 'Kamar superior dengan fasilitas standar yang nyaman untuk pasangan atau perjalanan dinas.',
-            'facilities' => [
-                ['name' => 'AC', 'icon' => 'Wind'],
-                ['name' => 'TV', 'icon' => 'Tv'],
-                ['name' => 'Hot Shower', 'icon' => 'ShowerHead'],
-                ['name' => 'Breakfast 2 Pax', 'icon' => 'Coffee']
-            ],
             'price' => 500000,
             'price_weekend' => 650000,
             'stock' => 8,
@@ -88,7 +74,11 @@ class DummyDataSeeder extends Seeder
             'room_size' => '18',
             'gallery' => []
         ]);
+        $resort4->facilities()->sync(
+            $allFacs->whereIn('name', ['AC Premium', 'Smart TV 55"', 'Hot Shower', 'Breakfast 2 Pax'])->pluck('id')
+        );
 
+        // 3. Seed Tickets
         Ticket::create([
             'id' => 'EB-TICK-101',
             'name' => 'Tiket Masuk Reguler',
@@ -116,6 +106,7 @@ class DummyDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
+        // 4. Seed Promos
         Promo::create([
             'promo_code' => 'KEMERDEKAAN',
             'name' => 'Promo Kemerdekaan 17 Agustus',
@@ -138,6 +129,7 @@ class DummyDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
+        // 5. Seed Expenses
         Expense::create([
             'name' => 'Gaji Karyawan Bulan Ini',
             'notes' => 'Pembayaran gaji reguler',
