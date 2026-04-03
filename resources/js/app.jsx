@@ -127,11 +127,11 @@ const App = () => {
                         <Route path="rooms" element={<Rooms />} />
                         <Route path="rooms/:id" element={<RoomDetails />} />
                         <Route path="events" element={<Events />} />
-                        <Route path="events/:id/book" element={<ProtectedRoute><EventBooking /></ProtectedRoute>} />
-                        <Route path="event-ticketing" element={<ProtectedRoute><EventTicketing /></ProtectedRoute>} />
+                        <Route path="events/:id/book" element={<EventBooking />} />
+                        <Route path="event-ticketing" element={<EventTicketing />} />
                         
                         {/* Protected Guest */}
-                        <Route path="ticketing" element={<ProtectedRoute><Ticketing /></ProtectedRoute>} />
+                        <Route path="ticketing" element={<Ticketing />} />
                         <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                         <Route path="booking" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
                         <Route path="payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />

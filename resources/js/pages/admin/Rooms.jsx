@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
+import IconRenderer from '../../components/IconRenderer';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
@@ -271,7 +272,7 @@ export default function Rooms() {
                                     <div className="flex flex-wrap gap-3">
                                         {(selectedRoom.facilities || []).map((f, i) => (
                                             <span key={i} className="px-5 py-2.5 bg-admin-bg border border-admin-border text-admin-text-main rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all">
-                                                <span className="text-sm">{f.icon || <Check size={14} className="opacity-50" />}</span>
+                                                <IconRenderer icon={f.icon} size={14} />
                                                 <span>{f.name || f}</span>
                                             </span>
                                         ))}

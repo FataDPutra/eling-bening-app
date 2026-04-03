@@ -60,13 +60,20 @@ export default function Dashboard() {
             ? transactions 
             : transactions.filter(t => t.created_at && t.created_at.startsWith(period));
 
+        const calculateGrandTotal = (b) => {
+            const base = Number(b.total_price || 0);
+            const addons = (b.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0);
+            const resc = (b.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0);
+            return base + addons + resc;
+        };
+
         const periodRev = filtered
             .filter(b => (b.status === 'success' || b.status === 'paid'))
-            .reduce((sum, b) => sum + Number(b.total_price), 0);
+            .reduce((sum, b) => sum + calculateGrandTotal(b), 0);
 
         const todayRev = transactions
             .filter(b => b.created_at && b.created_at.startsWith(today) && (b.status === 'success' || b.status === 'paid'))
-            .reduce((sum, b) => sum + Number(b.total_price), 0);
+            .reduce((sum, b) => sum + calculateGrandTotal(b), 0);
 
         setBookings(filtered);
         setStats({

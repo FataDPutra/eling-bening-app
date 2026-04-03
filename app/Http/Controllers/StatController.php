@@ -26,14 +26,20 @@ class StatController extends Controller
 
         // 1. Basic Stats (For selected period)
         $revenueQuery = Transaction::whereIn('status', ['paid', 'success']);
+        $rescheduleRevenueQuery = \App\Models\Reschedule::where('status', 'completed');
+
         if (!$isAllTime) {
             $revenueQuery->whereBetween('created_at', [$startOfPeriod, $endOfPeriod]);
+            $rescheduleRevenueQuery->whereBetween('paid_at', [$startOfPeriod, $endOfPeriod]);
         }
-        $revenue = $revenueQuery->sum('total_price');
+
+        $revenue = $revenueQuery->sum('total_price') + $rescheduleRevenueQuery->sum('final_charge');
 
         $lastMonthRevenue = Transaction::whereIn('status', ['paid', 'success'])
             ->whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])
-            ->sum('total_price');
+            ->sum('total_price') + \App\Models\Reschedule::where('status', 'completed')
+            ->whereBetween('paid_at', [$startOfLastMonth, $endOfLastMonth])
+            ->sum('final_charge');
 
         $revenueTrend = $lastMonthRevenue > 0 
             ? (($revenue - $lastMonthRevenue) / $lastMonthRevenue) * 100 

@@ -49,7 +49,18 @@ class EventController extends Controller
      */
     public function index()
     {
-        return response()->json(Event::orderBy('created_at', 'desc')->get());
+        $events = Event::orderBy('created_at', 'desc')->get();
+        foreach ($events as $event) {
+            if ($event->is_ticketed) {
+                $sold = \App\Models\TransactionItem::where('item_type', Event::class)
+                    ->where('item_id', $event->id)
+                    ->whereHas('transaction', function($q) {
+                        $q->whereIn('status', ['paid', 'success']);
+                    })->sum('quantity');
+                $event->available_quota = max(0, $event->ticket_quota - $sold);
+            }
+        }
+        return response()->json($events);
     }
 
     /**

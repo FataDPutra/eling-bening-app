@@ -79,13 +79,20 @@ export default function BookingDetails() {
     const nights = Math.max(1, (new Date(transaction.check_out_date) - new Date(transaction.check_in_date)) / (1000 * 60 * 60 * 24));
     const roomSubtotal = (resortItem?.price || 0) * (resortItem?.quantity || 1) * nights;
     
-    // Additional facilities calculation
-    const addOnTotal = Array.isArray(transaction.additional_facilities) 
-        ? transaction.additional_facilities.reduce((sum, f) => sum + (Number(f.price || 0) * nights * (resortItem?.quantity || 1)), 0)
+    // Initial additional facilities calculation (Pre-checkin)
+    const initialAddOnTotal = Array.isArray(transaction.additional_facilities) 
+        ? transaction.additional_facilities.reduce((sum, f) => sum + (Number(f.price || 0)), 0)
         : 0;
 
-    const baseAmount = roomSubtotal + addOnTotal;
-    const taxAmount = baseAmount * 0.1;
+    // Post-checkin addons (Stay Addons)
+    const stayAddons = transaction.addons || [];
+    const stayAddonsTotal = stayAddons.reduce((sum, addon) => sum + Number(addon.total_price || 0), 0);
+
+    // Reschedule History & Fees
+    const reschedules = (transaction.reschedules || []).filter(r => r.status === 'completed');
+    const rescheduledTotal = reschedules.reduce((sum, r) => sum + Number(r.final_charge || 0), 0);
+
+    const baseAmount = roomSubtotal + initialAddOnTotal;
 
     return (
         <main className="pt-32 pb-24 px-6 max-w-6xl mx-auto min-h-screen bg-gray-50 animate-fade-in print:pt-0">
@@ -222,12 +229,13 @@ export default function BookingDetails() {
                             <div className="w-10 h-10 rounded-2xl bg-eling-green/10 text-eling-green flex items-center justify-center">
                                 <Info size={20} />
                             </div>
-                            <h2 className="text-2xl font-black font-serif text-gray-800">Fasilitas & Permintaan</h2>
+                            <h2 className="text-2xl font-black font-serif text-gray-800">Layanan & Fasilitas</h2>
                         </div>
 
                         <div className="space-y-12">
+                            {/* Original Addons */}
                             <div>
-                                <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Layanan Tambahan yang Dipilih</span>
+                                <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Layanan Saat Reservasi Utama</span>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {Array.isArray(transaction.additional_facilities) && transaction.additional_facilities.length > 0 ? (
                                         transaction.additional_facilities.map((fac, i) => (
@@ -241,11 +249,86 @@ export default function BookingDetails() {
                                         ))
                                     ) : (
                                         <div className="col-span-2 p-8 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Tidak ada fasilitas tambahan</p>
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Tidak ada fasilitas tambahan saat reservasi</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
+
+                            {/* Stay Addons (ordered during check-in/stay) */}
+                            {stayAddons.length > 0 && (
+                                <div className="pt-10 border-t border-dashed border-gray-100">
+                                    <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 text-blue-600">Layanan Tambahan Selama Menginap</span>
+                                    <div className="space-y-4">
+                                        {stayAddons.map((addon, i) => (
+                                            <div key={i} className="bg-blue-50/50 rounded-3xl p-6 border border-blue-100">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Order #{addon.id}</span>
+                                                    <span className="text-xs font-black text-gray-400">{new Date(addon.created_at).toLocaleDateString('id-ID')}</span>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {addon.items?.map((item, idx) => (
+                                                        <div key={idx} className="flex justify-between items-center">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                                                <span className="text-sm font-bold text-gray-700">{item.item?.name || 'Item'} (x{item.quantity})</span>
+                                                            </div>
+                                                            <span className="text-sm font-black text-gray-900">{formatRupiah(item.subtotal)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Reschedule Log */}
+                            {reschedules.length > 0 && (
+                                <div className="pt-10 border-t border-dashed border-gray-100">
+                                    <span className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6 text-orange-600">Riwayat Reschedule</span>
+                                    <div className="space-y-4">
+                                        {reschedules.map((r, i) => (
+                                            <div key={i} className="bg-orange-50/50 rounded-3xl p-6 border border-orange-100">
+                                                <div className="flex justify-between items-center mb-4">
+                                                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-600">Biaya Perubahan Jadwal</span>
+                                                    <span className="px-3 py-1 bg-white rounded-full text-[9px] font-black text-emerald-600 border border-emerald-100 uppercase tracking-widest">Lunas</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                                    <div>
+                                                        <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Dari</span>
+                                                        <p className="text-xs font-black text-gray-600 line-through">{new Date(r.old_date).toLocaleDateString('id-ID')}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 text-orange-400">Ke</span>
+                                                        <p className="text-xs font-black text-gray-800">{new Date(r.new_date).toLocaleDateString('id-ID')}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2 border-t border-orange-200/50 pt-4">
+                                                    {r.price_diff > 0 && (
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-gray-500">Selisih Harga Kamar</span>
+                                                            <span className="font-bold text-gray-900">{formatRupiah(r.price_diff)}</span>
+                                                        </div>
+                                                    )}
+                                                    {r.admin_fee > 0 && (
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-gray-500">Biaya Admin</span>
+                                                            <span className="font-bold text-gray-900">{formatRupiah(r.admin_fee)}</span>
+                                                        </div>
+                                                    )}
+                                                    {r.penalty_fee > 0 && (
+                                                        <div className="flex justify-between items-center text-xs">
+                                                            <span className="text-gray-500">Biaya Denda</span>
+                                                            <span className="font-bold text-gray-900">{formatRupiah(r.penalty_fee)}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {transaction.special_requests && (
                                 <div className="pt-10 border-t border-dashed border-gray-100">
@@ -291,21 +374,32 @@ export default function BookingDetails() {
 
                         <div className="space-y-6 mb-10">
                             <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Harga Dasar Kamar</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Kamar ({nights} Malam)</span>
                                 <span className="text-sm font-black text-gray-800">{formatRupiah(roomSubtotal)}</span>
                             </div>
-                            {addOnTotal > 0 && (
-                                <div className="flex justify-between items-center animate-fade-in">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Layanan Tambahan</span>
-                                    <span className="text-sm font-black text-gray-800">+{formatRupiah(addOnTotal)}</span>
+                            {initialAddOnTotal > 0 && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Fasilitas Awal</span>
+                                    <span className="text-sm font-black text-gray-800">+{formatRupiah(initialAddOnTotal)}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pajak & Layanan (10%)</span>
-                                <span className="text-sm font-black text-gray-800">+{formatRupiah(taxAmount)}</span>
-                            </div>
+                            {stayAddonsTotal > 0 && (
+                                <div className="flex justify-between items-center text-blue-600">
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Layanan Saat Menginap</span>
+                                    <span className="text-sm font-black">+{formatRupiah(stayAddonsTotal)}</span>
+                                </div>
+                            )}
+                            {rescheduledTotal > 0 && (
+                                <div className="flex justify-between items-center text-orange-600">
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Biaya Reschedule</span>
+                                    <span className="text-sm font-black">+{formatRupiah(rescheduledTotal)}</span>
+                                </div>
+                            )}
+                            
+                            <div className="pt-4 border-t border-dashed border-gray-100"></div>
+                            
                             {transaction.discount_amount > 0 && (
-                                <div className="flex justify-between items-center text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100/50 animate-fade-in">
+                                <div className="flex justify-between items-center text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100/50 animate-fade-in mb-4">
                                     <span className="text-[10px] font-black uppercase tracking-widest">Potongan Promo</span>
                                     <span className="text-sm font-black">-{formatRupiah(transaction.discount_amount)}</span>
                                 </div>
@@ -314,7 +408,7 @@ export default function BookingDetails() {
 
                         <div className="pt-8 border-t border-dashed border-gray-100">
                             <div className="flex flex-col items-center">
-                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Harga Dibayar</span>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 text-center">Total Seluruh Tagihan</span>
                                 <span className="text-3xl font-black text-eling-green font-serif">{formatRupiah(transaction.total_price)}</span>
                             </div>
                         </div>

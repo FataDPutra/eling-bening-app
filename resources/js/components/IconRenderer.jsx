@@ -10,7 +10,8 @@ import {
     UtensilsCrossed, Monitor, AirVent, Fan, Refrigerator, Smartphone, Tablet, Laptop,
     Mic, Music2, Camera, Video, MonitorPlay, Heart, Brain, Library,
     Droplet, Brush,
-    Users, Maximize, User, UserCircle, Square
+    Users, Maximize, User, UserCircle, Square,
+    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info
 } from 'lucide-react';
 
 // ─── CUSTOM ICONS (For missing ones in older Lucide versions) ───────────────
@@ -28,6 +29,11 @@ const CustomSoap = ({ size, className }) => (
 
 // ─── ICON MAPPING ───────────────────────────────────────────────────────────
 const ICON_MAP = {
+    // Basic Actions & Components
+    Plus, Edit, Trash2, Search, ConciergeBell, LayoutGrid, X,
+    Package, ShoppingBasket, Check, ChevronDown, Loader2,
+    
+    // Original Icons
     Bed, Bath, ShowerHead, Wind, Tv, Wifi, Lightbulb, Lamp, DoorOpen, Lock,
     Coffee, Utensils, Soup, Pizza, GlassWater, Wine, Beer, IceCream, Cake,
     Waves, Trees, Mountain, Flame, Tent, Flower, Sun, Moon, Cloud, Fish,
@@ -36,7 +42,8 @@ const ICON_MAP = {
     UtensilsCrossed, Monitor, AirVent, Fan, Refrigerator, Smartphone, Tablet, Laptop,
     Mic, Music2, Camera, Video, MonitorPlay, Heart, Brain, Library,
     Droplet, Brush, Soap: CustomSoap,
-    Users, Maximize, User, UserCircle, Square
+    Users, Maximize, User, UserCircle, Square,
+    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info
 };
 
 // ─── Icon Renderer Helper ──────────────────────────────────────────────────

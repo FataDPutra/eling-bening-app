@@ -1,22 +1,35 @@
-import { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, FileText, CircleDollarSign, Filter, Search, X, Receipt, ArrowDownCircle, Edit } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Calendar, FileText, CircleDollarSign, Filter, Search, X, Receipt, ArrowDownCircle, Edit, MoreVertical } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 
 export default function Expenses() {
-    const [expenses, setExpenses] = useState([]);
+    const [allExpenses, setAllExpenses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editId, setEditId] = useState(null);
-    const [formData, setFormData] = useState({ name: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
+    const [formData, setFormData] = useState({ name: '', amount: '', category: 'operasional', transaction_date: new Date().toISOString().split('T')[0], notes: '' });
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
+
     const fetchExpenses = async () => {
+        setIsLoading(true);
         try {
             const res = await axios.get('/api/expenses');
-            setExpenses(res.data);
+            setAllExpenses(res.data);
             setIsLoading(false);
         } catch (error) {
             console.error("Failed to fetch expenses", error);
@@ -30,7 +43,7 @@ export default function Expenses() {
     }, []);
 
     const resetForm = () => {
-        setFormData({ name: '', amount: '', category: 'Operasional', date: new Date().toISOString().split('T')[0], note: '' });
+        setFormData({ name: '', amount: '', category: 'operasional', transaction_date: new Date().toISOString().split('T')[0], notes: '' });
         setIsEditing(false);
         setEditId(null);
         setShowForm(false);
@@ -38,210 +51,191 @@ export default function Expenses() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
         try {
             const payload = { ...formData, amount: Number(formData.amount) };
             if (isEditing) {
-                const res = await axios.put(`/api/expenses/${editId}`, payload);
-                setExpenses(expenses.map(exp => exp.id === editId ? res.data : exp));
-                toast.success('Pengeluaran berhasil diperbarui');
+                await axios.put(`/api/expenses/${editId}`, payload);
+                toast.success('Pengeluaran diperbarui');
             } else {
-                const res = await axios.post('/api/expenses', payload);
-                setExpenses([res.data, ...expenses]);
-                toast.success('Pengeluaran berhasil dicatat');
+                await axios.post('/api/expenses', payload);
+                toast.success('Pengeluaran dicatat');
             }
+            fetchExpenses();
             resetForm();
         } catch (error) {
             console.error("Failed to save expense", error);
-            toast.error("Gagal menyimpan data pengeluaran");
+            toast.error("Gagal menyimpan data");
         }
     };
 
-    const handleEdit = (exp) => {
-        setFormData({
-            name: exp.name,
-            amount: exp.amount,
-            category: exp.category,
-            date: exp.date,
-            note: exp.note || ''
+    const getFilteredExpenses = () => {
+        return allExpenses.filter(e => {
+            const date = new Date(e.transaction_date);
+            const matchPeriod = isAllTime || (date.getMonth() + 1 === Number(selectedMonth) && date.getFullYear() === Number(selectedYear));
+            const matchSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) || (e.notes && e.notes.toLowerCase().includes(searchTerm.toLowerCase()));
+            return matchPeriod && matchSearch;
         });
-        setIsEditing(true);
-        setEditId(exp.id);
-        setShowForm(true);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleDelete = async (id) => {
-        if (confirm('Hapus catatan pengeluaran ini?')) {
-            try {
-                await axios.delete(`/api/expenses/${id}`);
-                setExpenses(expenses.filter(e => e.id !== id));
-                toast.success('Catatan dihapus');
-            } catch (error) {
-                console.error("Failed to delete expense", error);
-                toast.error("Gagal menghapus catatan");
-            }
-        }
-    };
-
-    const filteredExpenses = expenses.filter(e => 
-        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (e.note && e.note.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredExpenses = getFilteredExpenses();
+    const totalExpense = filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
     return (
         <div className="animate-fade-in space-y-6">
-            <div className="admin-page-header">
+            <header className="admin-page-header">
                 <div>
                     <h1>Pengeluaran Operasional</h1>
-                    <p>Catat dan audit semua biaya operasional, gaji, dan pemeliharaan.</p>
+                    <p className="text-muted mt-1">Kelola dan audit semua biaya operasional resort.</p>
                 </div>
-                <button className={`btn-primary shadow-lg shadow-admin-primary/20 ${showForm ? '!bg-danger' : ''}`} onClick={() => showForm ? resetForm() : setShowForm(true)}>
-                    {showForm ? <X size={18} /> : <Plus size={18} />}
-                    {showForm ? 'Batal' : 'Catat Pengeluaran'}
-                </button>
-            </div>
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                        </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="rotate-90" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="-rotate-90" /></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 text-[10px] font-bold rounded-lg transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                    <button className={`btn-primary shadow-lg shadow-admin-primary/20 ${showForm ? '!bg-red-500' : ''}`} onClick={() => showForm ? resetForm() : setShowForm(true)}>
+                        {showForm ? <X size={18} /> : <Plus size={18} />}
+                    </button>
+                </div>
+            </header>
 
             {showForm && (
-                <div className="admin-table-container !p-8 border-2 border-admin-primary/20 animate-scale-up">
-                    <div className="flex items-center gap-3 mb-8">
-                        <div className="p-3 rounded-2xl bg-admin-primary/10 text-admin-primary">
-                            <Receipt size={24} />
+                <div className="admin-card border-2 border-admin-primary/20 animate-slide-up">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="admin-label">Nama Pengeluaran</label>
+                                <input type="text" required className="admin-input" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Contoh: Pembelian Sabun Mandi" />
+                            </div>
+                            <div>
+                                <label className="admin-label">Kategori</label>
+                                <select className="admin-input" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                                    <option value="operasional">Operasional</option>
+                                    <option value="pemeliharaan">Pemeliharaan</option>
+                                    <option value="gaji_karyawan">Gaji Karyawan</option>
+                                    <option value="pemasaran">Pemasaran</option>
+                                    <option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="admin-label">Nominal (Rp)</label>
+                                <input type="number" required className="admin-input font-bold text-admin-primary" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} placeholder="0" />
+                            </div>
+                            <div>
+                                <label className="admin-label">Tanggal Transaksi</label>
+                                <input type="date" required className="admin-input" value={formData.transaction_date} onChange={e => setFormData({...formData, transaction_date: e.target.value})} />
+                            </div>
                         </div>
                         <div>
-                            <h3 className="text-xl font-black text-admin-text-main">{isEditing ? 'Perbarui Transaksi' : 'Input Transaksi'}</h3>
-                            <p className="text-xs text-admin-text-muted font-bold">{isEditing ? 'Lakukan perubahan pada data pengeluaran.' : 'Pastikan data pengeluaran sesuai dengan bukti kwitansi.'}</p>
+                            <label className="admin-label">Catatan Tambahan</label>
+                            <textarea className="admin-input min-h-[80px]" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} placeholder="Keterangan lebih lanjut..."></textarea>
                         </div>
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="form-group">
-                                <label className="form-label">Nama Pengeluaran / Keperluan</label>
-                                <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} type="text" className="admin-input" placeholder="misal: Pembelian Inventaris Resto" />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Kategori Biaya</label>
-                                <div className="relative">
-                                    <select value={formData.category} onChange={e => setFormData({ ...formData, category: e.target.value })} className="admin-input appearance-none">
-                                        <option>Operasional</option>
-                                        <option>Pemeliharaan</option>
-                                        <option>Gaji Karyawan</option>
-                                        <option>Pemasaran</option>
-                                        <option>Lainnya</option>
-                                    </select>
-                                    <Filter className="absolute right-4 top-1/2 -translate-y-1/2 text-admin-text-muted pointer-events-none" size={16} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="form-group">
-                                <label className="form-label">Jumlah Nominal (IDR)</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-muted font-black text-sm">Rp</span>
-                                    <input required value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} type="number" className="admin-input !pl-12" placeholder="0" />
-                                </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label">Tanggal Transaksi</label>
-                                <input required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} type="date" className="admin-input" />
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label className="form-label">Catatan / Detail Tambahan</label>
-                            <textarea value={formData.note} onChange={e => setFormData({ ...formData, note: e.target.value })} rows="3" className="admin-textarea" placeholder="Tuliskan detail tambahan jika diperlukan..."></textarea>
-                        </div>
-
-                        <div className="flex justify-end gap-3 pt-4 border-t border-admin-border">
-                            <button type="button" className="px-6 py-3 rounded-xl border border-admin-border text-admin-text-muted font-black text-xs uppercase tracking-widest hover:bg-admin-bg transition-all" onClick={resetForm}>Batal</button>
-                            <button type="submit" className="btn-primary py-3 px-8 shadow-xl shadow-admin-primary/20">
-                                <CircleDollarSign size={18} /> {isEditing ? 'Perbarui Catatan' : 'Simpan Pengeluaran'}
-                            </button>
+                        <div className="flex justify-end gap-3">
+                            <button type="button" onClick={resetForm} className="px-4 py-2 text-sm font-bold text-admin-text-muted hover:text-admin-text-main">Batal</button>
+                            <button type="submit" className="btn-primary px-6">{isEditing ? 'Simpan Perubahan' : 'Catat Pengeluaran'}</button>
                         </div>
                     </form>
                 </div>
             )}
 
-            <div className="admin-table-container">
-                <div className="table-header-actions">
-                    <div className="topbar-search !w-full md:!w-96">
-                        <Search className="search-icon" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Cari transaksi..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div className="admin-card bg-slate-900 text-white border-none">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/10 rounded-2xl">
+                            <ArrowDownCircle size={28} className="text-red-400" />
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Pengeluaran ({isAllTime ? 'Seluruh Waktu' : `${months.find(m => m.value == selectedMonth)?.name} ${selectedYear}`})</p>
+                            <h2 className="text-3xl font-black text-white">{formatRupiah(totalExpense)}</h2>
+                        </div>
                     </div>
                 </div>
+                <div className="admin-card overflow-hidden">
+                    <div className="relative">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={18} />
+                        <input type="text" className="w-full pl-12 pr-4 py-3 text-sm bg-admin-bg border-none rounded-xl focus:ring-1 focus:ring-admin-primary transition-all" placeholder="Cari nama pengeluaran atau catatan..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                    </div>
+                </div>
+            </div>
 
+            <div className="admin-table-container">
                 <table className="admin-table">
                     <thead>
                         <tr>
                             <th>Tanggal</th>
-                            <th>Detail Transaksi</th>
-                            <th>Kategori</th>
-                            <th>Nominal</th>
-                            <th></th>
+                            <th>Nama & Kategori</th>
+                            <th className="text-right">Nominal</th>
+                            <th className="w-20 text-center"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
-                            <tr>
-                                <td colSpan="5" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
-                                    Syncing financial logs...
-                                </td>
-                            </tr>
+                            <tr><td colSpan="4" className="py-20 text-center text-admin-text-muted font-bold animate-pulse uppercase tracking-widest text-[10px]">Syncing records...</td></tr>
                         ) : filteredExpenses.length === 0 ? (
-                            <tr>
-                                <td colSpan="5" className="py-24 text-center">
-                                    <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
-                                        <Receipt size={40} />
-                                    </div>
-                                    <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Data pengeluaran masih kosong</p>
-                                </td>
-                            </tr>
-                        ) : filteredExpenses.map(exp => (
-                            <tr key={exp.id}>
+                            <tr><td colSpan="4" className="py-20 text-center text-admin-text-muted italic">Tidak ada catatan pengeluaran pada periode ini.</td></tr>
+                        ) : filteredExpenses.map(e => (
+                            <tr key={e.id} className="hover:bg-admin-bg/50 transition-all">
                                 <td>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-admin-bg flex items-center justify-center text-admin-text-muted">
-                                            <Calendar size={18} />
-                                        </div>
-                                        <span className="text-xs font-black text-admin-text-muted">
-                                            {new Date(exp.date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                        </span>
-                                    </div>
+                                    <span className="text-[10px] font-black text-admin-text-muted">{new Date(e.transaction_date).toLocaleDateString('id-ID')}</span>
                                 </td>
                                 <td>
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{exp.name}</span>
-                                        <span className="text-[10px] font-bold text-admin-text-muted flex items-center gap-1">
-                                            <FileText size={10} /> {exp.note || 'Tidak ada catatan'}
-                                        </span>
-                                    </div>
+                                    <div className="font-bold text-admin-text-main">{e.name}</div>
+                                    <div className="text-[10px] uppercase text-admin-text-muted tracking-widest">{e.category.replace('_', ' ')}</div>
                                 </td>
+                                <td className="text-right font-black text-red-600">{formatRupiah(e.amount)}</td>
                                 <td>
-                                    <span className="badge-status bg-slate-100 text-slate-600 border-slate-200">
-                                        {exp.category}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div className="flex items-center gap-2 font-black text-danger">
-                                        <ArrowDownCircle size={14} />
-                                        {formatRupiah(exp.amount)}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="action-buttons">
-                                        <button className="btn-icon text-admin-primary hover:bg-admin-primary/10" onClick={() => handleEdit(exp)} title="Edit">
-                                            <Edit size={16} />
-                                        </button>
-                                        <button className="btn-icon !text-danger hover:!bg-danger/10" onClick={() => handleDelete(exp.id)} title="Hapus">
-                                            <Trash2 size={18} />
-                                        </button>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <button onClick={() => { setFormData({ name: e.name, amount: e.amount, category: e.category, transaction_date: e.transaction_date, notes: e.notes || '' }); setIsEditing(true); setEditId(e.id); setShowForm(true); window.scrollTo({top:0, behavior:'smooth'}); }} className="p-2 text-admin-text-light hover:text-admin-primary hover:bg-admin-primary/10 rounded-lg transition-all"><Edit size={16} /></button>
+                                        <button onClick={() => { if(confirm('Hapus item ini?')){ axios.delete(`/api/expenses/${e.id}`).then(() => fetchExpenses()); } }} className="p-2 text-admin-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>

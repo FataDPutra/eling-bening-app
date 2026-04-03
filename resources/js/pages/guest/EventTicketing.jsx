@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../utils/AuthContext';
@@ -11,6 +11,7 @@ import '../../styles/guest.css';
 
 export default function EventTicketing() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const [events, setEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,9 +54,17 @@ export default function EventTicketing() {
     }, []);
 
     const updateQty = (id, delta) => {
+        if (!user && delta > 0) { navigate('/login', { state: { from: location } }); return; }
+        const event = events.find(e => e.id === id);
         const currentTotal = Object.values(qtys).reduce((acc, q) => acc + q, 0);
-        const newQty = Math.max(0, (qtys[id] || 0) + delta);
+        const currentQty = qtys[id] || 0;
+        const newQty = Math.max(0, currentQty + delta);
         
+        if (delta > 0 && event.is_ticketed && newQty > (event.available_quota || 0)) {
+            toast.error(`Maaf, sisa tiket yang tersedia hanya ${event.available_quota}.`);
+            return;
+        }
+
         if (delta > 0 && currentTotal >= 10) {
             toast.error('Maksimal pemesanan adalah 10 tiket per transaksi.');
             return;
@@ -150,7 +159,7 @@ export default function EventTicketing() {
     const simulatePayment = async (method) => {
         if (!hasItems) return;
         if (!user) {
-            navigate('/login');
+            navigate('/login', { state: { from: location } });
             return;
         }
 
@@ -275,21 +284,47 @@ export default function EventTicketing() {
                                                 <p className="text-3xl font-black text-eling-green font-serif tracking-tight leading-none">
                                                     {formatRupiah(event.price)}
                                                 </p>
+                                                <div className="flex flex-col gap-1 mt-1">
+                                                    {event.is_ticketed && event.available_quota > 0 && event.available_quota <= 50 && (
+                                                        <div className="flex items-center gap-1 text-orange-600 animate-pulse">
+                                                            <i className="fas fa-fire-alt text-[9px]"></i>
+                                                            <span className="text-[9px] font-black uppercase tracking-widest">Hanya Tersisa {event.available_quota}! Buruan!</span>
+                                                        </div>
+                                                    )}
+                                                    {event.is_ticketed && event.available_quota > 50 && (
+                                                        <div className="flex items-center gap-1 text-gray-400">
+                                                            <div className="w-1 h-1 rounded-full bg-eling-green"></div>
+                                                            <span className="text-[9px] font-black uppercase tracking-widest">Tersedia {event.available_quota} Tiket</span>
+                                                        </div>
+                                                    )}
+                                                    {event.is_ticketed && event.available_quota <= 0 && (
+                                                        <div className="flex items-center gap-1 text-gray-400 opacity-50">
+                                                            <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+                                                            <span className="text-[9px] font-black uppercase tracking-widest">Tiket Habis Terjual</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="flex items-center justify-between sm:justify-end gap-5 bg-white p-2.5 rounded-2xl shadow-sm border border-gray-100 min-w-[140px]">
-                                                <button 
-                                                    onClick={() => updateQty(event.id, -1)} 
-                                                    className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-red hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
-                                                >
-                                                    <b className="text-xl leading-none">−</b>
-                                                </button>
-                                                <span className="font-black text-xl w-6 text-center text-gray-900">{qtys[event.id] || 0}</span>
-                                                <button 
-                                                    onClick={() => updateQty(event.id, 1)} 
-                                                    className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
-                                                >
-                                                    <b className="text-xl leading-none">+</b>
-                                                </button>
+                                                {event.is_ticketed && event.available_quota <= 0 ? (
+                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">Tiket Habis</span>
+                                                ) : (
+                                                    <>
+                                                        <button 
+                                                            onClick={() => updateQty(event.id, -1)} 
+                                                            className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-red hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
+                                                        >
+                                                            <b className="text-xl leading-none">−</b>
+                                                        </button>
+                                                        <span className="font-black text-xl w-6 text-center text-gray-900">{qtys[event.id] || 0}</span>
+                                                        <button 
+                                                            onClick={() => updateQty(event.id, 1)} 
+                                                            className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-eling-green hover:text-white transition-all text-gray-400 active:scale-95 shadow-sm border border-gray-100"
+                                                        >
+                                                            <b className="text-xl leading-none">+</b>
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -418,7 +453,10 @@ export default function EventTicketing() {
                                 )}
 
                                 <button
-                                    onClick={() => setShowPayment(true)}
+                                onClick={() => {
+                                    if (!user) { navigate('/login', { state: { from: location } }); return; }
+                                    setShowPayment(true);
+                                }}
                                     disabled={!hasItems || isProcessing || isLoading}
                                     className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mt-8"
                                 >

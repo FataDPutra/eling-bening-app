@@ -25,3 +25,31 @@
         animation: spin 3s linear infinite;
     }
 }
+
+/* Hide number input spinners (arrows) to avoid clashing with suffix text */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* Input Utility Groups */
+.input-with-prefix, .input-with-suffix {
+    @apply flex items-stretch bg-admin-bg border border-admin-border rounded-xl overflow-hidden focus-within:border-admin-primary transition-all;
+}
+
+.input-prefix, .input-suffix {
+    @apply bg-slate-100 px-4 flex items-center text-[10px] font-black text-admin-text-muted uppercase border-admin-border;
+}
+
+.input-prefix { @apply border-r; }
+.input-suffix { @apply border-l; }
+
+.input-with-prefix input, .input-with-suffix input {
+    @apply bg-transparent border-none focus:ring-0 py-3 px-4 text-sm font-black text-admin-text-main w-full;
+}

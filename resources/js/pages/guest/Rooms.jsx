@@ -5,7 +5,8 @@ import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../utils/AuthContext';
 import IconRenderer from '../../components/IconRenderer';
-import { Calendar, Search, MapPin, Check, ChevronRight, X, Lock, Info, UserCircle, Loader2 } from 'lucide-react';
+import { Calendar, Search, ChevronRight, X, AlertTriangle, Info, Loader2, Clock } from 'lucide-react';
+import CountdownTimer from '../../components/CountdownTimer';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
@@ -24,8 +25,16 @@ export default function Rooms() {
     const [isChecking, setIsChecking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [bookingData, setBookingData] = useState(null);
+    const [feeSettings, setFeeSettings] = useState({ reschedule_admin_fee: 0, reschedule_penalty: 0 });
+    const [costPreview, setCostPreview] = useState(null); // { isWeekendChange, priceDiff, adminFee, penalty, finalCharge }
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    const isWeekend = (dateStr) => {
+        if (!dateStr) return false;
+        const day = new Date(dateStr).getDay();
+        return day === 0 || day === 6;
+    };
 
     // Default images used only when no gallery images are present
     const defaultImages = [
@@ -57,6 +66,36 @@ export default function Rooms() {
     useEffect(() => {
         fetchRooms(checkIn, checkOut);
     }, []);
+
+    // Fetch public fee settings when reschedule modal opens
+    useEffect(() => {
+        if (showReschedule) {
+            axios.get('/api/settings/public').then(res => {
+                setFeeSettings({
+                    reschedule_admin_fee: Number(res.data.reschedule_admin_fee ?? 0),
+                    reschedule_penalty: Number(res.data.reschedule_penalty ?? 0),
+                    min_reschedule_lead_days: Number(res.data.min_reschedule_lead_days ?? 2),
+                });
+            }).catch(() => {});
+        }
+    }, [showReschedule]);
+
+    // Recalculate cost preview whenever newDate changes
+    useEffect(() => {
+        if (!newDate || !bookingData) { setCostPreview(null); return; }
+        const adminFee = feeSettings.reschedule_admin_fee;
+        const penalty  = feeSettings.reschedule_penalty;
+        const weekendChange = !isWeekend(oldDate) && isWeekend(newDate);
+        // We don't have price detail here — just show fees; backend calculates priceDiff
+        setCostPreview({
+            isWeekendChange: weekendChange,
+            adminFee,
+            penalty,
+            note: weekendChange
+                ? 'Tanggal baru jatuh pada akhir pekan (weekend). Kemungkinan ada selisih harga yang perlu dibayar.'
+                : 'Tanggal baru adalah weekday. Tidak ada selisih harga.'
+        });
+    }, [newDate, bookingData, feeSettings]);
 
     const handleRoomSelect = (roomId) => {
         navigate(`/rooms/${roomId}`);
@@ -97,18 +136,34 @@ export default function Rooms() {
             return;
         }
 
+        if (bookingData?.reschedule_count > 0) {
+            toast.error('Reschedule hanya dapat dilakukan maksimal satu kali per transaksi.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await axios.post(`/api/transactions/${bookingCode}/reschedule`, {
+            const { data } = await axios.post(`/api/transactions/${bookingCode}/reschedule`, {
                 new_check_in_date: newDate,
                 reason: 'Reschedule from guest dashboard'
             });
-            toast.success('Permintaan reschedule berhasil dikirim!');
+
+            const cb = data.cost_breakdown;
+            if (cb && cb.final_charge > 0) {
+                toast.success(
+                    `Reschedule diajukan! Tagihan tambahan: ${formatRupiah(cb.final_charge)}`,
+                    { duration: 6000, icon: '💰' }
+                );
+            } else {
+                toast.success('Permintaan reschedule berhasil dikirim! Tidak ada biaya tambahan.');
+            }
+
             setShowReschedule(false);
-            // Reset fields
             setBookingCode('');
             setOldDate('');
             setNewDate('');
+            setBookingData(null);
+            setCostPreview(null);
         } catch (error) {
             toast.error(error.response?.data?.message || 'Gagal mengajukan reschedule');
         } finally {
@@ -177,10 +232,7 @@ export default function Rooms() {
                     const stockToShow = r.available_stock !== undefined ? r.available_stock : r.stock;
                     const badgeText = isMaintenance ? 'Perbaikan' : isFull ? 'Sold Out' : `${stockToShow} Unit Tersisa`;
 
-                    // Dynamic Pricing Logic
-                    const today = new Date().getDay();
-                    const isWeekend = today === 0 || today === 6; // 0=Sun, 6=Sat (Adjusted as per common practice)
-                    const currentPrice = isWeekend && r.price_weekend ? r.price_weekend : r.price;
+                    const currentPrice = r.price;
 
                     return (
                         <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group flex flex-col h-full hover:-translate-y-3 hover:shadow-2xl hover:border-eling-green/20 transition-all duration-500 ${unavailable ? 'opacity-75' : ''}`}>
@@ -230,17 +282,62 @@ export default function Rooms() {
                                 </ul>
                                 <div className="flex flex-col gap-4 pt-6 border-t border-gray-100 mt-auto">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none px-1">Harga Per Malam</p>
+                                        <div className="flex items-center justify-between px-1">
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Harga Per Malam</p>
+                                            {isWeekend(checkIn) && (
+                                                <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-widest">Tarif Akhir Pekan</span>
+                                            )}
+                                        </div>
                                         <div className={`flex items-baseline gap-1 ${unavailable ? 'text-gray-400' : 'text-eling-green'}`}>
                                             <span className="text-lg font-black font-serif">Rp</span>
                                             <span className="text-3xl font-black font-serif tracking-tighter">
                                                 {Number(currentPrice).toLocaleString('id-ID')}
                                             </span>
-                                            <span className="text-xs text-gray-400 font-bold lowercase ml-1">/malam</span>
                                         </div>
                                     </div>
+                                    
+                                    <div className="flex flex-col gap-1.5 px-1 py-1">
+                                        {r.available_stock > 0 && r.available_stock <= 3 && (
+                                            <div className="flex items-center gap-1.5 text-orange-600 animate-pulse">
+                                                <AlertTriangle size={12} className="shrink-0" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                                    Hanya Tersisa {r.available_stock} Unit! Pesan Sekarang!
+                                                </span>
+                                            </div>
+                                        )}
+                                        {r.available_stock > 3 && (
+                                            <div className="flex items-center gap-1.5 text-gray-400">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-eling-green shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                                    Tersedia {r.available_stock} Unit
+                                                </span>
+                                            </div>
+                                        )}
+                                        {r.available_stock <= 0 && !r.is_on_hold && (
+                                            <div className="flex items-center gap-1.5 text-gray-400 opacity-50">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Unit Habis Dipesan</span>
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {unavailable ? (
-                                        <button disabled className="bg-gray-100 text-gray-400 font-bold py-4 px-8 rounded-2xl cursor-not-allowed w-full border border-gray-200 uppercase tracking-widest text-[11px]">Habis Dipesan</button>
+                                        r.is_on_hold ? (
+                                            <div className="space-y-3 w-full">
+                                                <button disabled className="bg-amber-50 text-amber-600 font-black py-4 px-8 rounded-2xl cursor-wait w-full border border-amber-200 uppercase tracking-widest text-[10px] flex items-center justify-center gap-2">
+                                                    <Clock size={14} className="animate-pulse" /> {r.hold_expiry ? 'Ditahan Sementara' : 'Menunggu Review'}
+                                                </button>
+                                                <p className="text-[9px] text-amber-600/70 font-bold text-center leading-relaxed italic px-2">
+                                                    {r.hold_expiry ? (
+                                                        <>Unit sedang ditahan karena reschedule.<br/>Mohon tunggu <CountdownTimer expiryDate={r.hold_expiry} onExpire={() => fetchRooms(checkIn, checkOut)} /> ya!</>
+                                                    ) : (
+                                                        "Unit sedang ditahan karena reschedule.<br/>Mohon tunggu review admin ya!"
+                                                    )}
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <button disabled className="bg-gray-100 text-gray-400 font-bold py-4 px-8 rounded-2xl cursor-not-allowed w-full border border-gray-200 uppercase tracking-widest text-[11px]">Stok Habis</button>
+                                        )
                                     ) : (
                                         <button 
                                             onClick={() => handleRoomSelect(r.id)} 
@@ -340,10 +437,23 @@ export default function Rooms() {
                                                 className="w-full bg-white border border-eling-green rounded-xl px-4 py-3 focus:outline-none ring-2 ring-eling-green/20" 
                                                 value={newDate}
                                                 onChange={(e) => setNewDate(e.target.value)}
-                                                min={new Date().toISOString().split('T')[0]}
+                                                min={
+                                                    new Date(new Date().getTime() + (feeSettings.min_reschedule_lead_days || 2) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                                                }
                                             />
                                         </div>
                                     </div>
+
+                                    {bookingData && bookingData.reschedule_count > 0 && (
+                                        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
+                                            <AlertTriangle size={18} className="text-red-500 mt-0.5 flex-shrink-0" />
+                                            <div>
+                                                <p className="text-xs font-black text-red-700">Peringatan: Kuota Habis</p>
+                                                <p className="text-[10px] text-red-600 mt-1">Anda sudah pernah melakukan reschedule untuk kode booking ini. Perubahan jadwal hanya diizinkan satu kali.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {bookingData && (
                                         <div className="p-3 bg-eling-green/5 border border-eling-green/10 rounded-xl">
                                             <p className="text-[11px] text-eling-green font-bold">
@@ -351,6 +461,44 @@ export default function Rooms() {
                                             </p>
                                         </div>
                                     )}
+
+                                    {/* Cost Preview Alert */}
+                                    {costPreview && (
+                                        <div className={`rounded-2xl p-5 border ${costPreview.isWeekendChange ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-100'}`}>
+                                            <div className="flex items-start gap-3">
+                                                <AlertTriangle size={18} className={`mt-0.5 flex-shrink-0 ${costPreview.isWeekendChange ? 'text-orange-500' : 'text-blue-400'}`} />
+                                                <div className="flex-1">
+                                                    <p className={`text-sm font-black mb-3 ${costPreview.isWeekendChange ? 'text-orange-700' : 'text-blue-700'}`}>
+                                                        {costPreview.isWeekendChange ? '⚠️ Perubahan ke Akhir Pekan (Weekend)' : 'ℹ️ Estimasi Biaya Reschedule'}
+                                                    </p>
+                                                    <p className={`text-[11px] mb-3 leading-relaxed ${costPreview.isWeekendChange ? 'text-orange-600' : 'text-blue-600'}`}>
+                                                        {costPreview.note}
+                                                    </p>
+                                                    <div className="space-y-1.5">
+                                                        {costPreview.isWeekendChange && (
+                                                            <div className="flex justify-between text-xs">
+                                                                <span className="text-gray-500">Selisih harga (dihitung backend)</span>
+                                                                <span className="font-black text-orange-600">Ditentukan saat proses</span>
+                                                            </div>
+                                                        )}
+                                                        <div className="flex justify-between text-xs">
+                                                            <span className="text-gray-500">Biaya Admin</span>
+                                                            <span className="font-black text-gray-800">{formatRupiah(costPreview.adminFee)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs">
+                                                            <span className="text-gray-500">Penalty Reschedule</span>
+                                                            <span className="font-black text-gray-800">{formatRupiah(costPreview.penalty)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between text-xs pt-2 border-t border-gray-200 mt-2">
+                                                            <span className="font-black text-gray-700">Min. Total Biaya Tambahan</span>
+                                                            <span className="font-black text-eling-green">{formatRupiah(costPreview.adminFee + costPreview.penalty)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <p className="text-[10px] text-gray-400">*) Ketersediaan unit akan dicek secara real-time oleh tim kami.</p>
                                     <button
                                         onClick={handleRescheduleSubmit}
@@ -364,6 +512,8 @@ export default function Rooms() {
                                                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                                 Memproses...
                                             </>
+                                        ) : costPreview && (costPreview.adminFee + costPreview.penalty) > 0 ? (
+                                            `Ajukan & Bayar Min. ${formatRupiah(costPreview.adminFee + costPreview.penalty)}`
                                         ) : (
                                             'Ajukan Perubahan Jadwal'
                                         )}

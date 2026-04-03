@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Save, Loader2, ConciergeBell, Package, ShoppingBasket } from 'lucide-react';
 import ImageUpload from '../../../components/admin/ImageUpload';
+import IconRenderer from '../../../components/IconRenderer';
 import toast from 'react-hot-toast';
 
 export default function AddRoom() {
@@ -130,7 +131,7 @@ export default function AddRoom() {
                                                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${selected ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-admin-border'}`}>
                                                             {selected && <Check size={11} strokeWidth={4} />}
                                                         </div>
-                                                        <span className="text-lg leading-none">{f.icon}</span>
+                                                        <IconRenderer icon={f.icon} size={18} />
                                                         <span className="text-xs font-bold truncate">{f.name}</span>
                                                     </div>
                                                 );
@@ -154,7 +155,7 @@ export default function AddRoom() {
                                                         <div className={`w-5 h-5 rounded-md border flex items-center justify-center flex-shrink-0 transition-all ${selected ? 'bg-orange-400 border-orange-400 text-white' : 'bg-white border-admin-border'}`}>
                                                             {selected && <Check size={11} strokeWidth={4} />}
                                                         </div>
-                                                        <span className="text-lg leading-none">{f.icon}</span>
+                                                        <IconRenderer icon={f.icon} size={18} />
                                                         <span className="text-xs font-bold truncate">{f.name}</span>
                                                     </div>
                                                 );

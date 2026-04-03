@@ -3,8 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
+use App\Models\Resort;
+use App\Models\TransactionItem;
+use App\Models\Reschedule;
+use App\Models\SystemSetting;
+use App\Models\TransactionTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -15,11 +22,20 @@ class TransactionController extends Controller
         $month = $request->query('month');
         $year = $request->query('year');
 
-        $query = Transaction::with(['user', 'items.item', 'promo', 'tickets.transactionItem.item'])
+        // Lighter eager loading for list view — addons.items.item only needed in show()
+        $query = Transaction::with(['items.item', 'promo', 'addons', 'reschedules'])
             ->orderBy('created_at', 'desc');
 
         if ($user && $user->role !== 'admin' || $isMine) {
             $query->where('user_id', $user->id);
+            
+            // If not specifically asking for addons, hide pending addons from primary list
+            if (!$request->query('include_addons')) {
+                $query->where(function($q) {
+                    $q->whereNull('parent_id')
+                      ->orWhereIn('status', ['success', 'paid']);
+                });
+            }
         } elseif (!$user || ($user->role !== 'admin' && !$isMine)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
@@ -27,7 +43,7 @@ class TransactionController extends Controller
         if ($month && $month !== 'all') {
             $query->whereMonth('check_in_date', $month);
         }
-        if ($year && $month !== 'all') {
+        if ($year && $year !== 'all') {
             $query->whereYear('check_in_date', $year);
         }
 
@@ -50,7 +66,7 @@ class TransactionController extends Controller
 
         return response()->json([
             'id' => $transaction->id,
-            'check_in_date' => $transaction->check_in_date->format('Y-m-d'),
+            'check_in_date' => $transaction->check_in_date ? Carbon::parse($transaction->check_in_date)->format('Y-m-d') : null,
             'booker_name' => $transaction->booker_name,
             'status' => $transaction->status,
         ]);
@@ -90,12 +106,11 @@ class TransactionController extends Controller
         }
 
         return DB::transaction(function() use ($request, $validated) {
-            // Resort Availability Check (Omitted for brevity if unchanged, but I must keep it)
             if ($validated['booking_type'] === 'RESORT') {
                 foreach ($validated['items'] as $item) {
                     if ($item['item_type'] === 'App\\Models\\Resort') {
-                        $resort = \App\Models\Resort::findOrFail($item['item_id']);
-                        $bookedCount = \App\Models\TransactionItem::where('item_id', $item['item_id'])
+                        $resort = Resort::findOrFail($item['item_id']);
+                        $bookedCount = TransactionItem::where('item_id', $item['item_id'])
                             ->where('item_type', 'App\\Models\\Resort')
                             ->whereHas('transaction', function($q) use ($validated) {
                                 $q->whereIn('status', ['pending', 'paid', 'success'])
@@ -105,9 +120,26 @@ class TransactionController extends Controller
                                   });
                             })->sum('quantity');
 
-                        if (($bookedCount + $item['quantity']) > $resort->stock) {
+                        $rescheduleHoldCount = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                            ->where(function ($q) {
+                                $q->whereNull('expires_at')
+                                  ->orWhere('expires_at', '>', now());
+                            })
+                            ->where(function ($q) use ($validated) {
+                                $q->where('new_date', '<', $validated['check_out_date'])
+                                  ->where('new_check_out_date', '>', $validated['check_in_date']);
+                            })
+                            ->whereHas('transaction.items', function($q) use ($item) {
+                                $q->where('item_id', $item['item_id'])->where('item_type', 'App\\Models\\Resort');
+                            })
+                            ->get()
+                            ->sum(function($r) use ($item) {
+                                return $r->transaction->items->where('item_id', $item['item_id'])->where('item_type', 'App\\Models\\Resort')->sum('quantity');
+                            });
+
+                        if (($bookedCount + $rescheduleHoldCount + $item['quantity']) > $resort->stock) {
                             return response()->json([
-                                'message' => "Slot untuk {$resort->name} sudah penuh pada tanggal tersebut."
+                                'message' => "Slot untuk {$resort->name} sudah penuh atau sedang ditahan untuk perubahan jadwal tamu lain."
                             ], 422);
                         }
                     }
@@ -131,7 +163,7 @@ class TransactionController extends Controller
                 'booker_phone' => $validated['booker_phone'] ?? null,
                 'arrival_time' => $validated['arrival_time'] ?? null,
                 'additional_facilities' => $validated['additional_facilities'] ?? null,
-                'status' => 'success' // Default to success for testing as requested
+                'status' => 'success'
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -145,10 +177,8 @@ class TransactionController extends Controller
                 ]);
             }
 
-            // Generate tickets immediately since status is 'success'
             $this->generateTickets($transaction, $validated['items']);
 
-            // Increment used_count if promo is applied
             if ($transaction->promo_id) {
                 $transaction->promo()->increment('used_count');
             }
@@ -159,7 +189,7 @@ class TransactionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $transaction = Transaction::with(['user', 'items.item', 'promo', 'reschedules'])->findOrFail($id);
+        $transaction = Transaction::with(['user', 'items.item', 'promo', 'reschedules', 'addons.items.item'])->findOrFail($id);
         
         $user = $request->user();
         if ($user->role !== 'admin' && $user->id !== $transaction->user_id) {
@@ -180,12 +210,10 @@ class TransactionController extends Controller
         $oldStatus = $transaction->status;
         $transaction->update($validated);
 
-        // If status changes to PAID/SUCCESS and it's a TICKET or EVENT type, generate tickets if not already generated
         if (in_array($validated['status'], ['paid', 'success']) && 
             !in_array($oldStatus, ['paid', 'success']) &&
             ($transaction->booking_type === 'TICKET' || $transaction->booking_type === 'EVENT')) {
             
-            // Map items for generateTickets
             $itemsData = collect($transaction->items)->map(function($item) {
                 return [
                     'item_id' => $item->item_id,
@@ -197,7 +225,6 @@ class TransactionController extends Controller
             $this->generateTickets($transaction, $itemsData);
         }
 
-        // If transaction has promo and status changes from active to inactive, decrement used_count
         if ($transaction->promo_id && 
             in_array($oldStatus, ['pending', 'paid', 'success']) && 
             in_array($validated['status'], ['failed', 'cancelled'])) {
@@ -207,18 +234,29 @@ class TransactionController extends Controller
         return response()->json($transaction->load('tickets'));
     }
 
+    public function success($id)
+    {
+        $transaction = Transaction::findOrFail($id);
+        if ($transaction->user_id !== auth()->id() && auth()->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $transaction->update(['status' => 'paid']);
+        return response()->json([
+            'message' => 'Status transaksi diperbarui menjadi PAID',
+            'transaction' => $transaction
+        ]);
+    }
+
     private function generateTickets($transaction, $itemsData)
     {
-        // Don't generate if tickets already exist for this transaction
         if ($transaction->tickets()->count() > 0) return;
         if (!in_array($transaction->booking_type, ['TICKET', 'EVENT'])) return;
 
         foreach ($transaction->items as $idx => $transItem) {
-            // Find matched names from request itemsData if available, otherwise use booker name
             $requestItem = collect($itemsData)->where('item_id', $transItem->item_id)->first();
             
             for ($i = 0; $i < $transItem->quantity; $i++) {
-                // Check in request itemData first, then in stored guest_names from DB
                 $guestName = null;
                 if (isset($requestItem['guest_names']) && !empty($requestItem['guest_names'][$i])) {
                     $guestName = $requestItem['guest_names'][$i];
@@ -232,7 +270,6 @@ class TransactionController extends Controller
                 if ($transaction->booking_type === 'EVENT') {
                     $prefix = 'EB-EVT-';
                 } else if ($transItem->item && isset($transItem->item->name)) {
-                    // Extract initials from ticket name (e.g. Tiket Kolam Renang -> TKR)
                     $words = explode(' ', $transItem->item->name);
                     $initials = '';
                     foreach ($words as $w) {
@@ -243,7 +280,7 @@ class TransactionController extends Controller
 
                 $transaction->tickets()->create([
                     'transaction_item_id' => $transItem->id,
-                    'ticket_id' => $prefix . strtoupper(\Illuminate\Support\Str::random(12)),
+                    'ticket_id' => $prefix . strtoupper(Str::random(12)),
                     'guest_name' => $guestName,
                     'is_used' => false
                 ]);
@@ -253,8 +290,8 @@ class TransactionController extends Controller
 
     public function reschedule(Request $request, $id)
     {
-        $transaction = Transaction::findOrFail($id);
-        
+        $transaction = Transaction::with('items.item')->findOrFail($id);
+
         if ($transaction->user_id !== $request->user()->id && $request->user()->role !== 'admin') {
             return response()->json(['message' => 'Anda tidak memiliki akses ke pesanan ini.'], 403);
         }
@@ -263,33 +300,127 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Hanya pemesanan resort yang dapat di-reschedule'], 400);
         }
 
-        // Check reschedule policy
-        $maxDays = (int) (\App\Models\SystemSetting::where('key', 'max_reschedule_days')->first()?->value ?? 7);
-        $checkInDate = \Carbon\Carbon::parse($transaction->check_in_date)->startOfDay();
-        $now = \Carbon\Carbon::now()->startOfDay();
+        if ($transaction->reschedule_count > 0 && $request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Reschedule hanya dapat dilakukan maksimal satu kali per transaksi.'], 400);
+        }
+
+        $maxDays = (int) (SystemSetting::where('key', 'max_reschedule_days')->first()?->value ?? 7);
+        $minLead = (int) (SystemSetting::where('key', 'min_reschedule_lead_days')->first()?->value ?? 2);
+        
+        $checkInDate = Carbon::parse($transaction->check_in_date)->startOfDay();
+        $now = Carbon::now()->startOfDay();
 
         if ($now->diffInDays($checkInDate, false) < $maxDays) {
             return response()->json(['message' => "Batas waktu reschedule sudah terlewati. Harus dilakukan minimal {$maxDays} hari sebelum tanggal check-in."], 400);
         }
 
         $validated = $request->validate([
-            'new_check_in_date' => 'required|date|after:today',
+            'new_check_in_date'  => 'required|date|after:today',
             'new_check_out_date' => 'nullable|date|after:new_check_in_date',
-            'reason' => 'nullable|string',
+            'reason'             => 'nullable|string',
         ]);
 
-        $oldDate = $transaction->check_in_date;
+        $newDate = Carbon::parse($validated['new_check_in_date'])->startOfDay();
+        if ($now->diffInDays($newDate, false) < $minLead) {
+            return response()->json(['message' => "Tanggal baru terlalu dekat. Minimal harus dilakukan {$minLead} hari dari hari ini."], 400);
+        }
+
+        $newCheckOut = $validated['new_check_out_date'] ?? Carbon::parse($newDate)->addDay()->format('Y-m-d');
         
-        return DB::transaction(function() use ($transaction, $validated, $oldDate) {
-            $transaction->reschedules()->create([
-                'old_date' => $oldDate,
-                'new_date' => $validated['new_check_in_date'],
-                'reason' => $validated['reason'] ?? null,
-                'status' => 'pending',
+        foreach ($transaction->items as $item) {
+            if ($item->item_type === 'App\Models\Resort') {
+                $resort = Resort::findOrFail($item->item_id);
+                
+                $bookedCount = TransactionItem::where('item_id', $item->item_id)
+                    ->where('item_type', 'App\Models\Resort')
+                    ->whereHas('transaction', function($q) use ($newDate, $newCheckOut) {
+                        $q->whereIn('status', ['pending', 'paid', 'success'])
+                          ->where(function($dateFilter) use ($newDate, $newCheckOut) {
+                              $dateFilter->where('check_in_date', '<', $newCheckOut)
+                                         ->where('check_out_date', '>', $newDate);
+                          });
+                    })->sum('quantity');
+
+                $rescheduleHoldCount = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                    })
+                    ->where(function ($q) use ($newDate, $newCheckOut) {
+                        $q->where('new_date', '<', $newCheckOut)
+                          ->where('new_check_out_date', '>', $newDate);
+                    })
+                    ->whereHas('transaction.items', function($q) use ($item) {
+                        $q->where('item_id', $item->item_id)->where('item_type', 'App\Models\Resort');
+                    })
+                    ->get()
+                    ->sum(function($r) use ($item) {
+                        return $r->transaction->items->where('item_id', $item->item_id)->where('item_type', 'App\Models\Resort')->sum('quantity');
+                    });
+
+                if (($bookedCount + $rescheduleHoldCount + $item->quantity) > $resort->stock) {
+                    return response()->json([
+                        'message' => "Maaf, unit {$resort->name} tidak tersedia pada tanggal baru yang Anda pilih."
+                    ], 422);
+                }
+            }
+        }
+
+        $adminFee   = (float) (SystemSetting::where('key', 'reschedule_admin_fee')->first()?->value ?? 0);
+        $penaltyFee = (float) (SystemSetting::where('key', 'reschedule_penalty')->first()?->value ?? 0);
+
+        $isWeekend = fn($dateStr) => in_array(Carbon::parse($dateStr)->dayOfWeek, [0, 6]);
+
+        $oldCheckIn  = $transaction->check_in_date;
+        $oldCheckOut = $transaction->check_out_date;
+        $oldNights   = max(1, Carbon::parse($oldCheckIn)->startOfDay()->diffInDays(Carbon::parse($oldCheckOut)->startOfDay()));
+
+        $newCheckIn  = $validated['new_check_in_date'];
+        $newCheckOut = $validated['new_check_out_date'] ?? Carbon::parse($newCheckIn)->addDays($oldNights)->format('Y-m-d');
+        
+        $newNights = max(1, Carbon::parse($newCheckIn)->startOfDay()->diffInDays(Carbon::parse($newCheckOut)->startOfDay()));
+
+        $resortItem = $transaction->items->first();
+        $priceWeekday = (float) ($resortItem?->item?->price ?? $resortItem?->price ?? 0);
+        $priceWeekend = (float) ($resortItem?->item?->price_weekend ?? $priceWeekday);
+        $qty = (int) ($resortItem?->quantity ?? 1);
+
+        $oldPricePerNight = $isWeekend($oldCheckIn) ? $priceWeekend : $priceWeekday;
+        $newPricePerNight = $isWeekend($newCheckIn) ? $priceWeekend : $priceWeekday;
+
+        $oldTotal = $oldPricePerNight * $oldNights * $qty;
+        $newTotal = $newPricePerNight * $newNights * $qty;
+
+        $priceDiff  = max(0, $newTotal - $oldTotal);
+        $finalCharge = $priceDiff + $adminFee + $penaltyFee;
+
+        return DB::transaction(function () use ($transaction, $validated, $oldCheckIn, $newCheckOut, $priceDiff, $adminFee, $penaltyFee, $finalCharge, $oldTotal, $newTotal) {
+            $reschedule = $transaction->reschedules()->create([
+                'old_date'           => $oldCheckIn,
+                'new_date'           => $validated['new_check_in_date'],
+                'new_check_out_date' => $newCheckOut,
+                'reason'             => $validated['reason'] ?? null,
+                'status'             => 'pending',
+                'price_diff'         => $priceDiff,
+                'admin_fee'          => $adminFee,
+                'penalty_fee'        => $penaltyFee,
+                'final_charge'       => $finalCharge,
             ]);
 
             $transaction->increment('reschedule_count');
-            return response()->json(['message' => 'Permintaan reschedule telah diajukan.'], 200);
+
+            return response()->json([
+                'message'      => 'Permintaan reschedule telah diajukan.',
+                'cost_breakdown' => [
+                    'old_total'    => $oldTotal,
+                    'new_total'    => $newTotal,
+                    'price_diff'   => $priceDiff,
+                    'admin_fee'    => $adminFee,
+                    'penalty_fee'  => $penaltyFee,
+                    'final_charge' => $finalCharge,
+                ],
+                'reschedule' => $reschedule,
+            ], 200);
         });
     }
 
@@ -300,9 +431,8 @@ class TransactionController extends Controller
             return response()->json(['message' => 'Hanya admin yang dapat melakukan check-in'], 403);
         }
 
-        $ticket = \App\Models\TransactionTicket::where('ticket_id', $ticketUid)->firstOrFail();
+        $ticket = TransactionTicket::where('ticket_id', $ticketUid)->firstOrFail();
         
-        // Check if the transaction is paid/success
         if (!in_array($ticket->transaction->status, ['paid', 'success'])) {
             return response()->json(['message' => 'Transaksi belum lunas'], 422);
         }
@@ -313,7 +443,6 @@ class TransactionController extends Controller
             'used_at' => $newStatus ? now() : null
         ]);
 
-        // Load relationships to get item name and booker info
         $ticket->load(['transaction', 'transactionItem.item']);
 
         return response()->json([
@@ -323,7 +452,7 @@ class TransactionController extends Controller
             'ticket_id' => $ticket->ticket_id,
             'item_name' => $ticket->transactionItem?->item?->name ?? 'Tiket Wisata',
             'booker_name' => $ticket->transaction?->booker_name,
-            'check_in_date' => $ticket->transaction?->check_in_date?->format('d M Y'),
+            'check_in_date' => $ticket->transaction?->check_in_date ? Carbon::parse($ticket->transaction->check_in_date)->format('d M Y') : null,
             'status' => 'Valid'
         ]);
     }
@@ -331,10 +460,20 @@ class TransactionController extends Controller
     public function checkIn($id)
     {
         $transaction = Transaction::findOrFail($id);
+
         if ($transaction->booking_type !== 'RESORT') {
             return response()->json(['message' => 'Hanya reservasi resort yang dapat melakukan check-in'], 400);
         }
-        
+
+        // Guard: only allow check-in if payment is confirmed
+        if (!in_array($transaction->status, ['paid', 'success'])) {
+            return response()->json(['message' => 'Tamu harus melunasi pembayaran sebelum dapat melakukan check-in.'], 400);
+        }
+
+        if ($transaction->stay_status === 'checked_in') {
+            return response()->json(['message' => 'Tamu sudah dalam kondisi check-in.'], 400);
+        }
+
         $transaction->update([
             'stay_status' => 'checked_in',
             'checked_in_at' => now()
@@ -356,5 +495,94 @@ class TransactionController extends Controller
         ]);
 
         return response()->json(['message' => 'Check-out berhasil diproses', 'data' => $transaction]);
+    }
+
+    public function getAddonFacilities()
+    {
+        return response()->json(\App\Models\Facility::where('is_addon', true)->where('is_active', true)->get());
+    }
+
+    public function storeAddon(Request $request, $parentId)
+    {
+        $parentRecord = Transaction::findOrFail($parentId);
+        
+        // IMPORTANT: Addon parent MUST always be the root resort transaction (no parent_id)
+        $rootParent = $parentRecord->parent_id ? Transaction::findOrFail($parentRecord->parent_id) : $parentRecord;
+        
+        $user = $request->user();
+
+        // Security
+        if ($rootParent->user_id !== $user->id && $user->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($rootParent->stay_status !== 'checked_in') {
+            $msg = $rootParent->stay_status === 'checked_out' ? 'Tamu sudah checkout.' : 'Tamu belum melakukan check-in.';
+            return response()->json(['message' => 'Layanan tambahan hanya tersedia setelah tamu check-in. ' . $msg], 403);
+        }
+
+        $validated = $request->validate([
+            'items'            => 'required|array|min:1',
+            'items.*.item_id'  => 'required|integer|exists:facilities,id',
+            'items.*.quantity' => 'required|integer|min:1|max:10',
+            'payment_method'   => 'nullable|in:Manual/Transfer,Cash,QRIS,automated',
+        ]);
+
+        return DB::transaction(function() use ($validated, $rootParent, $user) {
+            // lockForUpdate() prevents race condition if two requests arrive simultaneously
+            $addonOrder = Transaction::where('parent_id', $rootParent->id)
+                ->where('status', 'pending')
+                ->lockForUpdate()
+                ->first();
+
+            if (!$addonOrder) {
+                $addonId = 'ADD-' . strtoupper(Str::random(8));
+                $addonOrder = Transaction::create([
+                    'id'             => $addonId,
+                    'parent_id'      => $rootParent->id,
+                    'user_id'        => $user->id,
+                    'booker_name'    => $rootParent->booker_name,
+                    'booker_email'   => $rootParent->booker_email,
+                    'booker_phone'   => $rootParent->booker_phone,
+                    'booking_type'   => 'RESORT',
+                    'status'         => 'pending',
+                    'check_in_date'  => $rootParent->check_in_date,
+                    'payment_method' => $validated['payment_method'] ?? 'Manual/Transfer',
+                    'total_price'    => 0,
+                ]);
+            }
+
+            // Reload from DB to ensure we have the freshest item list (not a stale in-memory collection)
+            $addonOrder->load('items');
+            $currentItems = $addonOrder->items;
+
+            foreach ($validated['items'] as $itemData) {
+                $facility = \App\Models\Facility::findOrFail($itemData['item_id']);
+                $existingItem = $currentItems->where('item_id', $facility->id)->first();
+                
+                if ($existingItem) {
+                    $newQty = $existingItem->quantity + $itemData['quantity'];
+                    $existingItem->update([
+                        'quantity' => $newQty,
+                        'subtotal' => $facility->price * $newQty
+                    ]);
+                } else {
+                    $addonOrder->items()->create([
+                        'item_id' => $facility->id,
+                        'item_type' => \App\Models\Facility::class,
+                        'quantity' => $itemData['quantity'],
+                        'price' => $facility->price,
+                        'subtotal' => $facility->price * $itemData['quantity'],
+                    ]);
+                }
+            }
+
+            $addonOrder->update(['total_price' => $addonOrder->items()->sum('subtotal')]);
+
+            return response()->json([
+                'message' => 'Pesanan tambahan berhasil diperbarui.',
+                'transaction' => $addonOrder->load('items.item')
+            ], 201);
+        });
     }
 }

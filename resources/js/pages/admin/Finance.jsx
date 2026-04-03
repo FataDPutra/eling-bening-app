@@ -1,18 +1,50 @@
 import { useNavigate } from 'react-router-dom';
 import { CircleDollarSign, TrendingUp, TrendingDown, FileText, ArrowRight, Wallet, Building, Ticket, Download, PieChart, Landmark, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import { formatRupiah, getBookings, getExpenses } from '../../utils/data';
+import { formatRupiah } from '../../utils/data';
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Finance() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = async () => {
+        setIsLoading(true);
+        try {
+            const [transRes, expRes] = await Promise.all([
+                axios.get('/api/transactions'),
+                axios.get('/api/expenses')
+            ]);
+
+            const transactions = transRes.data;
+            const expenses = expRes.data;
+
+            const totalIncome = transactions
+                .filter(b => ['success', 'paid'].includes(b.status))
+                .reduce((sum, b) => {
+                    const base = Number(b.total_price || 0);
+                    const addons = (b.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0);
+                    const resc = (b.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0);
+                    return sum + base + addons + resc;
+                }, 0);
+
+            const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+            setStats({
+                income: totalIncome,
+                expense: totalExpense,
+                balance: totalIncome - totalExpense
+            });
+            setIsLoading(false);
+        } catch (error) {
+            console.error("Failed to fetch finance stats", error);
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const bookings = getBookings();
-        const expenses = getExpenses();
-        const totalIncome = bookings.filter(b => b.status === 'success').reduce((sum, b) => sum + b.total, 0);
-        const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
-        setStats({ income: totalIncome, expense: totalExpense, balance: totalIncome - totalExpense });
+        fetchData();
     }, []);
 
     const menuItems = [
@@ -71,23 +103,23 @@ export default function Finance() {
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-text-muted mb-3 flex items-center gap-2">
-                                <Landmark size={12} className="text-admin-primary" /> Net Profit Margin (Maret)
+                                <Landmark size={12} className="text-admin-primary" /> Net Profit Margin (All Time)
                             </p>
                             <h2 className="text-5xl font-black text-admin-text-main tracking-tight mb-6">
-                                {formatRupiah(stats.balance)}
+                                {isLoading ? '...' : formatRupiah(stats.balance)}
                             </h2>
                             <div className="flex flex-wrap gap-4">
                                 <div className="px-5 py-3 rounded-2xl bg-success/5 border border-success/10">
                                     <p className="text-[9px] font-black text-success uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <ArrowUpRight size={10} /> Total Income
                                     </p>
-                                    <p className="text-lg font-black text-admin-text-main">{formatRupiah(stats.income)}</p>
+                                    <p className="text-lg font-black text-admin-text-main">{isLoading ? '...' : formatRupiah(stats.income)}</p>
                                 </div>
                                 <div className="px-5 py-3 rounded-2xl bg-danger/5 border border-danger/10">
                                     <p className="text-[9px] font-black text-danger uppercase tracking-widest mb-1 flex items-center gap-1">
                                         <ArrowDownRight size={10} /> Total Expense
                                     </p>
-                                    <p className="text-lg font-black text-admin-text-main">{formatRupiah(stats.expense)}</p>
+                                    <p className="text-lg font-black text-admin-text-main">{isLoading ? '...' : formatRupiah(stats.expense)}</p>
                                 </div>
                             </div>
                         </div>
@@ -102,11 +134,11 @@ export default function Finance() {
                         <FileText size={32} className="text-admin-primary" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black mb-2">Generate Report?</h3>
-                        <p className="text-xs text-white/60 font-medium leading-relaxed">Siapkan laporan konsolidasi untuk periode Maret 2024.</p>
+                        <h3 className="text-xl font-black mb-2">Audit Report</h3>
+                        <p className="text-xs text-white/60 font-medium leading-relaxed">Seluruh data finansial disinkronkan secara real-time dari database.</p>
                     </div>
-                    <button className="btn-primary !bg-white !text-admin-text-main w-full py-3.5 justify-center shadow-xl shadow-white/5 hover:scale-105 transition-all">
-                        <PieChart size={18} /> Export Full Analysis
+                    <button className="btn-primary !bg-white !text-admin-text-main w-full py-3.5 justify-center shadow-xl shadow-white/5 hover:scale-105 transition-all" onClick={() => window.print()}>
+                        <PieChart size={18} /> Print Financial Report
                     </button>
                 </div>
             </div>

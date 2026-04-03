@@ -6,7 +6,6 @@ use App\Models\Resort;
 use App\Models\Facility;
 use App\Models\Ticket;
 use App\Models\Promo;
-use App\Models\Expense;
 use Illuminate\Database\Seeder;
 
 class DummyDataSeeder extends Seeder
@@ -129,29 +128,5 @@ class DummyDataSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // 5. Seed Expenses
-        Expense::create([
-            'name' => 'Gaji Karyawan Bulan Ini',
-            'notes' => 'Pembayaran gaji reguler',
-            'category' => 'gaji_karyawan',
-            'amount' => 45000000,
-            'transaction_date' => now()->subDays(5)
-        ]);
-
-        Expense::create([
-            'name' => 'Maintenance Kolam',
-            'notes' => 'Kuras kolam bulanan dan beli bahan',
-            'category' => 'pemeliharaan',
-            'amount' => 3500000,
-            'transaction_date' => now()->subDays(2)
-        ]);
-        
-        Expense::create([
-            'name' => 'Ads Instagram',
-            'notes' => 'Boost post kampanye akhir tahun',
-            'category' => 'pemasaran',
-            'amount' => 5000000,
-            'transaction_date' => now()->subDays(10)
-        ]);
     }
 }

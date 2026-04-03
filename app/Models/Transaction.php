@@ -14,6 +14,7 @@ class Transaction extends Model
     protected $casts = [
         'check_in_date' => 'date',
         'check_out_date' => 'date',
+        'parent_id' => 'string',
         'additional_facilities' => 'array',
         'checked_in_at' => 'datetime',
         'checked_out_at' => 'datetime',
@@ -45,5 +46,15 @@ class Transaction extends Model
     public function reschedules()
     {
         return $this->hasMany(Reschedule::class, 'transaction_id', 'id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(Transaction::class, 'parent_id', 'id');
+    }
+
+    public function addons()
+    {
+        return $this->hasMany(Transaction::class, 'parent_id', 'id');
     }
 }

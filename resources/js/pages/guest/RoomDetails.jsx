@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import IconRenderer from '../../components/IconRenderer';
-import { X } from 'lucide-react';
+import { X, Clock } from 'lucide-react';
+import CountdownTimer from '../../components/CountdownTimer';
 
 export default function RoomDetails() {
     const { id } = useParams();
@@ -27,6 +28,12 @@ export default function RoomDetails() {
         "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&q=80&w=800",
         "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800"
     ];
+
+    const isWeekend = (dateStr) => {
+        if (!dateStr) return false;
+        const day = new Date(dateStr).getDay();
+        return day === 0 || day === 6;
+    };
 
     const hasGallery = Array.isArray(room?.gallery) && room.gallery.length > 0;
     const galleryToDisplay = hasGallery ? room.gallery : defaultImages;
@@ -420,7 +427,12 @@ export default function RoomDetails() {
                     {/* Right Sticky Widget */}
                     <div className="lg:col-span-1 mt-12 lg:mt-0">
                         <div className={`bg-white rounded-[3rem] p-8 lg:p-10 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-700 ${isUpdating ? 'opacity-50 grayscale scale-[0.98]' : 'opacity-100'}`}>
-                            <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                            <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 relative overflow-hidden">
+                                {isWeekend(startDate) && (
+                                    <div className="absolute top-0 right-0">
+                                        <div className="bg-orange-100 text-orange-600 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl">Tarif Akhir Pekan</div>
+                                    </div>
+                                )}
                                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2 text-center">Harga per Malam</p>
                                 <div className="flex items-center justify-center gap-2">
                                     <span className="text-4xl font-black font-serif text-gray-900">{formatRupiah(currentPrice)}</span>
@@ -453,14 +465,53 @@ export default function RoomDetails() {
                                 </div>
                             </div>
 
-                            <button onClick={handleBooking} disabled={!isRoomAvailable}
-                                className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all duration-500 active:scale-95 group relative overflow-hidden ${isRoomAvailable ? 'bg-eling-green text-white hover:bg-emerald-800 hover:shadow-emerald-500/40 hover:-translate-y-1' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
-                                {isRoomAvailable ? (
-                                    <span className="relative z-10 flex items-center justify-center gap-3">
-                                        Amankan Sekarang <i className="fas fa-arrow-right group-hover:translate-x-2 transition-transform duration-500"></i>
-                                    </span>
-                                ) : 'Stok Menipis/Habis'}
-                            </button>
+                            {room.is_on_hold ? (
+                                <div className="space-y-4">
+                                    <button disabled className="w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-xl bg-amber-50 text-amber-600 border border-amber-200 cursor-wait">
+                                        <span className="flex items-center justify-center gap-3">
+                                            <Clock size={16} className="animate-pulse" /> {room.hold_expiry ? 'Ditahan Sementara' : 'Menunggu Review'}
+                                        </span>
+                                    </button>
+                                    <p className="text-[11px] text-amber-600 font-bold text-center italic bg-amber-50/50 p-4 rounded-2xl border border-dashed border-amber-200">
+                                        {room.hold_expiry ? (
+                                            <>Unit sedang ditahan karena reschedule.<br/>Mohon tunggu <CountdownTimer expiryDate={room.hold_expiry} onExpire={fetchRoomDetails} /> ya!</>
+                                        ) : (
+                                            <>Unit sedang ditahan karena reschedule.<br/>Mohon tunggu review admin ya!</>
+                                        )}
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex flex-col gap-1 px-1">
+                                        {room.available_stock > 0 && room.available_stock <= 2 && (
+                                            <div className="flex items-center gap-1.5 text-orange-600 animate-pulse">
+                                                <i className="fas fa-exclamation-triangle text-[10px]"></i>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Hanya Tersisa {room.available_stock} Unit Lagi! Segera Pesan!</span>
+                                            </div>
+                                        )}
+                                        {room.available_stock > 2 && (
+                                            <div className="flex items-center gap-1.5 text-eling-green">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-eling-green shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Tersedia {room.available_stock} Unit Kamar</span>
+                                            </div>
+                                        )}
+                                        {room.available_stock <= 0 && (
+                                            <div className="flex items-center gap-1.5 text-gray-400">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Stok Kamar Habis Untuk Tanggal Ini</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <button onClick={handleBooking} disabled={!isRoomAvailable}
+                                        className={`w-full py-6 rounded-[2rem] font-black text-sm uppercase tracking-[0.2em] shadow-2xl transition-all duration-500 active:scale-95 group relative overflow-hidden ${isRoomAvailable ? 'bg-eling-green text-white hover:bg-emerald-800 hover:shadow-emerald-500/40 hover:-translate-y-1' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}>
+                                        {isRoomAvailable ? (
+                                            <span className="relative z-10 flex items-center justify-center gap-3">
+                                                Amankan Sekarang <i className="fas fa-arrow-right group-hover:translate-x-2 transition-transform duration-500"></i>
+                                            </span>
+                                        ) : 'Stok Habis'}
+                                    </button>
+                                </div>
+                            )}
 
                             <div className="mt-8 space-y-4 pt-8 border-t border-dashed border-slate-100">
                                 <div className="flex justify-between items-center text-xs">

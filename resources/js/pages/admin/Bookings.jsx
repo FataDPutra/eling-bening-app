@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, ArrowRight, DollarSign, LayoutGrid, Download, MessageSquare, Quote, Star, CheckCircle2, Ticket, DoorOpen, DoorClosed } from 'lucide-react';
+import { Search, Eye, X, Check, Calendar, User, CreditCard, ChevronRight, Info, ShoppingCart, Clock, ArrowUpRight, ArrowRight, DollarSign, LayoutGrid, Download, MessageSquare, Quote, Star, CheckCircle2, Ticket, DoorOpen, DoorClosed, Plus, Minus } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
@@ -15,6 +15,12 @@ export default function Bookings() {
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const [isAllTime, setIsAllTime] = useState(false);
     const [resortFilter, setResortFilter] = useState('all');
+    
+    // Addon states
+    const [isAddingAddon, setIsAddingAddon] = useState(false);
+    const [addonFacilities, setAddonFacilities] = useState([]);
+    const [addonQuantities, setAddonQuantities] = useState({});
+    const [isSubmittingAddon, setIsSubmittingAddon] = useState(false);
 
     const months = [
         { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
@@ -49,6 +55,47 @@ export default function Bookings() {
         }
     };
 
+    const fetchAddonFacilities = async () => {
+        try {
+            const res = await axios.get('/api/addon-facilities');
+            setAddonFacilities(res.data);
+            const initialQuantities = {};
+            res.data.forEach(f => initialQuantities[f.id] = 0);
+            setAddonQuantities(initialQuantities);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleAddAddon = async () => {
+        const orderItems = Object.entries(addonQuantities)
+            .filter(([_, qty]) => qty > 0)
+            .map(([id, qty]) => ({ item_id: parseInt(id), quantity: qty }));
+
+        if (orderItems.length === 0) {
+            toast.error('Pilih minimal 1 fasilitas.');
+            return;
+        }
+
+        setIsSubmittingAddon(true);
+        try {
+            await axios.post(`/api/transactions/${selectedBooking.id}/addons`, {
+                items: orderItems,
+                payment_method: 'Manual/Admin'
+            });
+            toast.success('Fasilitas tambahan berhasil ditambahkan.');
+            setIsAddingAddon(false);
+            // Refresh detail
+            const res = await axios.get(`/api/transactions/${selectedBooking.id}`);
+            setSelectedBooking(res.data);
+            fetchBookings();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Gagal menambahkan fasilitas.');
+        } finally {
+            setIsSubmittingAddon(false);
+        }
+    };
+
     useEffect(() => {
         fetchBookings();
     }, [selectedMonth, selectedYear, isAllTime]);
@@ -76,11 +123,18 @@ export default function Bookings() {
         return 'bg-danger/10 text-danger border-danger/20';
     };
 
+    const getGrandTotal = (booking) => {
+        const basePr = Number(booking.total_price || 0);
+        const addPr = (booking.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0);
+        const rescPr = (booking.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0);
+        return basePr + addPr + rescPr;
+    };
+
     const stats = [
         { label: 'Total Volume', value: bookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
         { label: 'Confirmed', value: bookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
         { label: 'Awaiting', value: bookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
-        { label: 'Revenue', value: formatRupiah(bookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + Number(curr.total_price), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
+        { label: 'Revenue', value: formatRupiah(bookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
     ];
 
     return (
@@ -265,7 +319,7 @@ export default function Bookings() {
                                 </td>
                                 <td>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-text-main">{formatRupiah(booking.total_price)}</span>
+                                        <span className="text-sm font-black text-admin-text-main">{formatRupiah(getGrandTotal(booking))}</span>
                                         <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Payment Final</span>
                                     </div>
                                 </td>
@@ -392,6 +446,20 @@ export default function Bookings() {
                                             </div>
                                         </div>
                                     </div>
+                                    {/* ADMIN ADDON BUTTON */}
+                                    {selectedBooking.booking_type === 'RESORT' && selectedBooking.stay_status !== 'checked_out' && (
+                                        <div className="pt-4">
+                                            <button 
+                                                onClick={() => {
+                                                    fetchAddonFacilities();
+                                                    setIsAddingAddon(true);
+                                                }}
+                                                className="w-full py-3 bg-admin-primary/10 text-admin-primary rounded-xl border border-admin-primary/20 text-[10px] font-black uppercase tracking-widest hover:bg-admin-primary hover:text-white transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={14} /> Admin: Tambah Fasilitas
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="space-y-6">
                                     <div>
@@ -407,23 +475,6 @@ export default function Bookings() {
                                     </div>
                                 </div>
                             </div>
-
-                            {selectedBooking.special_requests && (
-                                <section className="mb-12">
-                                    <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <MessageSquare size={12} className="text-admin-primary" />
-                                        Permintaan Khusus Tamu
-                                    </h4>
-                                    <div className="bg-admin-bg p-8 rounded-[2rem] border-2 border-dashed border-admin-border relative group hover:border-admin-primary/30 transition-all">
-                                        <div className="absolute top-4 right-6 opacity-5 select-none">
-                                            <Quote size={48} className="text-admin-text-main" />
-                                        </div>
-                                        <p className="text-sm font-bold text-admin-text-main leading-relaxed italic relative z-10">
-                                            "{selectedBooking.special_requests}"
-                                        </p>
-                                    </div>
-                                </section>
-                            )}
 
                             <section className="mb-10">
                                 <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
@@ -509,23 +560,49 @@ export default function Bookings() {
                                 </div>
                             </section>
 
-                            {/* Additional Facilities (Add-ons) */}
-                            {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
+                            {/* Linked Addons Summary */}
+                            {selectedBooking.addons && selectedBooking.addons.length > 0 && (
                                 <section className="mb-10">
                                     <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
-                                        Fasilitas Tambahan (Add-ons)
+                                        Bill Tagihan Tambahan (Add-ons)
                                         <span className="w-12 h-px bg-admin-border" />
                                     </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {selectedBooking.additional_facilities.map((fac, idx) => (
-                                            <div key={idx} className="flex justify-between items-center p-4 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-eling-green/30 transition-all">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-green-50 text-eling-green flex items-center justify-center">
-                                                        <Check size={14} />
+                                    <div className="space-y-4">
+                                        {selectedBooking.addons.map((addon) => (
+                                            <div key={addon.id} className="p-6 bg-admin-bg border border-admin-border rounded-2xl group hover:border-admin-primary/30 transition-all">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <p className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest leading-none mb-1.5">{addon.id}</p>
+                                                        <div className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border inline-block ${addon.status === 'paid' || addon.status === 'success' ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}>
+                                                            {addon.status}
+                                                        </div>
                                                     </div>
-                                                    <span className="text-xs font-bold text-admin-text-main uppercase">{typeof fac === 'object' ? fac.name : fac}</span>
+                                                    <span className="font-black text-admin-text-main">{formatRupiah(addon.total_price)}</span>
                                                 </div>
-                                                <span className="text-[10px] font-black text-eling-green">{typeof fac === 'object' ? formatRupiah(fac.price) : '-'}</span>
+                                                <div className="space-y-1.5">
+                                                    {addon.items.map((it, i) => (
+                                                        <div key={i} className="flex justify-between text-xs font-bold text-admin-text-muted">
+                                                            <span>{it.item?.name} x{it.quantity}</span>
+                                                            <span className="text-admin-text-light">{formatRupiah(it.subtotal)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {addon.status === 'pending' && (
+                                                    <div className="mt-4 pt-4 border-t border-admin-border border-dashed flex justify-end">
+                                                        <button 
+                                                            className="text-[9px] font-black text-admin-primary uppercase tracking-widest hover:underline"
+                                                            onClick={() => {
+                                                                axios.post(`/api/transactions/${addon.id}/success`).then(() => {
+                                                                    toast.success("Addon ditandai Lunas");
+                                                                    fetchBookings();
+                                                                    setSelectedBooking(null);
+                                                                });
+                                                            }}
+                                                        >
+                                                            Tandai Lunas (Manual)
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -550,72 +627,114 @@ export default function Bookings() {
                                 </section>
                             )}
 
-                            {/* Final Pricing Summary Breakdown */}
+                            {/* Final Financial Summary Breakdown - Admin Side standardized to Guest View */}
                             <section className="mb-10">
                                 <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
-                                    Rincian Pembayaran
+                                    Laporan Rekapitulasi Keuangan
                                     <span className="w-12 h-px bg-admin-border" />
                                 </h4>
-                                <div className="mt-4 pt-8 border-t border-dashed border-admin-border/50 space-y-3">
-                                    {/* 1. Harga Dasar Kamar/Tiket */}
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
-                                        <span>Harga Kamar / Tiket</span>
-                                        <span>{formatRupiah(selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
+                                
+                                <div className="space-y-8">
+                                    {/* 1. PEMBAYARAN UTAMA */}
+                                    <div className="p-6 bg-admin-bg rounded-3xl border border-admin-border group hover:bg-white transition-all">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className="w-1 h-4 bg-admin-primary rounded-full"></div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-admin-text-main">1. Reservasi Utama (Awal)</span>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-xs font-bold text-admin-text-muted">
+                                                <span>Subtotal Unit/Item</span>
+                                                <span>{formatRupiah(selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
+                                            </div>
+                                            {selectedBooking.additional_facilities?.length > 0 && (
+                                                <div className="flex justify-between text-xs font-bold text-admin-text-muted">
+                                                    <span>Fasilitas Pre-Checkin</span>
+                                                    <span>{formatRupiah(selectedBooking.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
+                                                </div>
+                                            )}
+                                            {selectedBooking.discount_amount > 0 && (
+                                                <div className="flex justify-between text-xs font-bold text-danger">
+                                                    <span>Potongan Promo</span>
+                                                    <span>-{formatRupiah(selectedBooking.discount_amount)}</span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between pt-2 border-t border-admin-border/50 font-black text-admin-text-main">
+                                                <span>Total Lunas (Awal)</span>
+                                                <span className="text-admin-primary">{formatRupiah(selectedBooking.total_price)}</span>
+                                            </div>
+                                        </div>
                                     </div>
 
-                                    {/* 2. Biaya Fasilitas Tambahan */}
-                                    {selectedBooking.additional_facilities && selectedBooking.additional_facilities.length > 0 && (
-                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
-                                            <span>Biaya Fasilitas Tambahan</span>
-                                            <span>{formatRupiah(selectedBooking.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
+                                    {/* 2. LAYANAN SAAT MENGINAP (ADDONS) */}
+                                    {selectedBooking.addons?.some(a => ['paid', 'success'].includes(a.status)) && (
+                                        <div className="p-6 bg-blue-50/10 rounded-3xl border border-blue-100 group hover:bg-white transition-all">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">2. Layanan Saat Menginap (Extra)</span>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {selectedBooking.addons?.filter(a => ['paid', 'success'].includes(a.status)).map(addon => (
+                                                    <div key={addon.id} className="pb-3 border-b border-blue-50 last:border-0 last:pb-0">
+                                                        <div className="flex justify-between text-[11px] font-black text-admin-text-main mb-1">
+                                                            <span>Tagihan #{addon.id}</span>
+                                                            <span className="text-blue-600">{formatRupiah(addon.total_price)}</span>
+                                                        </div>
+                                                        <div className="pl-3 space-y-1">
+                                                            {addon.items?.map(it => (
+                                                                <div key={it.id} className="flex justify-between text-[10px] font-bold text-admin-text-muted">
+                                                                    <span>• {it.item?.name} x{it.quantity}</span>
+                                                                    <span>{formatRupiah(it.subtotal)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
-                                    {/* 3. Pajak 10% (Dihitung dari Dasar, bukan dari Total) */}
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-admin-text-muted/60">
-                                        <span>Estimasi Pajak (10%)</span>
-                                        <span>{formatRupiah(
-                                            ( (selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0) + 
-                                              (selectedBooking.additional_facilities?.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0) || 0) 
-                                            ) * 0.1
-                                        )}</span>
-                                    </div>
-
-                                    {/* 4. Potongan Promo jika ada */}
-                                    {selectedBooking.discount_amount > 0 && (
-                                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-eling-red">
-                                            <span>Potongan Promo</span>
-                                            <span>-{formatRupiah(selectedBooking.discount_amount)}</span>
+                                    {/* 3. RIWAYAT RESCHEDULE */}
+                                    {selectedBooking.reschedules?.some(r => r.status === 'completed') && (
+                                        <div className="p-6 bg-orange-50/10 rounded-3xl border border-orange-100 group hover:bg-white transition-all">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <div className="w-1 h-4 bg-orange-500 rounded-full"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">3. Biaya Perubahan Jadwal</span>
+                                            </div>
+                                            <div className="space-y-4">
+                                                {selectedBooking.reschedules?.filter(r => r.status === 'completed').map((r, i) => (
+                                                    <div key={i} className="pb-3 border-b border-orange-50 last:border-0 last:pb-0">
+                                                        <div className="flex justify-between text-[11px] font-black text-admin-text-main mb-2">
+                                                            <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg text-[9px]">LUNAS</span>
+                                                            <span className="text-orange-600">{formatRupiah(r.final_charge)}</span>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            {r.price_diff > 0 && <div className="flex justify-between text-[10px] font-bold text-admin-text-muted"><span>Selisih Harga</span><span>{formatRupiah(r.price_diff)}</span></div>}
+                                                            {r.admin_fee > 0 && <div className="flex justify-between text-[10px] font-bold text-admin-text-muted"><span>Biaya Admin</span><span>{formatRupiah(r.admin_fee)}</span></div>}
+                                                            {r.penalty_fee > 0 && <div className="flex justify-between text-[10px] font-bold text-admin-text-muted"><span>Denda Dibatalkan</span><span>{formatRupiah(r.penalty_fee)}</span></div>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
-                                    {/* 5. Total Akhir (Sesuai Database) */}
-                                    <div className="flex justify-between pt-3 border-t border-admin-border text-xs font-black uppercase tracking-widest text-admin-text-main">
-                                        <span>Total Akhir Dibayar</span>
-                                        <span className="text-admin-primary">{formatRupiah(selectedBooking.total_price)}</span>
+                                    {/* GRAND TOTAL COMPONENT */}
+                                    <div className="bg-admin-text-main p-8 rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000"></div>
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-1">Total Nilai Investasi</p>
+                                            <h5 className="text-[9px] font-black text-white/60 uppercase tracking-widest leading-none">Akumulasi Seluruh Tagihan Lunas</h5>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-3xl font-black tracking-tighter">{formatRupiah(
+                                                Number(selectedBooking.total_price || 0) +
+                                                (selectedBooking.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0) +
+                                                (selectedBooking.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0)
+                                            )}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
-
-                            {selectedBooking.promo && (
-                                <section className="mb-10 p-6 bg-admin-primary/5 border-2 border-dashed border-admin-primary/20 rounded-[2rem] flex items-center justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-2xl bg-white border border-admin-primary/20 flex items-center justify-center text-admin-primary shadow-sm hover:scale-110 transition-transform">
-                                            <Ticket size={24} />
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-0.5">Voucher Verified</span>
-                                            <span className="text-sm font-black text-admin-primary uppercase tracking-widest leading-none">
-                                                {selectedBooking.promo.promo_code}
-                                            </span>
-                                        </div>
-                                    </div>
-                                        <div className="text-right">
-                                        <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-1 font-serif">Valuation Savings</span>
-                                        <div className="text-lg font-black text-admin-primary">-{formatRupiah(selectedBooking.discount_amount)}</div>
-                                    </div>
-                                </section>
-                            )}
 
                             <div className="flex gap-4">
                                 {selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? (
@@ -663,6 +782,66 @@ export default function Bookings() {
                                     </button>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin Addon Order Modal */}
+            {isAddingAddon && (
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-6 animate-fade-in">
+                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsAddingAddon(false)}></div>
+                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 relative z-[1101] shadow-2xl animate-scale-up flex flex-col max-h-[85vh]">
+                        <button onClick={() => setIsAddingAddon(false)} className="absolute top-8 right-8 text-admin-text-muted hover:text-admin-text-main transition-colors"><X size={20} /></button>
+
+                        <div className="mb-8">
+                            <div className="w-14 h-14 bg-admin-primary/10 text-admin-primary rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                                <ShoppingCart size={24} />
+                            </div>
+                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-tight">Manual Add-on Order</h3>
+                            <p className="text-xs font-bold text-admin-text-muted mt-2">Pilih fasilitas tambahan untuk dimasukkan ke bill tamu.</p>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                            {addonFacilities.map(f => (
+                                <div key={f.id} className="p-4 bg-admin-bg rounded-2xl border border-admin-border flex items-center justify-between group hover:bg-white hover:border-admin-primary/20 transition-all shadow-sm">
+                                    <div className="flex-1">
+                                        <h5 className="font-black text-admin-text-main text-xs uppercase tracking-tight">{f.name}</h5>
+                                        <p className="text-[10px] font-black text-admin-primary mt-1">{formatRupiah(f.price)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-white p-2 rounded-xl border border-admin-border">
+                                        <button 
+                                            onClick={() => setAddonQuantities({...addonQuantities, [f.id]: Math.max(0, addonQuantities[f.id] - 1)})}
+                                            className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center text-admin-text-muted hover:bg-danger/10 hover:text-danger transition"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="w-5 text-center font-black text-xs text-admin-text-main">{addonQuantities[f.id]}</span>
+                                        <button 
+                                            onClick={() => setAddonQuantities({...addonQuantities, [f.id]: addonQuantities[f.id] + 1})}
+                                            className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center text-admin-text-muted hover:bg-success/10 hover:text-success transition"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-admin-border">
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-[0.2em]">Estimasi Tagihan</span>
+                                <span className="text-xl font-black text-admin-text-main">
+                                    {formatRupiah(addonFacilities.reduce((acc, f) => acc + (f.price * (addonQuantities[f.id] || 0)), 0))}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={handleAddAddon}
+                                disabled={isSubmittingAddon}
+                                className="w-full py-4 bg-admin-primary text-white font-black rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-admin-primary/20 flex items-center justify-center gap-2 group disabled:opacity-50 text-xs uppercase tracking-widest"
+                            >
+                                {isSubmittingAddon ? 'Memproses...' : 'Tambahkan Ke Bill'}
+                            </button>
                         </div>
                     </div>
                 </div>

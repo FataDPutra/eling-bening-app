@@ -14,6 +14,7 @@ class Reschedule extends Model
     protected $casts = [
         'old_date' => 'date',
         'new_date' => 'date',
+        'expires_at' => 'datetime',
     ];
 
     public function transaction()

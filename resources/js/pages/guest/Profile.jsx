@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
 import { formatRupiah } from '../../utils/data';
 import { QRCodeCanvas } from 'qrcode.react';
+import CountdownTimer from '../../components/CountdownTimer';
 
 export default function Profile() {
     const { user, logout, updateProfile, updatePassword, updatePhoto } = useAuth();
@@ -19,12 +20,31 @@ export default function Profile() {
     const [rescheduleData, setRescheduleData] = useState(null); 
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+    const [isOrderingAddon, setIsOrderingAddon] = useState(false);
+    const [addonFacilities, setAddonFacilities] = useState([]);
+    const [addonQuantities, setAddonQuantities] = useState({});
+    const [isSubmittingAddon, setIsSubmittingAddon] = useState(false);
+    const [selectedAddonPayment, setSelectedAddonPayment] = useState(null);
     const [publicSettings, setPublicSettings] = useState({ max_reschedule_days: 7 });
+    const [reschedules, setReschedules] = useState([]);
+    const [selectedReschedulePayment, setSelectedReschedulePayment] = useState(null);
+    const [isPayingReschedule, setIsPayingReschedule] = useState(false);
+    const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'addons'
 
     useEffect(() => {
         fetchBookings();
+        fetchReschedules();
         fetchPublicSettings();
     }, []);
+
+    const fetchReschedules = async () => {
+        try {
+            const res = await axios.get('/api/reschedules');
+            setReschedules(res.data);
+        } catch (error) {
+            console.error("Failed to fetch reschedules", error);
+        }
+    };
 
     const fetchPublicSettings = async () => {
         try {
@@ -37,10 +57,10 @@ export default function Profile() {
 
     const fetchBookings = async () => {
         try {
-            const res = await axios.get('/api/transactions?mine=1');
-            setBookings(res.data);
+            const response = await axios.get('/api/transactions?mine=1&include_addons=1');
+            setBookings(response.data);
         } catch (error) {
-            console.error("Failed to fetch bookings", error);
+            console.error('Failed to fetch bookings:', error);
         }
     };
 
@@ -51,9 +71,8 @@ export default function Profile() {
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#C62828',
-            confirmButtonText: 'Ya, Logout',
-            cancelButtonClass: 'rounded-xl',
             confirmButtonClass: 'rounded-xl',
+            cancelButtonClass: 'rounded-xl',
             customClass: { popup: 'rounded-[2rem] font-serif' }
         });
 
@@ -109,6 +128,56 @@ export default function Profile() {
         }
     };
 
+    const handlePayReschedule = async () => {
+        if (!selectedReschedulePayment) return;
+        setIsPayingReschedule(true);
+        try {
+            await axios.post(`/api/reschedules/${selectedReschedulePayment.id}/pay`);
+            Swal.fire({
+                title: 'Berhasil!',
+                text: 'Jadwal Anda telah resmi diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#2E7D32',
+                customClass: { popup: 'rounded-[2rem]' }
+            });
+            setSelectedReschedulePayment(null);
+            fetchBookings();
+            fetchReschedules();
+        } catch (error) {
+            console.error(error);
+            toast.error(error.response?.data?.message || 'Gagal memproses pembayaran.');
+        } finally {
+            setIsPayingReschedule(false);
+        }
+    };
+
+    const handleCancelReschedule = async () => {
+        if (!selectedReschedulePayment) return;
+
+        const result = await Swal.fire({
+            title: 'Batalkan Reschedule?',
+            text: "Kamar yang sedang ditahan untuk Anda akan dilepas kembali untuk umum.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#C62828',
+            confirmButtonText: 'Ya, Batalkan',
+            cancelButtonText: 'Kembali',
+            customClass: { popup: 'rounded-[2rem]' }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.post(`/api/reschedules/${selectedReschedulePayment.id}/cancel`);
+                toast.success('Reschedule dibatalkan. Stok telah dilepas.');
+                setSelectedReschedulePayment(null);
+                fetchReschedules();
+                fetchBookings();
+            } catch (err) {
+                toast.error('Gagal membatalkan reschedule.');
+            }
+        }
+    };
+
     const handleReschedule = async () => {
         if (!rescheduleData.newDate) return;
         try {
@@ -116,30 +185,114 @@ export default function Profile() {
                 new_check_in_date: rescheduleData.newDate,
                 reason: rescheduleData.reason
             });
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Permintaan reschedule telah diajukan ke admin.',
-                icon: 'success',
-                confirmButtonColor: '#2E7D32',
-                customClass: { popup: 'rounded-[2rem]' }
-            });
-            setRescheduleData(null);
+            toast.success('Permintaan reschedule diajukan. Tunggu konfirmasi admin.');
             fetchBookings();
+            fetchReschedules();
+            setRescheduleData(null);
         } catch (error) {
-            Swal.fire({
-                title: 'Gagal!',
-                text: error.response?.data?.message || 'Gagal merubah tanggal.',
-                icon: 'error',
-                customClass: { popup: 'rounded-[2rem]' }
-            });
+            toast.error(error.response?.data?.message || 'Gagal mengajukan reschedule.');
         }
     };
 
-    const filtered = bookings.filter(b =>
-        b.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.booker_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        b.items?.some(item => item.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const fetchAddonFacilities = async () => {
+        try {
+            const res = await axios.get('/api/addon-facilities');
+            setAddonFacilities(res.data);
+            const initialQuantities = {};
+            res.data.forEach(f => initialQuantities[f.id] = 0);
+            setAddonQuantities(initialQuantities);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleOrderAddon = async () => {
+        const orderItems = Object.entries(addonQuantities)
+            .filter(([_, qty]) => qty > 0)
+            .map(([id, qty]) => ({ item_id: parseInt(id), quantity: qty }));
+
+        if (orderItems.length === 0) {
+            toast.error('Pilih minimal 1 fasilitas.');
+            return;
+        }
+
+        // Calculate total for confirmation
+        const totalAddon = orderItems.reduce((sum, i) => {
+            const facility = addonFacilities.find(f => f.id === i.item_id);
+            return sum + (Number(facility?.price) || 0) * i.quantity;
+        }, 0);
+
+        const result = await Swal.fire({
+            title: 'Konfirmasi Pesanan Tambahan',
+            html: `Total tagihan: <strong>${formatRupiah(totalAddon)}</strong><br/><span style="font-size:12px;color:#666">Tagihan akan ditambahkan ke akun Anda dan dapat dibayar di tab Fasilitas Tambahan.</span>`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Pesan Sekarang',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#2E7D32',
+            customClass: { popup: 'rounded-[2rem]' }
+        });
+        if (!result.isConfirmed) return;
+
+        setIsSubmittingAddon(true);
+        try {
+            await axios.post(`/api/transactions/${selectedOrderDetail.id}/addons`, {
+                items: orderItems,
+                payment_method: 'automated'
+            });
+            toast.success('Pesanan fasilitas berhasil dibuat. Silakan selesaikan pembayaran.');
+            setIsOrderingAddon(false);
+            // Refresh detail with fresh data from server
+            const res = await axios.get(`/api/transactions/${selectedOrderDetail.id}`);
+            setSelectedOrderDetail(res.data);
+            fetchBookings();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Gagal membuat pesanan.');
+        } finally {
+            setIsSubmittingAddon(false);
+        }
+    };
+
+    // Helper: calculate grand total including all paid addons
+    const getGrandTotal = (booking) => {
+        const basePrice = Number(booking.total_price || 0);
+        const addonsPrice = (booking.addons
+            ?.filter(a => ['paid', 'success'].includes(a.status))
+            .reduce((acc, curr) => acc + Number(curr.total_price), 0) || 0);
+        const reschedulesPrice = (reschedules
+            ?.filter(r => r.transaction_id === booking.id && r.status === 'completed')
+            .reduce((acc, curr) => acc + Number(curr.final_charge), 0) || 0);
+        
+        return basePrice + addonsPrice + reschedulesPrice;
+    };
+
+    // Open detail modal and fetch fresh data from the server
+    const handleOpenDetail = async (booking) => {
+        setSelectedOrderDetail(booking); // show immediately with cached data
+        try {
+            const res = await axios.get(`/api/transactions/${booking.id}`);
+            setSelectedOrderDetail(res.data); // overwrite with fresh data
+        } catch (err) {
+            console.error('Failed to refresh booking detail', err);
+        }
+    };
+
+    const filtered = bookings.filter(booking => {
+        // Search filter
+        const matchSearch = (
+            booking.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            booking.booker_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            booking.items?.some(item => item.item?.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+
+        if (activeTab === 'tickets') {
+            // Show main stays AND finished addons
+            return matchSearch && (!booking.parent_id || ['success', 'paid'].includes(booking.status));
+        } else {
+            // Only show PENDING addons
+            return matchSearch && (booking.parent_id && booking.status === 'pending');
+        }
+    });
 
     return (
         <div className="animate-fade-in bg-gray-50 pb-20 pt-24 min-h-screen">
@@ -183,8 +336,12 @@ export default function Profile() {
                         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-8">
                             <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-2 font-serif">Riwayat & E-Tiket Saya</h2>
-                                    <p className="text-gray-500 text-sm">Kelola tiket wisata dan reservasi resort Anda.</p>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2 font-serif">
+                                        {activeTab === 'tickets' ? 'Riwayat & E-Tiket Saya' : 'Tagihan Fasilitas Tambahan'}
+                                    </h2>
+                                    <p className="text-gray-500 text-sm">
+                                        {activeTab === 'tickets' ? 'Kelola tiket wisata dan reservasi resort Anda.' : 'Selesaikan biaya tambahan layanan stay Anda.'}
+                                    </p>
                                 </div>
                                 <div className="relative w-full sm:w-auto">
                                     <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -198,6 +355,26 @@ export default function Profile() {
                                 </div>
                             </div>
 
+                            <div className="flex gap-4 mb-8">
+                                <button
+                                    onClick={() => setActiveTab('tickets')}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                >
+                                    Tiket & Resort
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('addons')}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                >
+                                    Fasilitas Tambahan
+                                    {bookings.filter(b => b.parent_id && b.status === 'pending').length > 0 && (
+                                        <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce-slow">
+                                            {bookings.filter(b => b.parent_id && b.status === 'pending').length}
+                                        </span>
+                                    )}
+                                </button>
+                            </div>
+
                             <div className="space-y-6">
                                 {filtered.map(booking => {
                                     const isResort = booking.booking_type === 'RESORT';
@@ -206,11 +383,16 @@ export default function Profile() {
                                     return (
                                         <div key={booking.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:border-green-200 transition">
                                             <div className="flex-1 w-full flex items-start gap-4">
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${isResort ? 'bg-green-50 text-eling-green' : 'bg-blue-50 text-blue-500'}`}>
-                                                    {isResort ? <BedDouble size={24} /> : <Ticket size={24} />}
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${booking.parent_id ? 'bg-purple-50 text-purple-600' : (isResort ? 'bg-green-50 text-eling-green' : 'bg-blue-50 text-blue-500')}`}>
+                                                    {booking.parent_id ? <Sparkles size={24} /> : (isResort ? <BedDouble size={24} /> : <Ticket size={24} />)}
                                                 </div>
                                                 <div>
-                                                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{booking.id}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{booking.id}</span>
+                                                        {booking.parent_id && (
+                                                            <span className="text-[8px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-purple-100">Add-on</span>
+                                                        )}
+                                                    </div>
                                                     <h3 className="text-xl font-bold text-gray-900 my-1">
                                                         {booking.items?.length > 1 ? `${firstItem.name} & ${booking.items.length - 1} lainnya` : firstItem.name}
                                                     </h3>
@@ -227,47 +409,113 @@ export default function Profile() {
                                                         )}
                                                     </div>
                                                 </div>
+                                                {booking.addons?.some(a => a.status === 'paid' || a.status === 'success') && (
+                                                    <div className="mt-2 flex flex-wrap gap-2">
+                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-purple-100/50">
+                                                            <Sparkles size={11} /> 
+                                                            {booking.addons.filter(a => a.status === 'paid' || a.status === 'success').reduce((acc, curr) => acc + (curr.items?.length || 0), 0)} Layanan Tambahan (Terbayar)
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-3 shrink-0 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0">
-                                                <div className="text-xl font-bold text-gray-900">{formatRupiah(booking.total_price)}</div>
+                                                <div className="text-xl font-bold text-gray-900">
+                                                    {formatRupiah(getGrandTotal(booking))}
+                                                </div>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${booking.status === 'success' || booking.status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${booking.status === 'success' || booking.status === 'paid' ? 'bg-green-100 text-green-700' : (booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500')}`}>
                                                         {booking.status}
                                                     </span>
+                                                    {activeTab === 'addons' && booking.status === 'pending' && (
+                                                        <button 
+                                                            onClick={() => setSelectedAddonPayment(booking)}
+                                                            className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
+                                                        >
+                                                            <CreditCard size={12} /> Bayar Sekarang
+                                                        </button>
+                                                    )}
+                                                    {(() => {
+                                                        const activeReschedule = reschedules.find(r => r.transaction_id === booking.id && ['pending', 'approved_awaiting_payment', 'completed'].includes(r.status));
+                                                        if (activeReschedule) {
+                                                            const statusConfig = {
+                                                                pending: { label: 'Reschedule: Menunggu Admin', color: 'bg-yellow-50 text-yellow-600 border-yellow-100' },
+                                                                approved_awaiting_payment: { label: 'Reschedule: Siap Bayar', color: 'bg-green-50 text-green-600 border-green-200 animate-pulse' },
+                                                                completed: { label: 'Reschedule: Berhasil', color: 'bg-blue-50 text-blue-600 border-blue-100' }
+                                                            };
+                                                            const cfg = statusConfig[activeReschedule.status] || statusConfig.pending;
+                                                            return (
+                                                                <div className="flex flex-col gap-2">
+                                                                    <div className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border flex items-center gap-2 ${cfg.color}`}>
+                                                                        {cfg.label}
+                                                                        {activeReschedule.status === 'approved_awaiting_payment' && activeReschedule.expires_at && (
+                                                                            <span className="flex items-center gap-1 border-l pl-2 border-green-200">
+                                                                                <Clock size={10} />
+                                                                                <CountdownTimer expiryDate={activeReschedule.expires_at} onExpire={fetchReschedules} />
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    {activeReschedule.status === 'approved_awaiting_payment' && (
+                                                                        <button 
+                                                                            onClick={() => setSelectedReschedulePayment(activeReschedule)}
+                                                                            className="text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition shadow-sm flex items-center justify-center gap-1"
+                                                                        >
+                                                                            <CreditCard size={10} /> Bayar Selisih
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return null;
+                                                    })()}
                                                     <button 
-                                                        onClick={() => setSelectedOrderDetail(booking)}
+                                                        onClick={() => handleOpenDetail(booking)}
                                                         className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
                                                     >
                                                         Lihat Detail
                                                     </button>
-                                                    {isResort && (
-                                                        <button 
-                                                            onClick={() => {
-                                                                const checkIn = new Date(booking.check_in_date);
-                                                                checkIn.setHours(0,0,0,0);
-                                                                const now = new Date();
-                                                                now.setHours(0,0,0,0);
-                                                                const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
-                                                                const maxDays = Number(publicSettings.max_reschedule_days || 7);
-                                                                
-                                                                if (diff < maxDays) {
-                                                                    Swal.fire({
-                                                                        title: 'Maaf',
-                                                                        text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
-                                                                        icon: 'error',
-                                                                        confirmButtonColor: '#C62828',
-                                                                        customClass: { popup: 'rounded-[2rem]' }
-                                                                    });
-                                                                    return;
-                                                                }
-                                                                setRescheduleData({ id: booking.id, oldDate: booking.check_in_date });
-                                                            }}
-                                                            className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
-                                                        >
-                                                            <Clock size={10} className="inline mr-1" /> Reschedule
-                                                        </button>
-                                                    )}
+                                                    <button 
+                                                        onClick={() => {
+                                                            const checkIn = new Date(booking.check_in_date);
+                                                            checkIn.setHours(0,0,0,0);
+                                                            const now = new Date();
+                                                            now.setHours(0,0,0,0);
+                                                            const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+                                                            const maxDays = Number(publicSettings.max_reschedule_days || 7);
+                                                            
+                                                            if (diff < maxDays) {
+                                                                Swal.fire({
+                                                                    title: 'Maaf',
+                                                                    text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
+                                                                    icon: 'error',
+                                                                    confirmButtonColor: '#C62828',
+                                                                    customClass: { popup: 'rounded-[2rem]' }
+                                                                });
+                                                                return;
+                                                            }
+
+                                                            if (booking.reschedule_count > 0) {
+                                                                Swal.fire({
+                                                                    title: 'Peringatan',
+                                                                    text: 'Anda sudah pernah melakukan reschedule untuk pemesanan ini. Perubahan jadwal hanya diizinkan satu kali.',
+                                                                    icon: 'warning',
+                                                                    confirmButtonColor: '#E65100',
+                                                                    customClass: { popup: 'rounded-[2rem]' }
+                                                                });
+                                                                return;
+                                                            }
+
+                                                            setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date });
+                                                        }}
+                                                        disabled={booking.reschedule_count > 0}
+                                                        className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition flex items-center gap-1 ${
+                                                            booking.reschedule_count > 0 
+                                                            ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' 
+                                                            : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
+                                                        }`}
+                                                    >
+                                                        <Clock size={10} /> {booking.reschedule_count > 0 ? 'Reschedule Digunakan' : 'Reschedule'}
+                                                    </button>
                                                 </div>
                                                 {!isResort && booking.status === 'success' && (
                                                     <button onClick={() => setSelectedTicket(booking)} className="text-sm font-bold text-eling-green hover:underline flex items-center gap-2">
@@ -309,10 +557,13 @@ export default function Profile() {
                                 <p className="font-bold text-gray-900">{rescheduleData.id}</p>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Pilih Tanggal Baru</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Pilih Tanggal Baru (Min. H-{publicSettings.min_reschedule_lead_days || 2} Persiapan)</label>
                                 <input 
                                     type="date" 
                                     className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all mb-4"
+                                    min={
+                                        new Date(new Date().getTime() + (publicSettings.min_reschedule_lead_days || 2) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                                    }
                                     onChange={(e) => setRescheduleData({ ...rescheduleData, newDate: e.target.value })}
                                 />
                             </div>
@@ -325,11 +576,26 @@ export default function Profile() {
                                     onChange={(e) => setRescheduleData({ ...rescheduleData, reason: e.target.value })}
                                 ></textarea>
                             </div>
+
+                            {rescheduleData.reschedule_count > 0 && (
+                                <div className="p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3">
+                                    <AlertCircle className="text-red-500 shrink-0" size={18} />
+                                    <p className="text-[10px] text-red-600 font-bold leading-tight">
+                                        Peringatan: Pemesanan ini sudah pernah di-reschedule. Permintaan baru akan ditolak otomatis oleh sistem.
+                                    </p>
+                                </div>
+                            )}
+
                             <button 
                                 onClick={handleReschedule} 
-                                className="w-full bg-eling-green text-white font-bold py-4 rounded-xl hover:bg-green-800 shadow-lg shadow-green-900/20 transition-all font-serif"
+                                disabled={rescheduleData.reschedule_count > 0}
+                                className={`w-full text-white font-bold py-4 rounded-xl transition-all font-serif ${
+                                    rescheduleData.reschedule_count > 0 
+                                    ? 'bg-gray-300 cursor-not-allowed shadow-none' 
+                                    : 'bg-eling-green hover:bg-green-800 shadow-lg shadow-green-900/20'
+                                }`}
                             >
-                                Ajukan Perubahan
+                                {rescheduleData.reschedule_count > 0 ? 'Quota Reschedule Habis' : 'Ajukan Perubahan'}
                             </button>
                         </div>
                     </div>
@@ -477,97 +743,138 @@ export default function Profile() {
 
                                 {/* Booking Context (Dates/Times) */}
                                 <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informasi Kunjungan</h4>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Calendar size={14} /></div>
-                                            <div>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">
-                                                    {selectedOrderDetail.booking_type === 'RESORT' ? 'Check-in (Rencana)' : 'Tanggal Kunjungan'}
-                                                </p>
-                                                <p className="font-black text-gray-900 text-sm tracking-tight leading-tight">
-                                                    {new Date(selectedOrderDetail.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                    {selectedOrderDetail.check_out_date && (
-                                                        <> - {new Date(selectedOrderDetail.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</>
-                                                    )}
-                                                </p>
-                                            </div>
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Informasi Reservasi</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Tgl Terpilih</p>
+                                            <p className="text-xs font-bold text-gray-900 mt-0.5">{new Date(selectedOrderDetail.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                         </div>
-                                        {selectedOrderDetail.booking_type === 'RESORT' && (
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><Clock size={14} /></div>
-                                                <div>
-                                                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Perkiraan Tiba</p>
-                                                    <p className="font-black text-gray-900 text-sm tracking-tight">
-                                                        {selectedOrderDetail.arrival_time && selectedOrderDetail.arrival_time !== 'Pilih waktu kedatangan' ? selectedOrderDetail.arrival_time : '-'}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                            <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Kapasitas</p>
+                                            <p className="text-xs font-bold text-gray-900 mt-0.5">{selectedOrderDetail.items[0]?.item?.capacity || '-'} Orang</p>
+                                        </div>
+                                        
+                                        {/* ORDER ADDON BUTTON (ONLY IF CHECKED IN) */}
+                                        {selectedOrderDetail.booking_type === 'RESORT' && selectedOrderDetail.stay_status === 'checked_in' && (
+                                            <button 
+                                                onClick={() => {
+                                                    fetchAddonFacilities();
+                                                    setIsOrderingAddon(true);
+                                                }}
+                                                className="col-span-2 py-3 bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-widest rounded-xl border border-eling-green/20 hover:bg-eling-green hover:text-white transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Plus size={14} /> Pesan Fasilitas Tambahan
+                                            </button>
                                         )}
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400"><CreditCard size={14} /></div>
-                                            <div>
-                                                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider leading-none">Metode Pembayaran</p>
-                                                <p className="font-black text-gray-900 text-sm tracking-tight uppercase">{selectedOrderDetail.payment_method || 'Midtrans VA'}</p>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Items Section */}
                             <div className="space-y-4">
-                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Item Dalam Pesanan</h4>
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Daftar Fasilitas & Item (Terbayar)</h4>
                                 <div className="space-y-3">
-                                    {selectedOrderDetail.items?.map((item, i) => (
-                                        <div 
-                                            key={i} 
-                                            onClick={() => {
-                                                if (selectedOrderDetail.booking_type === 'RESORT' && item.item?.id) {
-                                                    navigate(`/rooms/${item.item.id}`);
-                                                }
-                                            }}
-                                            className={`flex justify-between items-center p-4 rounded-2xl bg-gray-50 border border-gray-100 group transition-all ${selectedOrderDetail.booking_type === 'RESORT' ? 'cursor-pointer hover:border-eling-green/30 hover:bg-white' : ''}`}
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-16 h-12 rounded-xl bg-white overflow-hidden shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 border border-gray-100">
-                                                    {selectedOrderDetail.booking_type === 'RESORT' && item.item?.gallery?.[0] ? (
-                                                        <img src={item.item.gallery[0]} className="w-full h-full object-cover" alt={item.item.name} />
-                                                    ) : (
-                                                        <div className={`w-full h-full flex items-center justify-center ${selectedOrderDetail.booking_type === 'RESORT' ? 'text-blue-500 bg-blue-50' : 'text-eling-green bg-green-50'}`}>
-                                                            {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={20} /> : <Ticket size={20} />}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <p className="font-black text-gray-900 leading-tight tracking-tight uppercase text-sm">{item.item?.name || 'Tiket Wisata'}</p>
-                                                    
-                                                    {selectedOrderDetail.booking_type === 'RESORT' && item.item && (
-                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 opacity-80">
-                                                            {item.item.bed_type && (
-                                                                <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                                                                    <i className="fas fa-bed text-[8px] text-eling-green"></i> {item.item.bed_type}
-                                                                </span>
-                                                            )}
-                                                            <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                                                                <i className="fas fa-user-friends text-[8px] text-eling-green"></i> {item.item.capacity || 2} Tamu
-                                                            </span>
-                                                            {item.item.room_size && (
-                                                                <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                                                                    <i className="fas fa-expand text-[8px] text-eling-green"></i> {item.item.room_size} m&sup2;
-                                                                </span>
+                                    {[
+                                        ...(selectedOrderDetail.items || []),
+                                        ...((selectedOrderDetail.addons || [])
+                                            .filter(a => a.status === 'paid' || a.status === 'success')
+                                            .flatMap(a => a.items || []))
+                                    ].map((item, i) => {
+                                        const isFacility = item.item_type?.includes('Facility');
+                                        const isResort = item.item_type?.includes('Resort');
+                                        
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => {
+                                                    if (isResort && item.item?.id) {
+                                                        navigate(`/rooms/${item.item.id}`);
+                                                    }
+                                                }}
+                                                className={`flex justify-between items-center p-4 rounded-2xl bg-gray-50 border border-gray-100 group transition-all ${isResort ? 'cursor-pointer hover:border-eling-green/30 hover:bg-white' : ''}`}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-16 h-12 rounded-xl bg-white overflow-hidden shadow-sm group-hover:scale-105 transition-transform flex items-center justify-center shrink-0 border border-gray-100">
+                                                        {isResort && item.item?.gallery?.[0] ? (
+                                                            <img src={item.item.gallery[0]} className="w-full h-full object-cover" alt={item.item.name} />
+                                                        ) : (
+                                                            <div className={`w-full h-full flex items-center justify-center ${isResort ? 'text-blue-500 bg-blue-50' : (isFacility ? 'text-purple-500 bg-purple-50' : 'text-eling-green bg-green-50')}`}>
+                                                                {isResort ? <BedDouble size={20} /> : (isFacility ? <Sparkles size={20} /> : <Ticket size={20} />)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-black text-gray-900 leading-tight tracking-tight uppercase text-sm">{item.item?.name || 'Item Pesanan'}</p>
+                                                            {isFacility && (
+                                                                <span className="text-[8px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-purple-100">EXTRA</span>
                                                             )}
                                                         </div>
-                                                    )}
-                                                    
-                                                    <p className="text-[10px] text-gray-400 font-bold mt-1 tracking-widest">{item.quantity} Unit x {formatRupiah(item.price)}</p>
+                                                        
+                                                        {isResort && item.item && (
+                                                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 opacity-80">
+                                                                {item.item.bed_type && (
+                                                                    <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <i className="fas fa-bed text-[8px] text-eling-green"></i> {item.item.bed_type}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[9px] text-gray-400 font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                    <i className="fas fa-user-friends text-[8px] text-eling-green"></i> {item.item.capacity || 2} Tamu
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <p className="text-[10px] text-gray-400 font-bold mt-1 tracking-widest">{item.quantity} Unit x {formatRupiah(item.price)}</p>
+                                                    </div>
                                                 </div>
+                                                <p className="font-black text-gray-900 font-serif tracking-tight">{formatRupiah(item.subtotal)}</p>
                                             </div>
-                                            <p className="font-black text-gray-900 font-serif tracking-tight">{formatRupiah(item.subtotal)}</p>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
+
+                            {/* EXTRA ORDERS (ADDONS) */}
+                            {selectedOrderDetail.addons && selectedOrderDetail.addons.length > 0 && (
+                                <div className="pt-4 border-t-2 border-dashed border-gray-200">
+                                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Informasi Tagihan Tambahan (Extra Bill)</h4>
+                                    <div className="space-y-4">
+                                        {selectedOrderDetail.addons.map((addon) => (
+                                            <div key={addon.id} className="p-6 bg-white border border-gray-100 rounded-3xl group transition-all shadow-sm">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div>
+                                                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">{addon.id}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className={`w-1.5 h-1.5 rounded-full ${addon.status === 'paid' || addon.status === 'success' ? 'bg-green-500' : 'bg-amber-500'}`}></div>
+                                                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">{addon.status}</span>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-sm font-black text-gray-900">{formatRupiah(addon.total_price)}</span>
+                                                </div>
+                                                <div className="space-y-2 mb-4">
+                                                    {addon.items?.map((it) => (
+                                                        <div key={it.id} className="flex justify-between text-xs font-bold text-gray-600">
+                                                            <span>{it.item?.name} x{it.quantity}</span>
+                                                            <span className="text-gray-400">{formatRupiah(it.subtotal)}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {addon.status === 'pending' && (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setSelectedAddonPayment(addon);
+                                                        }}
+                                                        className="w-full py-3 bg-eling-green text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-900/10 hover:scale-[1.02] transition-all"
+                                                    >
+                                                        Bayar Tagihan Ini
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Additional Info (Check-in time, Facilities, Requests) */}
                             <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
@@ -606,55 +913,118 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            {/* Financial Summary Breakdown */}
-                            <div className="pt-8 border-t border-dashed border-gray-200 space-y-4">
-                                <div className="space-y-3">
-                                    {/* 1. Harga Kamar / Tiket */}
-                                    <div className="flex justify-between text-xs font-bold text-gray-400">
-                                        <span className="uppercase tracking-widest">Harga Kamar / Tiket</span>
-                                        <span className="text-gray-900">{formatRupiah(selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
+                            {/* Financial Summary Breakdown - Refactored for Categorized View */}
+                            <div className="pt-8 border-t border-dashed border-gray-200 space-y-8 pb-12">
+                                {/* SECTION 1: PEMBAYARAN UTAMA (AWAL) */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1.5 h-6 bg-eling-green rounded-full shadow-[0_0_8px_rgba(46,125,50,0.4)]"></div>
+                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">1. Rincian Pembayaran Utama (Awal)</h4>
                                     </div>
-
-                                    {/* 2. Fasilitas Tambahan (Jika ada) */}
-                                    {selectedOrderDetail.additional_facilities && selectedOrderDetail.additional_facilities.length > 0 && (
+                                    <div className="space-y-3 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
                                         <div className="flex justify-between text-xs font-bold text-gray-400">
-                                            <span className="uppercase tracking-widest">Biaya Fasilitas Tambahan</span>
-                                            <span className="text-gray-900">{formatRupiah(selectedOrderDetail.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
+                                            <span className="uppercase tracking-widest">Subtotal Pesanan Utama</span>
+                                            <span className="text-gray-900">{formatRupiah(selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
                                         </div>
-                                    )}
-
-                                    {/* 3. Pajak (Dihitung dari Dasar) */}
-                                    <div className="flex justify-between text-xs font-bold text-gray-400">
-                                        <span className="uppercase tracking-widest">Pajak (10%)</span>
-                                        <span className="text-gray-900">{formatRupiah(
-                                            ( (selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0) + 
-                                              (selectedOrderDetail.additional_facilities?.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0) || 0) 
-                                            ) * 0.1
-                                        )}</span>
+                                        {selectedOrderDetail.discount_amount > 0 && (
+                                            <div className="flex justify-between text-xs font-bold text-emerald-600 bg-emerald-50/50 p-2 rounded-lg">
+                                                <span className="uppercase tracking-widest flex items-center gap-2"><Sparkles size={10}/> Potongan Promo</span>
+                                                <span className="font-black">- {formatRupiah(selectedOrderDetail.discount_amount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between pt-3 border-t border-gray-200/50">
+                                            <span className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Total Bayar Pertama (Lunas)</span>
+                                            <span className="text-sm font-black text-eling-green">{formatRupiah(selectedOrderDetail.total_price || 0)}</span>
+                                        </div>
                                     </div>
-
-                                    {/* 4. Potongan Promo */}
-                                    {selectedOrderDetail.discount_amount > 0 && (
-                                        <div className="flex justify-between text-xs font-bold text-emerald-600 bg-emerald-50 p-2 rounded-lg border border-emerald-100/30">
-                                            <span className="uppercase tracking-widest">Potongan Promo</span>
-                                            <span className="font-black text-sm">- {formatRupiah(selectedOrderDetail.discount_amount)}</span>
-                                        </div>
-                                    )}
                                 </div>
-                                <div className="flex justify-between items-center bg-gray-900 p-6 rounded-[2rem] text-white shadow-xl shadow-gray-900/10">
+
+                                {/* SECTION 2: LAYANAN SAAT MENGINAP (ADDONS) */}
+                                {selectedOrderDetail.addons?.some(a => ['paid', 'success'].includes(a.status)) && (
+                                    <div className="space-y-4 bg-blue-50/20 p-6 rounded-[2rem] border border-blue-50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-1.5 h-6 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.4)]"></div>
+                                            <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">2. Layanan Saat Menginap (Extra Bill)</h4>
+                                        </div>
+                                        <div className="space-y-4 mt-4">
+                                            {selectedOrderDetail.addons
+                                                .filter(a => ['paid', 'success'].includes(a.status))
+                                                .map(addon => (
+                                                    <div key={addon.id} className="bg-white/80 p-4 rounded-2xl border border-blue-100 shadow-sm">
+                                                        <div className="flex justify-between items-center mb-2">
+                                                            <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tagihan #{addon.id}</span>
+                                                            <span className="text-xs font-black text-blue-600">{formatRupiah(addon.total_price)}</span>
+                                                        </div>
+                                                        <div className="pl-3 space-y-1">
+                                                            {addon.items?.map(it => (
+                                                                <div key={it.id} className="flex justify-between text-[10px] font-bold text-gray-500">
+                                                                    <span>• {it.item?.name} x{it.quantity}</span>
+                                                                    <span>{formatRupiah(it.subtotal)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            }
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* SECTION 3: RIWAYAT RESCHEDULE & FEES */}
+                                {selectedOrderDetail.reschedules?.some(r => r.status === 'completed') && (
+                                    <div className="space-y-4 bg-orange-50/20 p-6 rounded-[2rem] border border-orange-50">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-1.5 h-6 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.4)]"></div>
+                                            <h4 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">3. Rincian Biaya Perubahan Jadwal</h4>
+                                        </div>
+                                        <div className="space-y-4 mt-4">
+                                            {selectedOrderDetail.reschedules.filter(r => r.status === 'completed').map((r, i) => (
+                                                <div key={i} className="bg-white/80 p-4 rounded-2xl border border-orange-100 shadow-sm">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest bg-orange-50 px-2 py-0.5 rounded-full">Reschedule Success</span>
+                                                        <span className="text-xs font-black text-gray-900">{formatRupiah(r.final_charge)}</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 gap-4 mb-3 border-b border-orange-50 pb-3">
+                                                        <div>
+                                                            <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jadwal Lama</span>
+                                                            <p className="text-[10px] font-black text-gray-500 line-through">{new Date(r.old_date).toLocaleDateString('id-ID')}</p>
+                                                        </div>
+                                                        <div>
+                                                            <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1">Jadwal Baru</span>
+                                                            <p className="text-[10px] font-black text-gray-900">{new Date(r.new_date).toLocaleDateString('id-ID')}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1">
+                                                        {r.price_diff > 0 && <div className="flex justify-between text-[10px] font-bold text-gray-500"><span>Selisih Harga Kamar</span><span>{formatRupiah(r.price_diff)}</span></div>}
+                                                        {r.admin_fee > 0 && <div className="flex justify-between text-[10px] font-bold text-gray-500"><span>Biaya Layanan Admin</span><span>{formatRupiah(r.admin_fee)}</span></div>}
+                                                        {r.penalty_fee > 0 && <div className="flex justify-between text-[10px] font-bold text-gray-500"><span>Biaya Denda (Penalty)</span><span>{formatRupiah(r.penalty_fee)}</span></div>}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* CONSOLIDATED TOTAL FOOTER */}
+                                <div className="flex justify-between items-center bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-gray-900/20">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 mb-1">Total Dibayar</p>
-                                        <h5 className="text-sm font-bold text-white/60">Lunas & Dikonfirmasi</h5>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">Grand Total Investasi</p>
+                                        <h5 className="text-[9px] font-black text-white/50 uppercase tracking-widest leading-none">Seluruh Tagihan Lunas</h5>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-3xl font-black font-serif tracking-tight">{formatRupiah(selectedOrderDetail.total_price)}</span>
+                                        <span className="text-3xl font-black font-serif tracking-tight">{formatRupiah(
+                                            Number(selectedOrderDetail.total_price || 0) +
+                                            (selectedOrderDetail.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0) +
+                                            (selectedOrderDetail.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0)
+                                        )}</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Sticky Bottom Actions inside Panel */}
                         {selectedOrderDetail.booking_type !== 'RESORT' && (selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid') && (
-                            <div className="p-8 bg-gray-50 border-t border-gray-100">
+                            <div className="p-8 bg-gray-50 border-t border-gray-100 shrink-0">
                                 <button 
                                     onClick={() => {
                                         setSelectedOrderDetail(null);
@@ -816,6 +1186,197 @@ export default function Profile() {
                                 </form>
                             </section>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Reschedule Payment Modal */}
+            {selectedReschedulePayment && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 p-8">
+                            <button onClick={() => setSelectedReschedulePayment(null)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
+                        </div>
+
+                        <div className="mb-8">
+                            <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 mb-6 shadow-sm rotate-3">
+                                <CreditCard size={32} />
+                            </div>
+                            <h3 className="text-3xl font-black font-serif text-gray-900 leading-tight">Konfirmasi Pembayaran</h3>
+                            <div className="flex gap-2 mt-2">
+                                {selectedReschedulePayment.expires_at && (
+                                    <div className="bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-red-100 flex items-center gap-1.5 animate-pulse">
+                                        <Clock size={10} /> Batas Pembayaran: <CountdownTimer expiryDate={selectedReschedulePayment.expires_at} onExpire={() => { setSelectedReschedulePayment(null); fetchReschedules(); }} />
+                                    </div>
+                                )}
+                            </div>
+                            <p className="text-gray-500 font-bold mt-3">Selesaikan biaya tambahan untuk memindahkan jadwal Anda.</p>
+                        </div>
+
+                        <div className="space-y-4 mb-8 bg-gray-50 rounded-3xl p-6 border border-gray-100">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Selisih Harga</span>
+                                <span className="font-bold text-gray-900">{formatRupiah(selectedReschedulePayment.price_diff)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Biaya Admin</span>
+                                <span className="font-bold text-gray-900">{formatRupiah(selectedReschedulePayment.admin_fee)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-gray-400 font-black uppercase tracking-widest text-[10px]">Denda / Penalty</span>
+                                <span className="font-bold text-gray-900">{formatRupiah(selectedReschedulePayment.penalty_fee)}</span>
+                            </div>
+                            <div className="h-px bg-gray-200 my-2"></div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-900 font-black uppercase tracking-widest text-[11px]">Total Bayar</span>
+                                <span className="text-2xl font-black text-eling-green font-serif">{formatRupiah(selectedReschedulePayment.final_charge)}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
+                                <AlertCircle size={20} className="text-amber-500 shrink-0" />
+                                <p className="text-[11px] text-amber-700 font-bold leading-relaxed">
+                                    Setelah Anda mengklik tombol bayar, jadwal pesanan akan langsung berubah secara permanen.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                <button 
+                                    onClick={handlePayReschedule}
+                                    disabled={isPayingReschedule}
+                                    className="w-full py-5 bg-eling-green text-white font-black rounded-2xl hover:bg-green-700 transition-all shadow-xl shadow-green-900/20 flex items-center justify-center gap-2 group disabled:opacity-50"
+                                >
+                                    {isPayingReschedule ? (
+                                        'Memproses...'
+                                    ) : (
+                                        <>
+                                            Bayar & Selesaikan <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                                        </>
+                                    )}
+                                </button>
+                                
+                                <button 
+                                    onClick={handleCancelReschedule}
+                                    className="w-full py-4 text-gray-400 hover:text-red-500 font-black text-[10px] uppercase tracking-[0.2em] transition-colors"
+                                >
+                                    Batalkan Pengajuan Reschedule
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Addon Order Modal */}
+            {isOrderingAddon && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl relative flex flex-col max-h-[85vh]">
+                        <div className="absolute top-0 right-0 p-8">
+                            <button onClick={() => setIsOrderingAddon(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
+                        </div>
+
+                        <div className="mb-8">
+                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm rotate-3">
+                                <Plus size={32} />
+                            </div>
+                            <h3 className="text-3xl font-black font-serif text-gray-900 leading-tight">Pesan Fasilitas</h3>
+                            <p className="text-gray-500 font-bold mt-2">Pilih fasilitas tambahan untuk menemani masa stay Anda.</p>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                            {addonFacilities.map(f => (
+                                <div key={f.id} className="p-4 bg-gray-50 rounded-3xl border border-gray-100 flex items-center justify-between group hover:bg-white hover:border-blue-200 transition-all">
+                                    <div className="flex-1">
+                                        <h5 className="font-black text-gray-900 text-sm tracking-tight">{f.name}</h5>
+                                        <p className="text-xs font-bold text-eling-green mt-1">{formatRupiah(f.price)}</p>
+                                    </div>
+                                    <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100">
+                                        <button 
+                                            onClick={() => setAddonQuantities({...addonQuantities, [f.id]: Math.max(0, addonQuantities[f.id] - 1)})}
+                                            className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-eling-red transition"
+                                        >
+                                            <Minus size={14} />
+                                        </button>
+                                        <span className="w-6 text-center font-black text-sm text-gray-900">{addonQuantities[f.id]}</span>
+                                        <button 
+                                            onClick={() => setAddonQuantities({...addonQuantities, [f.id]: addonQuantities[f.id] + 1})}
+                                            className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-green-50 hover:text-eling-green transition"
+                                        >
+                                            <Plus size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-8 pt-8 border-t border-gray-100">
+                            <div className="flex justify-between items-center mb-6">
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Estimasi Tambahan</span>
+                                <span className="text-2xl font-black text-gray-900">
+                                    {formatRupiah(addonFacilities.reduce((acc, f) => acc + (f.price * (addonQuantities[f.id] || 0)), 0))}
+                                </span>
+                            </div>
+                            <button 
+                                onClick={handleOrderAddon}
+                                disabled={isSubmittingAddon}
+                                className="w-full py-5 bg-eling-green text-white font-black rounded-2xl hover:bg-green-700 transition-all shadow-xl shadow-green-900/20 flex items-center justify-center gap-2 group disabled:opacity-50"
+                            >
+                                {isSubmittingAddon ? 'Memproses...' : 'Konfirmasi & Pesan'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Addon Payment Modal */}
+            {selectedAddonPayment && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setSelectedAddonPayment(null)}>
+                    <div className="bg-white rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up p-10 flex flex-col relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setSelectedAddonPayment(null)} className="absolute top-8 right-8 text-gray-400 hover:text-gray-900 transition-colors"><X size={24}/></button>
+                        
+                        <div className="mb-10 text-center">
+                            <div className="w-20 h-20 bg-green-50 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-sm rotate-3">
+                                <CreditCard size={32} />
+                            </div>
+                            <h3 className="text-3xl font-black font-serif text-gray-900 leading-tight">Selesaikan Pembayaran</h3>
+                            <p className="text-gray-500 font-bold mt-2 uppercase tracking-widest text-[10px]">Tagihan Tambahan: {selectedAddonPayment.id}</p>
+                        </div>
+
+                        <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 mb-8 space-y-4">
+                            <div className="space-y-3 pb-4 border-b border-gray-200">
+                                {selectedAddonPayment.items?.map(it => (
+                                    <div key={it.id} className="flex justify-between items-center text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                        <span>{it.item?.name} x{it.quantity}</span>
+                                        <span className="text-gray-900">{formatRupiah(it.subtotal)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-between items-center pt-2">
+                                <span className="text-gray-900 font-black uppercase tracking-widest text-[11px]">Total Tagihan</span>
+                                <span className="text-2xl font-black text-eling-green font-serif">{formatRupiah(selectedAddonPayment.total_price)}</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={async () => {
+                                setIsSubmittingAddon(true);
+                                try {
+                                    await axios.post(`/api/transactions/${selectedAddonPayment.id}/success`);
+                                    toast.success("Pembayaran tambahan berhasil diverifikasi!");
+                                    setSelectedAddonPayment(null);
+                                    setSelectedOrderDetail(null);
+                                    fetchBookings();
+                                } catch (error) {
+                                    toast.error("Gagal memproses pembayaran. Silakan coba lagi.");
+                                } finally {
+                                    setIsSubmittingAddon(false);
+                                }
+                            }}
+                            disabled={isSubmittingAddon}
+                            className="w-full py-5 bg-eling-green text-white font-black rounded-2xl hover:bg-green-700 transition-all shadow-xl shadow-green-900/20 disabled:opacity-50 flex items-center justify-center gap-3 group"
+                        >
+                            {isSubmittingAddon ? 'Memproses...' : 'Lakukan Pembayaran Secepatnya'}
+                        </button>
                     </div>
                 </div>
             )}

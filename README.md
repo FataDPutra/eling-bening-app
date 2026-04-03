@@ -96,13 +96,36 @@ php artisan view:cache
 
 ---
 
-## 🌟 Fitur Unggulan Versi Terbaru
+## 🌟 Fitur Unggulan (Changelog v2.1)
 
+- **Advanced Financial Audit System**: 
+    - **Hierarchical Resort Billing**: Baris transaksi resort yang dapat diekspansi untuk melihat rincian *Initial Booking*, *Add-ons*, dan *Reschedule Fees* secara transparan.
+    - **Operational Expense Manager**: Modul pencatatan biaya gaji, pemeliharaan, dan operasional lainnya yang terintegrasi langsung dengan saldo akhir.
+    - **Real-time Finance Recap**: Laporan laba/rugi (Pemasukan vs Pengeluaran) otomatis dengan perhitungan saldo bersih periodik.
+- **Premium Date & Period Filters**: Filter Bulan & Tahun gaya Dashboard yang diterapkan di seluruh laporan keuangan (Resort, Tiket, Pengeluaran, Rekapitulasi).
+- **Automated Reschedule System**: Perhitungan otomatis selisih harga, biaya admin, dan penalti untuk pemesanan resort yang dipindah jadwal.
 - **Real-time CMS Builder**: Editor visual dengan pratinjau interaktif (klik menu di preview untuk navigasi editor).
 - **Dynamic Google Auth**: Konfigurasi OAuth via database (tanpa restart server/.env).
-- **Advanced Finance Filter**: Laporan bulanan/tahunan di Dashboard, Pesanan Resort, Tiket Wisata, dan Tiket Event.
 - **Futuristic QR Scanner**: Scanner tanpa refresh, UI transparan, dan overlay animasi modern.
 - **Zebra-Themed Layout**: Tampilan guest yang dinamis dengan selang-seling seksi terang dan gelap secara otomatis.
+
+---
+
+## 🛠️ Persiapan Produksi (Checklist Deployment)
+
+1. **Jalankan Migrasi Database**: Sangat penting untuk fitur Reschedule dan Audit Keuangan.
+   ```bash
+   php artisan migrate --force
+   ```
+2. **Setup System Settings**: Pastikan biaya admin reschedule diatur di menu **System Settings** di dashboard admin.
+3. **Build Frontend**: Pastikan aset dikompilasi ulang untuk mengaktifkan filter dan UI finansial terbaru.
+   ```bash
+   npm install && npm run build
+   ```
+4. **Optimasi Cache**: Percepat respon API dashboard dengan caching.
+   ```bash
+   php artisan optimize
+   ```
 
 ---
 

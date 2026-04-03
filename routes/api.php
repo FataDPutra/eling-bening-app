@@ -55,7 +55,12 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::post('/user/photo', [ProfileController::class, 'updatePhoto']);
     Route::put('/user/password', [ProfileController::class, 'updatePassword']);
     
-    Route::post('/reschedules', [RescheduleController::class, 'store']);
+    Route::get('/reschedules', [RescheduleController::class, 'index']); // Guest see their own
+    Route::post('/reschedules/{id}/pay', [RescheduleController::class, 'pay']);
+    Route::post('/reschedules/{id}/cancel', [RescheduleController::class, 'cancel']);
+    Route::post('/transactions/{id}/success', [TransactionController::class, 'success']);
+    Route::get('/addon-facilities', [TransactionController::class, 'getAddonFacilities']);
+    Route::post('/transactions/{id}/addons', [TransactionController::class, 'storeAddon']);
     Route::get('/transactions/check-booking/{id}', [TransactionController::class, 'checkBooking']);
 });
 
@@ -84,7 +89,6 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function() {
     Route::patch('/tickets/{ticket_uid}/check-in', [TransactionController::class, 'checkInTicket']);
 
     // Manage Reschedules
-    Route::get('/reschedules', [RescheduleController::class, 'index']);
     Route::put('/reschedules/{id}', [RescheduleController::class, 'update']);
 
     // CMS & Event Management

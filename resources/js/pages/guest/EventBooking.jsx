@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../utils/AuthContext';
@@ -22,6 +22,7 @@ const getEventImage = (event) => {
 export default function EventBooking() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
 
     const [event, setEvent] = useState(null);
@@ -63,6 +64,7 @@ export default function EventBooking() {
     };
 
     const handleQtyChange = (delta) => {
+        if (!user && delta > 0) { navigate('/login', { state: { from: location } }); return; }
         const newQty = qty + delta;
         if (newQty < 1) return;
         if (newQty > maxQty()) {
@@ -117,7 +119,7 @@ export default function EventBooking() {
     };
 
     const simulatePayment = async (method) => {
-        if (!user) { navigate('/login'); return; }
+        if (!user) { navigate('/login', { state: { from: location } }); return; }
         setShowPayment(false);
         setIsProcessing(true);
 
@@ -387,7 +389,7 @@ export default function EventBooking() {
                                 {/* CTA */}
                                 <button
                                     onClick={() => {
-                                        if (!user) { navigate('/login'); return; }
+                                        if (!user) { navigate('/login', { state: { from: location } }); return; }
                                         setShowPayment(true);
                                     }}
                                     disabled={isProcessing}

@@ -4,20 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Resort;
 use App\Models\TransactionItem;
+use App\Models\Reschedule;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class ResortController extends Controller
 {
     public function index(Request $request)
     {
-        $resorts = Resort::with('facilities')->get();
+        $resorts = Resort::with('facilities', 'facilities.resorts')->get();
 
         if ($request->has(['check_in', 'check_out'])) {
             $startDate = $request->check_in;
             $endDate   = $request->check_out;
 
             foreach ($resorts as $resort) {
-                $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
+                // Count already booked status
+                $bookedCount = TransactionItem::where('item_type', Resort::class)
                     ->where('item_id', $resort->id)
                     ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
                         $query->whereIn('status', ['pending', 'paid', 'success'])
@@ -28,10 +32,43 @@ class ResortController extends Controller
                     })
                     ->sum('quantity');
 
-                $resort->available_stock = max(0, $resort->stock - $bookedCount);
+                // Inventory Locking
+                $holdQuery = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                    ->where(function ($q) {
+                        $q->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                    })
+                    ->where(function ($q) use ($startDate, $endDate) {
+                        $q->where('new_date', '<', $endDate)
+                          ->where('new_check_out_date', '>', $startDate);
+                    })
+                    ->whereHas('transaction.items', function($q) use ($resort) {
+                        $q->where('item_id', $resort->id)->where('item_type', Resort::class);
+                    });
+
+                $rescheduleHoldCount = $holdQuery->get()->sum(function($r) use ($resort) {
+                    return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
+                });
+
+                $resort->available_stock = max(0, $resort->stock - $bookedCount - $rescheduleHoldCount);
+                $resort->is_on_hold = ($resort->available_stock <= 0 && $rescheduleHoldCount > 0);
+                
+                if ($resort->is_on_hold) {
+                    $minExpiry = (clone $holdQuery)->whereNotNull('expires_at')->min('expires_at');
+                    $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
+                } else {
+                    $resort->hold_expiry = null;
+                }
 
                 if ($resort->available_stock <= 0) {
                     $resort->status = 'full';
+                }
+
+                // Adjust price based on weekend (6: Sat, 0: Sun)
+                $day = Carbon::parse($startDate)->dayOfWeek;
+                $isWeekend = ($day === 6 || $day === 0);
+                if ($isWeekend && $resort->price_weekend > 0) {
+                    $resort->price = $resort->price_weekend;
                 }
             }
         }
@@ -72,7 +109,7 @@ class ResortController extends Controller
             $startDate = $request->check_in;
             $endDate   = $request->check_out;
 
-            $bookedCount = \App\Models\TransactionItem::where('item_type', Resort::class)
+            $bookedCount = TransactionItem::where('item_type', Resort::class)
                 ->where('item_id', $resort->id)
                 ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
                     $query->whereIn('status', ['pending', 'paid', 'success'])
@@ -83,7 +120,40 @@ class ResortController extends Controller
                 })
                 ->sum('quantity');
 
-            $resort->available_stock = max(0, $resort->stock - $bookedCount);
+            // Count active reschedules
+            $holdQuery = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                ->where(function ($q) {
+                    $q->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', now());
+                })
+                ->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('new_date', '<', $endDate)
+                      ->where('new_check_out_date', '>', $startDate);
+                })
+                ->whereHas('transaction.items', function($q) use ($resort) {
+                    $q->where('item_id', $resort->id)->where('item_type', Resort::class);
+                });
+
+            $rescheduleHoldCount = $holdQuery->get()->sum(function($r) use ($resort) {
+                return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
+            });
+
+            $resort->available_stock = max(0, $resort->stock - $bookedCount - $rescheduleHoldCount);
+            $resort->is_on_hold = ($resort->available_stock <= 0 && $rescheduleHoldCount > 0);
+            
+            if ($resort->is_on_hold) {
+                $minExpiry = (clone $holdQuery)->whereNotNull('expires_at')->min('expires_at');
+                $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
+            } else {
+                $resort->hold_expiry = null;
+            }
+
+            // Adjust price based on weekend (6: Sat, 0: Sun)
+            $day = Carbon::parse($startDate)->dayOfWeek;
+            $isWeekend = ($day === 6 || $day === 0);
+            if ($isWeekend && $resort->price_weekend > 0) {
+                $resort->price = $resort->price_weekend;
+            }
         }
 
         return response()->json($resort);
@@ -119,7 +189,7 @@ class ResortController extends Controller
     public function destroy($id)
     {
         $resort = Resort::findOrFail($id);
-        $resort->facilities()->detach(); // clean pivot
+        $resort->facilities()->detach();
         $resort->delete();
         return response()->json(['message' => 'Resort deleted successfully']);
     }

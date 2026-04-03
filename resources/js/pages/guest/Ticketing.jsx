@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../utils/AuthContext';
@@ -55,7 +55,13 @@ export default function Ticketing() {
 
     const [guestNamesData, setGuestNamesData] = useState({});
 
+    const location = useLocation();
     const updateQty = (id, delta) => {
+        if (!user && delta > 0) {
+            navigate('/login', { state: { from: location } });
+            return;
+        }
+
         const currentTotal = Object.values(qtys).reduce((acc, q) => acc + q, 0);
         const newQty = Math.max(0, (qtys[id] || 0) + delta);
         
@@ -156,7 +162,7 @@ export default function Ticketing() {
                 showCancelButton: true,
                 customClass: { popup: 'rounded-[2rem] font-serif' }
             }).then(res => {
-                if (res.isConfirmed) navigate('/login');
+                if (res.isConfirmed) navigate('/login', { state: { from: location } });
             });
             return;
         }
@@ -379,6 +385,7 @@ export default function Ticketing() {
 
                                 <button
                                     onClick={() => {
+                                        if (!user) { navigate('/login', { state: { from: location } }); return; }
                                         if (!bookDate) return alert('Silakan pilih tanggal kunjungan terlebih dahulu.');
                                         setShowPayment(true);
                                     }}

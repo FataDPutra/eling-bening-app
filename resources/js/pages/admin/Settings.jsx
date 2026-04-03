@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Shield, Globe, Lock, Key, BarChart3, Mail, RefreshCw, Smartphone, CreditCard } from 'lucide-react';
+import { Save, Shield, Globe, Lock, Key, BarChart3, RefreshCw, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 

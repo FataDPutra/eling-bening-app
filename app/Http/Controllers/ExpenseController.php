@@ -7,9 +7,18 @@ use Illuminate\Http\Request;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Expense::orderBy('transaction_date', 'desc')->get());
+        $query = Expense::orderBy('transaction_date', 'desc');
+
+        if ($request->query('month') && $request->query('month') !== 'all') {
+            $query->whereMonth('transaction_date', $request->query('month'));
+        }
+        if ($request->query('year') && $request->query('year') !== 'all') {
+            $query->whereYear('transaction_date', $request->query('year'));
+        }
+
+        return response()->json($query->get());
     }
 
     public function store(Request $request)
