@@ -150,7 +150,7 @@ export default function Ticketing() {
 
     const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
 
-    const simulatePayment = async (method) => {
+    const processPayment = async () => {
         if (!hasItems) return;
         if (!user) {
             Swal.fire({
@@ -167,7 +167,6 @@ export default function Ticketing() {
             return;
         }
 
-        setShowPayment(false);
         setIsProcessing(true);
 
         const transId = `EB-TICK-${Math.floor(Math.random() * 899999 + 100000)}`;
@@ -176,7 +175,7 @@ export default function Ticketing() {
             id: transId,
             booking_type: 'TICKET',
             booker_name: bookerName,
-            payment_method: method,
+            payment_method: 'midtrans',
             promo_id: activePromo?.id,
             check_in_date: bookDate,
             total_price: total,
@@ -193,13 +192,30 @@ export default function Ticketing() {
 
         try {
             const res = await axios.post('/api/transactions', payload);
-            setSuccessData(res.data);
-            setIsProcessing(false);
-            const formattedDate = bookDate ? new Date(bookDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('id-ID');
-            setTicketDate(`Berlaku untuk: ${formattedDate}`);
-            setShowSuccess(true);
+            
+            if (res.data.snap_token) {
+                window.snap.pay(res.data.snap_token, {
+                    onSuccess: function() {
+                        Swal.fire('Berhasil!', 'Pembayaran tiket berhasil.', 'success').then(() => navigate('/profile'));
+                    },
+                    onPending: function() {
+                        Swal.fire('Tertunda', 'Selesaikan pembayaran tiket Anda.', 'info').then(() => navigate('/profile'));
+                    },
+                    onError: function() {
+                        Swal.fire('Gagal', 'Pembayaran gagal diproses.', 'error');
+                        setIsProcessing(false);
+                    },
+                    onClose: function() {
+                        Swal.fire('Tertunda', 'Anda menutup pembayaran, pesanan Anda menunggu pelunasan.', 'warning').then(() => navigate('/profile'));
+                    }
+                });
+            } else {
+                setSuccessData(res.data);
+                const formattedDate = bookDate ? new Date(bookDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString('id-ID');
+                setTicketDate(`Berlaku untuk: ${formattedDate}`);
+                setShowSuccess(true);
+            }
         } catch (error) {
-            setIsProcessing(false);
             Swal.fire({
                 title: 'Gagal!',
                 text: error.response?.data?.message || 'Terjadi kesalahan saat memproses pesanan.',
@@ -207,6 +223,7 @@ export default function Ticketing() {
                 confirmButtonColor: '#C62828',
                 customClass: { popup: 'rounded-[2rem] font-serif' }
             });
+            setIsProcessing(false);
         }
     };
 
@@ -387,7 +404,7 @@ export default function Ticketing() {
                                     onClick={() => {
                                         if (!user) { navigate('/login', { state: { from: location } }); return; }
                                         if (!bookDate) return alert('Silakan pilih tanggal kunjungan terlebih dahulu.');
-                                        setShowPayment(true);
+                                        processPayment();
                                     }}
                                     disabled={!hasItems || isProcessing || isLoading}
                                     className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 mt-4"
@@ -412,49 +429,6 @@ export default function Ticketing() {
                     </div>
                 </div>
             </header>
-
-            {/* Payment Modal */}
-            {showPayment && (
-                <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-3xl max-w-md w-full p-8 relative">
-                        <button onClick={() => setShowPayment(false)} className="absolute top-6 right-6 text-gray-400 hover:text-gray-900">
-                            <i className="fas fa-times text-xl"></i>
-                        </button>
-                        <h3 className="font-bold text-2xl mb-2 font-serif">Pilih Metode Pembayaran</h3>
-                        <p className="text-sm text-gray-500 mb-8">Pembayaran aman dan integrasi otomatis.</p>
-
-                        <div className="space-y-4">
-                            <button onClick={() => simulatePayment('VA')} className="w-full flex items-center justify-between p-4 border rounded-2xl hover:border-eling-green hover:bg-green-50 transition group text-left">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
-                                        <i className="fas fa-university"></i>
-                                    </div>
-                                    <span className="font-bold">Virtual Account (VA)</span>
-                                </div>
-                                <i className="fas fa-chevron-right text-gray-300 group-hover:text-eling-green"></i>
-                            </button>
-                            <button onClick={() => simulatePayment('QRIS')} className="w-full flex items-center justify-between p-4 border rounded-2xl hover:border-eling-green hover:bg-green-50 transition group text-left">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-red-600">
-                                        <i className="fas fa-qrcode"></i>
-                                    </div>
-                                    <span className="font-bold">QRIS / E-Wallet</span>
-                                </div>
-                                <i className="fas fa-chevron-right text-gray-300 group-hover:text-eling-green"></i>
-                            </button>
-                            <button onClick={() => simulatePayment('CC')} className="w-full flex items-center justify-between p-4 border rounded-2xl hover:border-eling-green hover:bg-green-50 transition group text-left">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
-                                        <i className="fas fa-credit-card"></i>
-                                    </div>
-                                    <span className="font-bold">Kartu Kredit</span>
-                                </div>
-                                <i className="fas fa-chevron-right text-gray-300 group-hover:text-eling-green"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Success Modal */}
             {showSuccess && successData && (

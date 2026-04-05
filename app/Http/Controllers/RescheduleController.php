@@ -74,6 +74,33 @@ class RescheduleController extends Controller
             return response()->json(['message' => 'Batas waktu pembayaran reschedule telah habis. Silakan ajukan ulang.'], 400);
         }
 
+        if ($reschedule->final_charge > 0) {
+            if (!$reschedule->snap_token) {
+                \Midtrans\Config::$serverKey = \App\Models\SystemSetting::where('key', 'midtrans_server_key')->first()?->value ?? '';
+                \Midtrans\Config::$isProduction = \App\Models\SystemSetting::where('key', 'midtrans_is_production')->first()?->value === 'true';
+                \Midtrans\Config::$isSanitized = true;
+                \Midtrans\Config::$is3ds = true;
+
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => 'RSCH-' . $reschedule->id,
+                        'gross_amount' => (int) $reschedule->final_charge,
+                    ],
+                    'customer_details' => [
+                        'first_name' => collect($reschedule->transaction->items)->first()?->guest_names[0] ?? $reschedule->transaction->user->name,
+                        'email' => $reschedule->transaction->user->email,
+                    ],
+                ];
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $reschedule->update(['snap_token' => $snapToken]);
+            }
+
+            return response()->json([
+                'message' => 'Lanjutkan pembayaran perubahan jadwal.',
+                'snap_token' => $reschedule->snap_token
+            ]);
+        }
+
         return DB::transaction(function() use ($reschedule, $request) {
             $reschedule->update([
                 'status' => 'completed',
@@ -112,7 +139,7 @@ class RescheduleController extends Controller
         return response()->json(['message' => 'Permintaan reschedule berhasil dibatalkan. Stok telah dilepas.']);
     }
 
-    private function finalizeReschedule($reschedule)
+    public function finalizeReschedule($reschedule)
     {
         $transaction = $reschedule->transaction;
         $transaction->update([

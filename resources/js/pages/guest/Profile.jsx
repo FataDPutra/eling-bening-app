@@ -132,21 +132,52 @@ export default function Profile() {
         if (!selectedReschedulePayment) return;
         setIsPayingReschedule(true);
         try {
-            await axios.post(`/api/reschedules/${selectedReschedulePayment.id}/pay`);
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Jadwal Anda telah resmi diperbarui.',
-                icon: 'success',
-                confirmButtonColor: '#2E7D32',
-                customClass: { popup: 'rounded-[2rem]' }
-            });
-            setSelectedReschedulePayment(null);
-            fetchBookings();
-            fetchReschedules();
+            const response = await axios.post(`/api/reschedules/${selectedReschedulePayment.id}/pay`);
+            
+            if (response.data.snap_token) {
+                window.snap.pay(response.data.snap_token, {
+                    onSuccess: function() {
+                        Swal.fire({
+                            title: 'Berhasil!',
+                            text: 'Jadwal Anda telah resmi diperbarui.',
+                            icon: 'success',
+                            confirmButtonColor: '#2E7D32',
+                            customClass: { popup: 'rounded-[2rem]' }
+                        });
+                        setSelectedReschedulePayment(null);
+                        fetchBookings();
+                        fetchReschedules();
+                        setIsPayingReschedule(false);
+                    },
+                    onPending: function() {
+                        toast.info('Menunggu pembayaran diselesaikan.');
+                        setIsPayingReschedule(false);
+                    },
+                    onError: function() {
+                        toast.error('Pembayaran gagal.');
+                        setIsPayingReschedule(false);
+                    },
+                    onClose: function() {
+                        toast.error('Pembayaran dibatalkan.');
+                        setIsPayingReschedule(false);
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Jadwal Anda telah resmi diperbarui.',
+                    icon: 'success',
+                    confirmButtonColor: '#2E7D32',
+                    customClass: { popup: 'rounded-[2rem]' }
+                });
+                setSelectedReschedulePayment(null);
+                fetchBookings();
+                fetchReschedules();
+                setIsPayingReschedule(false);
+            }
         } catch (error) {
             console.error(error);
             toast.error(error.response?.data?.message || 'Gagal memproses pembayaran.');
-        } finally {
             setIsPayingReschedule(false);
         }
     };
@@ -427,7 +458,7 @@ export default function Profile() {
                                                     <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${booking.status === 'success' || booking.status === 'paid' ? 'bg-green-100 text-green-700' : (booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500')}`}>
                                                         {booking.status}
                                                     </span>
-                                                    {activeTab === 'addons' && booking.status === 'pending' && (
+                                                    {booking.status === 'pending' && (
                                                         <button 
                                                             onClick={() => setSelectedAddonPayment(booking)}
                                                             className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
@@ -1380,13 +1411,34 @@ export default function Profile() {
                             onClick={async () => {
                                 setIsSubmittingAddon(true);
                                 try {
-                                    await axios.post(`/api/transactions/${selectedAddonPayment.id}/success`);
-                                    toast.success("Pembayaran tambahan berhasil diverifikasi!");
-                                    setSelectedAddonPayment(null);
-                                    setSelectedOrderDetail(null);
-                                    fetchBookings();
+                                    const res = await axios.post(`/api/transactions/${selectedAddonPayment.id}/pay-token`);
+                                    const snapToken = res.data.snap_token;
+
+                                    if (snapToken) {
+                                        window.snap.pay(snapToken, {
+                                            onSuccess: function() {
+                                                toast.success("Pembayaran berhasil diselesaikan!");
+                                                setSelectedAddonPayment(null);
+                                                setSelectedOrderDetail(null);
+                                                fetchBookings();
+                                            },
+                                            onPending: function() {
+                                                toast.info("Pembayaran tertunda. Selesaikan segera.");
+                                                setSelectedAddonPayment(null);
+                                            },
+                                            onError: function() {
+                                                toast.error("Pembayaran gagal.");
+                                            },
+                                            onClose: function() {
+                                                toast.error("Popup ditutup tanpa menyelesaikan pembayaran.");
+                                            }
+                                        });
+                                    } else {
+                                        toast.info("Transaksi ini tidak memerlukan pembayaran gateway.");
+                                        setSelectedAddonPayment(null);
+                                    }
                                 } catch (error) {
-                                    toast.error("Gagal memproses pembayaran. Silakan coba lagi.");
+                                    toast.error(error.response?.data?.message || "Gagal memproses pembayaran. Silakan coba lagi.");
                                 } finally {
                                     setIsSubmittingAddon(false);
                                 }

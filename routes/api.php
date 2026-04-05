@@ -24,6 +24,9 @@ require __DIR__.'/auth.php';
 Route::get('/auth/google', [SocialiteController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCallback']);
 
+// Midtrans Webhook
+Route::post('/midtrans/callback', [\App\Http\Controllers\PaymentCallbackController::class, 'handle']);
+
     // Public Endpoints
     Route::get('/resorts', [ResortController::class, 'index']);
     Route::get('/resorts/{id}', [ResortController::class, 'show']);
@@ -59,6 +62,7 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::post('/reschedules/{id}/pay', [RescheduleController::class, 'pay']);
     Route::post('/reschedules/{id}/cancel', [RescheduleController::class, 'cancel']);
     Route::post('/transactions/{id}/success', [TransactionController::class, 'success']);
+    Route::post('/transactions/{id}/pay-token', [TransactionController::class, 'payToken']);
     Route::get('/addon-facilities', [TransactionController::class, 'getAddonFacilities']);
     Route::post('/transactions/{id}/addons', [TransactionController::class, 'storeAddon']);
     Route::get('/transactions/check-booking/{id}', [TransactionController::class, 'checkBooking']);

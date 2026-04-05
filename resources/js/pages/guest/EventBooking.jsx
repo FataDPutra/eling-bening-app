@@ -118,9 +118,8 @@ export default function EventBooking() {
         }
     };
 
-    const simulatePayment = async (method) => {
+    const processPayment = async () => {
         if (!user) { navigate('/login', { state: { from: location } }); return; }
-        setShowPayment(false);
         setIsProcessing(true);
 
         const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
@@ -147,9 +146,27 @@ export default function EventBooking() {
 
         try {
             const res = await axios.post('/api/transactions', payload);
-            setSuccessData(res.data);
-            setIsProcessing(false);
-            setShowSuccess(true);
+            if (res.data.snap_token) {
+                window.snap.pay(res.data.snap_token, {
+                    onSuccess: function() {
+                        Swal.fire('Berhasil!', 'Pembayaran tiket berhasil.', 'success').then(() => navigate('/profile'));
+                    },
+                    onPending: function() {
+                        Swal.fire('Tertunda', 'Selesaikan pembayaran tiket Anda.', 'info').then(() => navigate('/profile'));
+                    },
+                    onError: function() {
+                        Swal.fire('Gagal', 'Pembayaran gagal diproses.', 'error');
+                        setIsProcessing(false);
+                    },
+                    onClose: function() {
+                        Swal.fire('Tertunda', 'Anda menutup pembayaran, pesanan Anda menunggu pelunasan.', 'warning').then(() => navigate('/profile'));
+                    }
+                });
+            } else {
+                setSuccessData(res.data);
+                setIsProcessing(false);
+                setShowSuccess(true);
+            }
         } catch (err) {
             setIsProcessing(false);
             Swal.fire({
@@ -390,7 +407,7 @@ export default function EventBooking() {
                                 <button
                                     onClick={() => {
                                         if (!user) { navigate('/login', { state: { from: location } }); return; }
-                                        setShowPayment(true);
+                                        processPayment();
                                     }}
                                     disabled={isProcessing}
                                     className="w-full bg-eling-red text-white font-black py-5 rounded-2xl shadow-xl shadow-eling-red/20 hover:bg-eling-red/90 hover:scale-[1.02] transition-all text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 group disabled:opacity-60 disabled:cursor-not-allowed"
@@ -421,48 +438,6 @@ export default function EventBooking() {
                     </div>
                 </div>
             </div>
-
-            {/* ─── PAYMENT MODAL ─── */}
-            {showPayment && (
-                <div className="fixed inset-0 z-[600] bg-black/70 flex items-center justify-center p-6 backdrop-blur-md animate-fade-in">
-                    <div className="bg-white rounded-[3rem] max-w-md w-full p-10 relative shadow-2xl overflow-hidden animate-scale-up">
-                        <div className="absolute top-0 right-0 w-48 h-48 bg-eling-red/5 rounded-full -mr-24 -mt-24 blur-3xl" />
-                        <button onClick={() => setShowPayment(false)} className="absolute top-8 right-8 text-gray-300 hover:text-gray-900 transition-colors">
-                            <X size={22} />
-                        </button>
-
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-eling-red block mb-1">Secure Checkout</span>
-                        <h3 className="text-2xl font-black mb-1 font-serif text-gray-900">Pilih Pembayaran</h3>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-6">
-                            Total: <span className="text-eling-green">{formatRupiah(total)}</span>
-                        </p>
-
-                        <div className="space-y-3">
-                            {[
-                                { name: 'Virtual Account', icon: <University size={20} />, method: 'VA', color: 'bg-blue-50 text-blue-600' },
-                                { name: 'QRIS / E-Wallet', icon: <QrCode size={20} />, method: 'QRIS', color: 'bg-eling-red/5 text-eling-red' },
-                                { name: 'Kartu Kredit', icon: <CreditCard size={20} />, method: 'CC', color: 'bg-gray-100 text-gray-600' },
-                            ].map(item => (
-                                <button
-                                    key={item.method}
-                                    onClick={() => simulatePayment(item.method)}
-                                    className="w-full flex items-center justify-between p-5 border border-gray-100 rounded-2xl hover:border-eling-green hover:bg-green-50 transition-all group active:scale-95"
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-12 h-12 ${item.color} rounded-xl flex items-center justify-center shadow-sm`}>
-                                            {item.icon}
-                                        </div>
-                                        <span className="font-black text-sm text-gray-700">{item.name}</span>
-                                    </div>
-                                    <div className="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center group-hover:bg-eling-green group-hover:text-white group-hover:border-eling-green transition-all">
-                                        <ArrowRight size={14} />
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Success Modal */}
             {showSuccess && (

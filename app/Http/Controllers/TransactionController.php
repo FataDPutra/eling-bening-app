@@ -167,6 +167,8 @@ class TransactionController extends Controller
                 }
             }
 
+            $status = $validated['total_price'] > 0 ? 'pending' : 'success';
+
             $transaction = Transaction::create([
                 'id' => $validated['id'],
                 'user_id' => $request->user()->id,
@@ -184,7 +186,7 @@ class TransactionController extends Controller
                 'booker_phone' => $validated['booker_phone'] ?? null,
                 'arrival_time' => $validated['arrival_time'] ?? null,
                 'additional_facilities' => $validated['additional_facilities'] ?? null,
-                'status' => 'success'
+                'status' => $status
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -198,7 +200,24 @@ class TransactionController extends Controller
                 ]);
             }
 
-            $this->generateTickets($transaction, $validated['items']);
+            if ($status === 'success') {
+                $this->generateTickets($transaction, $validated['items']);
+            } else {
+                $this->configureMidtrans();
+                $params = [
+                    'transaction_details' => [
+                        'order_id' => $transaction->id,
+                        'gross_amount' => (int) $transaction->total_price,
+                    ],
+                    'customer_details' => [
+                        'first_name' => $transaction->booker_name,
+                        'email' => $transaction->booker_email,
+                        'phone' => $transaction->booker_phone,
+                    ],
+                ];
+                $snapToken = \Midtrans\Snap::getSnapToken($params);
+                $transaction->update(['snap_token' => $snapToken]);
+            }
 
             if ($transaction->promo_id) {
                 $transaction->promo()->increment('used_count');
@@ -206,6 +225,14 @@ class TransactionController extends Controller
 
             return response()->json($transaction->load(['items', 'tickets']), 201);
         });
+    }
+
+    private function configureMidtrans()
+    {
+        \Midtrans\Config::$serverKey = SystemSetting::where('key', 'midtrans_server_key')->first()?->value ?? '';
+        \Midtrans\Config::$isProduction = SystemSetting::where('key', 'midtrans_is_production')->first()?->value === 'true';
+        \Midtrans\Config::$isSanitized = true;
+        \Midtrans\Config::$is3ds = true;
     }
 
     public function show(Request $request, $id)
@@ -255,6 +282,48 @@ class TransactionController extends Controller
         return response()->json($transaction->load('tickets'));
     }
 
+    public function payToken(Request $request, $id)
+    {
+        $transaction = Transaction::findOrFail($id);
+        
+        $user = $request->user();
+        if ($user->role !== 'admin' && $user->id !== $transaction->user_id) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        if ($transaction->status !== 'pending') {
+            return response()->json(['message' => 'Transaksi tidak dapat dibayar lagi.'], 400);
+        }
+
+        if ($transaction->total_price <= 0) {
+            return response()->json(['message' => 'Tidak memerlukan pembayaran gateway.', 'snap_token' => null]);
+        }
+
+        $this->configureMidtrans();
+
+        // Append unix timestamp to orderId to bypass identical order_id restriction if cart amount changed
+        $orderId = $transaction->id . '-' . time();
+
+        $params = [
+            'transaction_details' => [
+                'order_id' => $orderId,
+                'gross_amount' => (int) $transaction->total_price,
+            ],
+            'customer_details' => [
+                'first_name' => collect($transaction->items)->first()?->guest_names[0] ?? $transaction->booker_name,
+                'email' => $transaction->booker_email ?? $transaction->user->email,
+            ],
+        ];
+
+        $snapToken = \Midtrans\Snap::getSnapToken($params);
+        $transaction->update(['snap_token' => $snapToken]);
+
+        return response()->json([
+            'message' => 'Token berhasil diambil',
+            'snap_token' => $snapToken
+        ]);
+    }
+
     public function success($id)
     {
         $transaction = Transaction::findOrFail($id);
@@ -269,7 +338,7 @@ class TransactionController extends Controller
         ]);
     }
 
-    private function generateTickets($transaction, $itemsData)
+    public function generateTickets($transaction, $itemsData)
     {
         if ($transaction->tickets()->count() > 0) return;
         if (!in_array($transaction->booking_type, ['TICKET', 'EVENT'])) return;

@@ -135,7 +135,7 @@ export default function Booking() {
             booker_name: `${firstName} ${lastName}`.trim(), 
             booker_email: email,
             booker_phone: phone,
-            payment_method: paymentMethod,
+            payment_method: 'Midtrans',
             promo_id: activePromo?.id,
             check_in_date: bookingData.checkIn,
             check_out_date: bookingData.checkOut,
@@ -156,16 +156,60 @@ export default function Booking() {
         };
 
         try {
-            await axios.post('/api/transactions', payload);
-            Swal.fire({
-                title: 'Berhasil!',
-                text: 'Pesanan resort Anda telah dikonfirmasi.',
-                icon: 'success',
-                confirmButtonColor: '#2E7D32',
-                customClass: { popup: 'rounded-[2rem]' }
-            }).then(() => {
-                navigate('/profile');
-            });
+            const response = await axios.post('/api/transactions', payload);
+            const data = response.data;
+
+            if (data.snap_token) {
+                window.snap.pay(data.snap_token, {
+                    onSuccess: function(result){
+                        Swal.fire({
+                            title: 'Pembayaran Berhasil!',
+                            text: 'Pesanan resort Anda telah dibayar.',
+                            icon: 'success',
+                            confirmButtonColor: '#2E7D32',
+                            customClass: { popup: 'rounded-[2rem]' }
+                        }).then(() => navigate('/profile'));
+                    },
+                    onPending: function(result){
+                        Swal.fire({
+                            title: 'Menunggu Pembayaran',
+                            text: 'Selesaikan pembayaran Anda segera.',
+                            icon: 'info',
+                            confirmButtonColor: '#2E7D32',
+                            customClass: { popup: 'rounded-[2rem]' }
+                        }).then(() => navigate('/profile'));
+                    },
+                    onError: function(result){
+                        Swal.fire({
+                            title: 'Pembayaran Gagal',
+                            text: 'Terjadi kesalahan saat memproses pembayaran.',
+                            icon: 'error',
+                            customClass: { popup: 'rounded-[2rem]' }
+                        });
+                        setIsSubmitting(false);
+                    },
+                    onClose: function(){
+                        Swal.fire({
+                            title: 'Pembayaran Tertunda',
+                            text: 'Anda menutup popup. Selesaikan pembayaran di halaman profil.',
+                            icon: 'warning',
+                            confirmButtonColor: '#2E7D32',
+                            customClass: { popup: 'rounded-[2rem]' }
+                        }).then(() => navigate('/profile'));
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: 'Pesanan resort Anda telah dikonfirmasi.',
+                    icon: 'success',
+                    confirmButtonColor: '#2E7D32',
+                    customClass: { popup: 'rounded-[2rem]' }
+                }).then(() => {
+                    navigate('/profile');
+                });
+                setIsSubmitting(false);
+            }
         } catch (error) {
             Swal.fire({
                 title: 'Gagal!',
@@ -173,7 +217,6 @@ export default function Booking() {
                 icon: 'error',
                 customClass: { popup: 'rounded-[2rem]' }
             });
-        } finally {
             setIsSubmitting(false);
         }
     };
@@ -425,49 +468,9 @@ export default function Booking() {
                                     value={specialRequest}
                                     onChange={(e) => setSpecialRequest(e.target.value)}
                                 ></textarea>
-                            </div>
                         </div>
                     </div>
-
-                    {/* 4. Metode Pembayaran */}
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-gray-100 transition hover:shadow-md">
-                        <div className="flex items-center justify-between mb-10">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-green-50 text-eling-green flex items-center justify-center shadow-sm">
-                                    <CreditCard size={24} />
-                                </div>
-                                <div>
-                                    <h2 className="text-2xl font-black font-serif text-gray-900 tracking-tight">Metode Pembayaran</h2>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Secure Transaction</p>
-                                </div>
-                            </div>
-                            <span className="w-8 h-8 rounded-full bg-gray-50 text-gray-300 flex items-center justify-center font-black text-xs border border-gray-100 italic">04</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                            <label className={`relative flex flex-col p-8 border-2 rounded-[2rem] cursor-pointer transition-all ${paymentMethod === 'va' ? 'border-eling-green bg-green-50/50 shadow-sm shadow-green-900/5' : 'border-gray-50 bg-white hover:bg-gray-50/50 hover:border-gray-100'} group`}>
-                                <input type="radio" checked={paymentMethod === 'va'} onChange={() => setPaymentMethod('va')} className="absolute top-8 right-8 w-6 h-6 accent-eling-green" />
-                                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-50 group-hover:scale-110 transition-transform">
-                                    <div className={`text-2xl ${paymentMethod === 'va' ? 'text-eling-green' : 'text-gray-400 group-hover:text-eling-green'}`}>
-                                        <i className="fas fa-university"></i>
-                                    </div>
-                                </div>
-                                <span className="font-black text-gray-900 text-xl tracking-tight">Virtual Account</span>
-                                <span className="text-[11px] text-gray-400 mt-2 font-bold uppercase tracking-wider">BCA, Mandiri, BNI, BRI</span>
-                            </label>
-
-                            <label className={`relative flex flex-col p-8 border-2 rounded-[2rem] cursor-pointer transition-all ${paymentMethod === 'qris' ? 'border-eling-green bg-green-50/50 shadow-sm shadow-green-900/5' : 'border-gray-50 bg-white hover:bg-gray-50/50 hover:border-gray-100'} group`}>
-                                <input type="radio" checked={paymentMethod === 'qris'} onChange={() => setPaymentMethod('qris')} className="absolute top-8 right-8 w-6 h-6 accent-eling-green" />
-                                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-50 group-hover:scale-110 transition-transform">
-                                    <div className={`text-2xl ${paymentMethod === 'qris' ? 'text-eling-green' : 'text-gray-400 group-hover:text-eling-green'}`}>
-                                        <i className="fas fa-qrcode"></i>
-                                    </div>
-                                </div>
-                                <span className="font-black text-gray-900 text-xl tracking-tight">QRIS / E-Wallet</span>
-                                <span className="text-[11px] text-gray-400 mt-2 font-bold uppercase tracking-wider">OVO, Gopay, Dana, LinkAja</span>
-                            </label>
-                        </div>
-                    </div>
+                </div>
                 </div>
 
                 {/* Right: Summary Sidebar */}
@@ -611,9 +614,9 @@ export default function Booking() {
                                     <p className="text-blue-100 font-bold text-[10px] leading-relaxed uppercase tracking-wider">Pemesanan ini tidak dapat dibatalkan / refund.</p>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
+            </div>
             </div>
         </main>
     );
