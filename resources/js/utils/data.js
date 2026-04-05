@@ -288,3 +288,23 @@ export function saveEvents(events) {
 export function formatRupiah(n) {
     return 'Rp ' + Number(n).toLocaleString('id-ID');
 }
+
+export function calculateTotalStayPrice(room, checkIn, checkOut) {
+    if (!room || !checkIn || !checkOut) return 0;
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const nights = Math.max(1, Math.floor((end - start) / (1000 * 60 * 60 * 24)));
+    let total = 0;
+    for (let i = 0; i < nights; i++) {
+        const current = new Date(start);
+        current.setDate(start.getDate() + i);
+        const day = current.getDay();
+        const isWeekend = (day === 6 || day === 0);
+        
+        const weekdayVal = Number(room.weekday_price || room.price || 0);
+        const weekendVal = Number(room.price_weekend || room.priceWeekend || weekdayVal);
+        
+        total += isWeekend ? weekendVal : weekdayVal;
+    }
+    return total;
+}

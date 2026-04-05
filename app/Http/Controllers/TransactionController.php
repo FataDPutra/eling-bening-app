@@ -110,17 +110,23 @@ class TransactionController extends Controller
                 foreach ($validated['items'] as $item) {
                     if ($item['item_type'] === 'App\\Models\\Resort') {
                         $resort = Resort::findOrFail($item['item_id']);
-                        $bookedCount = TransactionItem::where('item_id', $item['item_id'])
-                            ->where('item_type', 'App\\Models\\Resort')
+                        
+                        $ci = Carbon::parse($validated['check_in_date']);
+                        $co = Carbon::parse($validated['check_out_date']);
+                        $nightsNum = max(1, $ci->diffInDays($co));
+
+                        // Peak occupancy check
+                        $overlappingTransactions = TransactionItem::where('item_id', $item['item_id'])
+                            ->where('item_type', Resort::class)
                             ->whereHas('transaction', function($q) use ($validated) {
                                 $q->whereIn('status', ['pending', 'paid', 'success'])
                                   ->where(function($dateFilter) use ($validated) {
                                       $dateFilter->where('check_in_date', '<', $validated['check_out_date'])
                                                  ->where('check_out_date', '>', $validated['check_in_date']);
                                   });
-                            })->sum('quantity');
+                            })->get();
 
-                        $rescheduleHoldCount = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                        $overlappingReschedules = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
                             ->where(function ($q) {
                                 $q->whereNull('expires_at')
                                   ->orWhere('expires_at', '>', now());
@@ -130,14 +136,29 @@ class TransactionController extends Controller
                                   ->where('new_check_out_date', '>', $validated['check_in_date']);
                             })
                             ->whereHas('transaction.items', function($q) use ($item) {
-                                $q->where('item_id', $item['item_id'])->where('item_type', 'App\\Models\\Resort');
-                            })
-                            ->get()
-                            ->sum(function($r) use ($item) {
-                                return $r->transaction->items->where('item_id', $item['item_id'])->where('item_type', 'App\\Models\\Resort')->sum('quantity');
+                                $q->where('item_id', $item['item_id'])->where('item_type', Resort::class);
+                            })->with('transaction.items')->get();
+
+                        $maxOccupancy = 0;
+                        for ($i = 0; $i < $nightsNum; $i++) {
+                            $nightDate = (clone $ci)->addDays($i)->format('Y-m-d');
+                            $nextNightDate = (clone $ci)->addDays($i + 1)->format('Y-m-d');
+
+                            $occ = $overlappingTransactions->filter(function($io) use ($nightDate, $nextNightDate) {
+                                return $io->transaction->check_in_date < $nextNightDate && $io->transaction->check_out_date > $nightDate;
+                            })->sum('quantity');
+
+                            $resOcc = $overlappingReschedules->filter(function($ro) use ($nightDate, $nextNightDate) {
+                                $nr_co = $ro->new_check_out_date ?? Carbon::parse($ro->new_date)->addDay()->format('Y-m-d');
+                                return $ro->new_date < $nextNightDate && $nr_co > $nightDate;
+                            })->sum(function($r) use ($item) {
+                                return $r->transaction->items->where('item_id', $item['item_id'])->where('item_type', Resort::class)->sum('quantity');
                             });
 
-                        if (($bookedCount + $rescheduleHoldCount + $item['quantity']) > $resort->stock) {
+                            if (($occ + $resOcc) > $maxOccupancy) $maxOccupancy = $occ + $resOcc;
+                        }
+
+                        if (($maxOccupancy + $item['quantity']) > $resort->stock) {
                             return response()->json([
                                 'message' => "Slot untuk {$resort->name} sudah penuh atau sedang ditahan untuk perubahan jadwal tamu lain."
                             ], 422);
@@ -325,13 +346,22 @@ class TransactionController extends Controller
             return response()->json(['message' => "Tanggal baru terlalu dekat. Minimal harus dilakukan {$minLead} hari dari hari ini."], 400);
         }
 
-        $newCheckOut = $validated['new_check_out_date'] ?? Carbon::parse($newDate)->addDay()->format('Y-m-d');
+        $orig_ci = Carbon::parse($transaction->check_in_date);
+        $orig_co = Carbon::parse($transaction->check_out_date);
+        $origNights = max(1, $orig_ci->diffInDays($orig_co));
+
+        $newCheckOut = $validated['new_check_out_date'] ?? Carbon::parse($newDate)->addDays($origNights)->format('Y-m-d');
         
         foreach ($transaction->items as $item) {
             if ($item->item_type === 'App\Models\Resort') {
                 $resort = Resort::findOrFail($item->item_id);
                 
-                $bookedCount = TransactionItem::where('item_id', $item->item_id)
+                $range_start = Carbon::parse($newDate);
+                $range_end = Carbon::parse($newCheckOut);
+                $nightsNum = max(1, $range_start->diffInDays($range_end));
+
+                // Peak occupancy check
+                $overlappingTransactions = TransactionItem::where('item_id', $item->item_id)
                     ->where('item_type', 'App\Models\Resort')
                     ->whereHas('transaction', function($q) use ($newDate, $newCheckOut) {
                         $q->whereIn('status', ['pending', 'paid', 'success'])
@@ -339,9 +369,9 @@ class TransactionController extends Controller
                               $dateFilter->where('check_in_date', '<', $newCheckOut)
                                          ->where('check_out_date', '>', $newDate);
                           });
-                    })->sum('quantity');
+                    })->get();
 
-                $rescheduleHoldCount = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                $overlappingReschedules = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
                     ->where(function ($q) {
                         $q->whereNull('expires_at')
                           ->orWhere('expires_at', '>', now());
@@ -352,13 +382,28 @@ class TransactionController extends Controller
                     })
                     ->whereHas('transaction.items', function($q) use ($item) {
                         $q->where('item_id', $item->item_id)->where('item_type', 'App\Models\Resort');
-                    })
-                    ->get()
-                    ->sum(function($r) use ($item) {
-                        return $r->transaction->items->where('item_id', $item->item_id)->where('item_type', 'App\Models\Resort')->sum('quantity');
+                    })->with('transaction.items')->get();
+
+                $maxOccupancy = 0;
+                for ($i = 0; $i < $nightsNum; $i++) {
+                    $nightDate = (clone $range_start)->addDays($i)->format('Y-m-d');
+                    $nextNightDate = (clone $range_start)->addDays($i+1)->format('Y-m-d');
+
+                    $occ = $overlappingTransactions->filter(function($io) use ($nightDate, $nextNightDate) {
+                        return $io->transaction->check_in_date < $nextNightDate && $io->transaction->check_out_date > $nightDate;
+                    })->sum('quantity');
+
+                    $resOcc = $overlappingReschedules->filter(function($ro) use ($nightDate, $nextNightDate) {
+                        $nr_co = $ro->new_check_out_date ?? Carbon::parse($ro->new_date)->addDay()->format('Y-m-d');
+                        return $ro->new_date < $nextNightDate && $nr_co > $nightDate;
+                    })->sum(function($r) use ($item) {
+                        return $r->transaction->items->where('item_id', $item->item_id)->where('item_type', Resort::class)->sum('quantity');
                     });
 
-                if (($bookedCount + $rescheduleHoldCount + $item->quantity) > $resort->stock) {
+                    if (($occ + $resOcc) > $maxOccupancy) $maxOccupancy = $occ + $resOcc;
+                }
+
+                if (($maxOccupancy + $item->quantity) > $resort->stock) {
                     return response()->json([
                         'message' => "Maaf, unit {$resort->name} tidak tersedia pada tanggal baru yang Anda pilih."
                     ], 422);
@@ -369,7 +414,6 @@ class TransactionController extends Controller
         $adminFee   = (float) (SystemSetting::where('key', 'reschedule_admin_fee')->first()?->value ?? 0);
         $penaltyFee = (float) (SystemSetting::where('key', 'reschedule_penalty')->first()?->value ?? 0);
 
-        $isWeekend = fn($dateStr) => in_array(Carbon::parse($dateStr)->dayOfWeek, [0, 6]);
 
         $oldCheckIn  = $transaction->check_in_date;
         $oldCheckOut = $transaction->check_out_date;
@@ -380,16 +424,28 @@ class TransactionController extends Controller
         
         $newNights = max(1, Carbon::parse($newCheckIn)->startOfDay()->diffInDays(Carbon::parse($newCheckOut)->startOfDay()));
 
-        $resortItem = $transaction->items->first();
-        $priceWeekday = (float) ($resortItem?->item?->price ?? $resortItem?->price ?? 0);
-        $priceWeekend = (float) ($resortItem?->item?->price_weekend ?? $priceWeekday);
+        $resortItem = $transaction->items->where('item_type', Resort::class)->first();
+        $resort = Resort::find($resortItem?->item_id);
+        
+        $priceWeekday = (float) ($resort?->price ?? $resortItem?->price ?? 0);
+        $priceWeekend = (float) ($resort?->price_weekend ?? $priceWeekday);
         $qty = (int) ($resortItem?->quantity ?? 1);
 
-        $oldPricePerNight = $isWeekend($oldCheckIn) ? $priceWeekend : $priceWeekday;
-        $newPricePerNight = $isWeekend($newCheckIn) ? $priceWeekend : $priceWeekday;
+        $calculateTotal = function($checkIn, $checkOut) use ($priceWeekday, $priceWeekend, $qty) {
+            $start = Carbon::parse($checkIn);
+            $end = Carbon::parse($checkOut);
+            $nights = max(1, $start->diffInDays($end));
+            $total = 0;
+            for ($i = 0; $i < $nights; $i++) {
+                $day = (clone $start)->addDays($i)->dayOfWeek;
+                $isWeekend = ($day === 6 || $day === 0);
+                $total += ($isWeekend && $priceWeekend > 0) ? $priceWeekend : $priceWeekday;
+            }
+            return $total * $qty;
+        };
 
-        $oldTotal = $oldPricePerNight * $oldNights * $qty;
-        $newTotal = $newPricePerNight * $newNights * $qty;
+        $oldTotal = $calculateTotal($oldCheckIn, $oldCheckOut);
+        $newTotal = $calculateTotal($newCheckIn, $newCheckOut);
 
         $priceDiff  = max(0, $newTotal - $oldTotal);
         $finalCharge = $priceDiff + $adminFee + $penaltyFee;

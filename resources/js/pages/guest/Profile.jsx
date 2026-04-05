@@ -474,48 +474,51 @@ export default function Profile() {
                                                     >
                                                         Lihat Detail
                                                     </button>
-                                                    <button 
-                                                        onClick={() => {
-                                                            const checkIn = new Date(booking.check_in_date);
-                                                            checkIn.setHours(0,0,0,0);
-                                                            const now = new Date();
-                                                            now.setHours(0,0,0,0);
-                                                            const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
-                                                            const maxDays = Number(publicSettings.max_reschedule_days || 7);
-                                                            
-                                                            if (diff < maxDays) {
-                                                                Swal.fire({
-                                                                    title: 'Maaf',
-                                                                    text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
-                                                                    icon: 'error',
-                                                                    confirmButtonColor: '#C62828',
-                                                                    customClass: { popup: 'rounded-[2rem]' }
-                                                                });
-                                                                return;
-                                                            }
+                                                    {isResort && (
+                                                        <button 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const checkIn = new Date(booking.check_in_date);
+                                                                checkIn.setHours(0,0,0,0);
+                                                                const now = new Date();
+                                                                now.setHours(0,0,0,0);
+                                                                const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+                                                                const maxDays = Number(publicSettings.max_reschedule_days || 7);
+                                                                
+                                                                if (diff < maxDays) {
+                                                                    Swal.fire({
+                                                                        title: 'Maaf',
+                                                                        text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
+                                                                        icon: 'error',
+                                                                        confirmButtonColor: '#C62828',
+                                                                        customClass: { popup: 'rounded-[2rem]' }
+                                                                    });
+                                                                    return;
+                                                                }
 
-                                                            if (booking.reschedule_count > 0) {
-                                                                Swal.fire({
-                                                                    title: 'Peringatan',
-                                                                    text: 'Anda sudah pernah melakukan reschedule untuk pemesanan ini. Perubahan jadwal hanya diizinkan satu kali.',
-                                                                    icon: 'warning',
-                                                                    confirmButtonColor: '#E65100',
-                                                                    customClass: { popup: 'rounded-[2rem]' }
-                                                                });
-                                                                return;
-                                                            }
+                                                                if (booking.reschedule_count > 0) {
+                                                                    Swal.fire({
+                                                                        title: 'Peringatan',
+                                                                        text: 'Anda sudah pernah melakukan reschedule untuk pemesanan ini. Perubahan jadwal hanya diizinkan satu kali.',
+                                                                        icon: 'warning',
+                                                                        confirmButtonColor: '#E65100',
+                                                                        customClass: { popup: 'rounded-[2rem]' }
+                                                                    });
+                                                                    return;
+                                                                }
 
-                                                            setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date });
-                                                        }}
-                                                        disabled={booking.reschedule_count > 0}
-                                                        className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition flex items-center gap-1 ${
-                                                            booking.reschedule_count > 0 
-                                                            ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' 
-                                                            : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
-                                                        }`}
-                                                    >
-                                                        <Clock size={10} /> {booking.reschedule_count > 0 ? 'Reschedule Digunakan' : 'Reschedule'}
-                                                    </button>
+                                                                setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date });
+                                                            }}
+                                                            disabled={booking.reschedule_count > 0}
+                                                            className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition flex items-center gap-1 ${
+                                                                booking.reschedule_count > 0 
+                                                                ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' 
+                                                                : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
+                                                            }`}
+                                                        >
+                                                            <Clock size={10} /> {booking.reschedule_count > 0 ? 'Reschedule Digunakan' : 'Reschedule'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 {!isResort && booking.status === 'success' && (
                                                     <button onClick={() => setSelectedTicket(booking)} className="text-sm font-bold text-eling-green hover:underline flex items-center gap-2">
@@ -556,16 +559,32 @@ export default function Profile() {
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Order ID</label>
                                 <p className="font-bold text-gray-900">{rescheduleData.id}</p>
                             </div>
+                             <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Durasi Menginap (Original)</label>
+                                <p className="font-black text-gray-900">
+                                    {Math.round((new Date(rescheduleData.check_out_date) - new Date(rescheduleData.check_in_date)) / (1000 * 60 * 60 * 24))} Malam
+                                </p>
+                            </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Pilih Tanggal Baru (Min. H-{publicSettings.min_reschedule_lead_days || 2} Persiapan)</label>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Pilih Tanggal Check-In Baru</label>
                                 <input 
                                     type="date" 
-                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all mb-4"
+                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all mb-4 font-bold"
                                     min={
                                         new Date(new Date().getTime() + (publicSettings.min_reschedule_lead_days || 2) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
                                     }
                                     onChange={(e) => setRescheduleData({ ...rescheduleData, newDate: e.target.value })}
                                 />
+                                {rescheduleData.newDate && (
+                                    <div className="mt-2 text-[11px] font-black uppercase tracking-widest text-eling-green bg-green-50 p-3 rounded-xl border border-green-100 animate-fade-in">
+                                        Check-Out Otomatis: {(() => {
+                                            const d = new Date(rescheduleData.newDate);
+                                            const nights = Math.round((new Date(rescheduleData.check_out_date) - new Date(rescheduleData.check_in_date)) / (1000 * 60 * 60 * 24));
+                                            d.setDate(d.getDate() + nights);
+                                            return d.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+                                        })()}
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Alasan / Catatan</label>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { formatRupiah } from '../../utils/data';
+import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../utils/AuthContext';
 import IconRenderer from '../../components/IconRenderer';
@@ -30,10 +30,16 @@ export default function Rooms() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
-    const isWeekend = (dateStr) => {
-        if (!dateStr) return false;
-        const day = new Date(dateStr).getDay();
-        return day === 0 || day === 6;
+    const hasWeekend = (start, end) => {
+        if (!start || !end) return false;
+        let curr = new Date(start);
+        const finish = new Date(end);
+        while (curr < finish) {
+            const day = curr.getDay();
+            if (day === 0 || day === 6) return true;
+            curr.setDate(curr.getDate() + 1);
+        }
+        return false;
     };
 
     // Default images used only when no gallery images are present
@@ -230,12 +236,12 @@ export default function Rooms() {
                     const isMaintenance = r.status === 'maintenance';
                     const unavailable = isFull || isMaintenance;
                     const stockToShow = r.available_stock !== undefined ? r.available_stock : r.stock;
-                    const badgeText = isMaintenance ? 'Perbaikan' : isFull ? 'Sold Out' : `${stockToShow} Unit Tersisa`;
+                    const badgeText = isMaintenance ? 'Perbaikan' : isFull ? 'Habis Terpesan' : `${stockToShow} Unit Tersisa`;
 
                     const currentPrice = r.price;
 
                     return (
-                        <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group flex flex-col h-full hover:-translate-y-3 hover:shadow-2xl hover:border-eling-green/20 transition-all duration-500 ${unavailable ? 'opacity-75' : ''}`}>
+                        <div key={idx} className={`bg-white rounded-3xl overflow-hidden shadow-xl border border-gray-100 group flex flex-col h-full hover:-translate-y-3 hover:shadow-2xl hover:border-eling-green/20 transition-all duration-500 ${unavailable ? 'grayscale-[0.5] opacity-90' : ''}`}>
                             <div className="h-64 overflow-hidden relative shrink-0">
                                 <img 
                                     src={(Array.isArray(r.gallery) && r.gallery.length > 0 ? r.gallery[0] : null) || defaultImages[idx % defaultImages.length]} 
@@ -243,8 +249,11 @@ export default function Rooms() {
                                     alt={r.name} 
                                 />
                                 {unavailable ? (
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                        <span className="bg-white text-gray-900 font-bold px-6 py-2 rounded-full uppercase tracking-widest text-sm">{badgeText}</span>
+                                    <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center p-6">
+                                        <div className="bg-white/10 border border-white/20 backdrop-blur-md px-8 py-3 rounded-2xl flex flex-col items-center gap-2 shadow-2xl animate-scale-up">
+                                            <span className="text-white font-black uppercase tracking-[0.2em] text-xs drop-shadow-lg">{badgeText}</span>
+                                            <div className="h-0.5 w-12 bg-white/30 rounded-full"></div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold text-eling-green shadow-sm">{badgeText}</div>
@@ -284,15 +293,41 @@ export default function Rooms() {
                                     <div className="space-y-1">
                                         <div className="flex items-center justify-between px-1">
                                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Harga Per Malam</p>
-                                            {isWeekend(checkIn) && (
-                                                <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-widest">Tarif Akhir Pekan</span>
+                                            {hasWeekend(checkIn, checkOut) && (
+                                                <span className="text-[9px] font-black bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full uppercase tracking-widest">Ada Tarif Akhir Pekan</span>
                                             )}
                                         </div>
-                                        <div className={`flex items-baseline gap-1 ${unavailable ? 'text-gray-400' : 'text-eling-green'}`}>
-                                            <span className="text-lg font-black font-serif">Rp</span>
-                                            <span className="text-3xl font-black font-serif tracking-tighter">
-                                                {Number(currentPrice).toLocaleString('id-ID')}
-                                            </span>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                                                <div className="flex justify-between items-end mb-1">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Weekday</span>
+                                                        <div className="flex items-baseline gap-1 text-eling-green">
+                                                            <span className="text-sm font-black font-serif">Rp</span>
+                                                            <span className="text-xl font-black font-serif tracking-tight">{Number(r.weekday_price || r.price).toLocaleString('id-ID')}</span>
+                                                        </div>
+                                                    </div>
+                                                    {r.price_weekend > 0 && (
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-[8px] font-bold text-orange-400 uppercase tracking-widest leading-none mb-1 text-right">Weekend</span>
+                                                            <div className="flex items-baseline gap-1 text-orange-600">
+                                                                <span className="text-sm font-black font-serif">Rp</span>
+                                                                <span className="text-xl font-black font-serif tracking-tight">{Number(r.price_weekend).toLocaleString('id-ID')}</span>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex justify-between items-center px-1">
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-bold text-eling-green">Total Est. {Math.max(1, Math.floor((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)))} Malam</span>
+                                                    <span className="text-sm font-black text-gray-900">{formatRupiah(calculateTotalStayPrice(r, checkIn, checkOut))}</span>
+                                                </div>
+                                                <div className="w-8 h-8 rounded-full bg-eling-green text-white flex items-center justify-center shadow-lg hover:scale-110 transition cursor-pointer">
+                                                    <ChevronRight size={18} />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     

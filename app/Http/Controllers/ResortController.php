@@ -20,8 +20,8 @@ class ResortController extends Controller
             $endDate   = $request->check_out;
 
             foreach ($resorts as $resort) {
-                // Count already booked status
-                $bookedCount = TransactionItem::where('item_type', Resort::class)
+                // Pre-load transactions for this specific resort to ensure 'filter' works correctly
+                $overlappingTransactions = TransactionItem::where('item_type', Resort::class)
                     ->where('item_id', $resort->id)
                     ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
                         $query->whereIn('status', ['pending', 'paid', 'success'])
@@ -30,10 +30,11 @@ class ResortController extends Controller
                                     ->where('check_out_date', '>', $startDate);
                               });
                     })
-                    ->sum('quantity');
+                    ->with('transaction') // Critical: Ensure trans is loaded for the filter loop below
+                    ->get();
 
-                // Inventory Locking
-                $holdQuery = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+                // Get all active reschedules
+                $overlappingReschedules = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
                     ->where(function ($q) {
                         $q->whereNull('expires_at')
                           ->orWhere('expires_at', '>', now());
@@ -44,17 +45,50 @@ class ResortController extends Controller
                     })
                     ->whereHas('transaction.items', function($q) use ($resort) {
                         $q->where('item_id', $resort->id)->where('item_type', Resort::class);
+                    })->with('transaction.items')->get();
+
+                $maxOccupancy = 0;
+                $isRescheduleHold = false;
+
+                $start = Carbon::parse($startDate)->startOfDay();
+                $end = Carbon::parse($endDate)->startOfDay();
+                $nightsNum = max(1, $start->diffInDays($end));
+
+                for ($i = 0; $i < $nightsNum; $i++) {
+                    $nightStart = (clone $start)->addDays($i);
+                    $nightEnd = (clone $nightStart)->addDay();
+
+                    // Booked for this specific night
+                    $nightOccupancy = $overlappingTransactions->filter(function($item) use ($nightStart, $nightEnd) {
+                        $trans = $item->transaction;
+                        if (!$trans) return false;
+                        $tci = Carbon::parse($trans->check_in_date)->startOfDay();
+                        $tco = Carbon::parse($trans->check_out_date)->startOfDay();
+                        return $tci < $nightEnd && $tco > $nightStart;
+                    })->sum('quantity');
+
+                    // Reschedule holds for this specific night
+                    $nightRescheduleHold = $overlappingReschedules->filter(function($res) use ($nightStart, $nightEnd, $resort) {
+                        $nr_ci = Carbon::parse($res->new_date)->startOfDay();
+                        $nr_co = Carbon::parse($res->new_check_out_date ?? $nr_ci->copy()->addDay())->startOfDay();
+                        return $nr_ci < $nightEnd && $nr_co > $nightStart;
+                    })->sum(function($r) use ($resort) {
+                        return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
                     });
 
-                $rescheduleHoldCount = $holdQuery->get()->sum(function($r) use ($resort) {
-                    return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
-                });
+                    $totalNightOccupancy = $nightOccupancy + $nightRescheduleHold;
+                    if ($totalNightOccupancy > $maxOccupancy) {
+                        $maxOccupancy = $totalNightOccupancy;
+                    }
 
-                $resort->available_stock = max(0, $resort->stock - $bookedCount - $rescheduleHoldCount);
-                $resort->is_on_hold = ($resort->available_stock <= 0 && $rescheduleHoldCount > 0);
+                    if ($nightRescheduleHold > 0) $isRescheduleHold = true;
+                }
+
+                $resort->available_stock = (int) max(0, $resort->stock - $maxOccupancy);
+                $resort->is_on_hold = ($resort->available_stock <= 0 && $isRescheduleHold);
                 
                 if ($resort->is_on_hold) {
-                    $minExpiry = (clone $holdQuery)->whereNotNull('expires_at')->min('expires_at');
+                    $minExpiry = $overlappingReschedules->whereNotNull('expires_at')->min('expires_at');
                     $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
                 } else {
                     $resort->hold_expiry = null;
@@ -64,12 +98,8 @@ class ResortController extends Controller
                     $resort->status = 'full';
                 }
 
-                // Adjust price based on weekend (6: Sat, 0: Sun)
-                $day = Carbon::parse($startDate)->dayOfWeek;
-                $isWeekend = ($day === 6 || $day === 0);
-                if ($isWeekend && $resort->price_weekend > 0) {
-                    $resort->price = $resort->price_weekend;
-                }
+                $resort->weekday_price = $resort->price;
+                $resort->has_weekend_price = ($resort->price_weekend > 0);
             }
         }
 
@@ -109,7 +139,14 @@ class ResortController extends Controller
             $startDate = $request->check_in;
             $endDate   = $request->check_out;
 
-            $bookedCount = TransactionItem::where('item_type', Resort::class)
+            // More accurate stock checking for multi-day stays:
+            // Calculate peak occupancy for each night in the range
+            $checkIn = Carbon::parse($startDate);
+            $checkOut = Carbon::parse($endDate);
+            $nightsNum = max(1, $checkIn->diffInDays($checkOut));
+
+            // Get all potentially overlapping transactions
+            $overlappingTransactions = TransactionItem::where('item_type', Resort::class)
                 ->where('item_id', $resort->id)
                 ->whereHas('transaction', function ($query) use ($startDate, $endDate) {
                     $query->whereIn('status', ['pending', 'paid', 'success'])
@@ -117,11 +154,10 @@ class ResortController extends Controller
                               $q->where('check_in_date', '<', $endDate)
                                 ->where('check_out_date', '>', $startDate);
                           });
-                })
-                ->sum('quantity');
+                })->get();
 
-            // Count active reschedules
-            $holdQuery = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
+            // Get all active reschedules
+            $overlappingReschedules = Reschedule::whereIn('status', ['pending', 'approved_awaiting_payment'])
                 ->where(function ($q) {
                     $q->whereNull('expires_at')
                       ->orWhere('expires_at', '>', now());
@@ -132,28 +168,70 @@ class ResortController extends Controller
                 })
                 ->whereHas('transaction.items', function($q) use ($resort) {
                     $q->where('item_id', $resort->id)->where('item_type', Resort::class);
+                })->with('transaction.items')->get();
+
+            $maxOccupancy = 0;
+            $isRescheduleHold = false;
+            $holdExpiry = null;
+
+            for ($i = 0; $i < $nightsNum; $i++) {
+                $nightDate = (clone $checkIn)->addDays($i)->format('Y-m-d');
+                $nextNightDate = (clone $checkIn)->addDays($i + 1)->format('Y-m-d');
+
+                // Booked for this specific night
+                $nightOccupancy = $overlappingTransactions->filter(function($item) use ($nightDate, $nextNightDate) {
+                    $trans = $item->transaction;
+                    return $trans->check_in_date < $nextNightDate && $trans->check_out_date > $nightDate;
+                })->sum('quantity');
+
+                // Reschedule holds for this specific night
+                $nightRescheduleHold = $overlappingReschedules->filter(function($res) use ($nightDate, $nextNightDate, $resort) {
+                    $isOverlap = $res->new_date < $nextNightDate && 
+                                ($res->new_check_out_date ?? Carbon::parse($res->new_date)->addDay()->format('Y-m-d')) > $nightDate;
+                    return $isOverlap;
+                })->sum(function($r) use ($resort) {
+                    return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
                 });
 
-            $rescheduleHoldCount = $holdQuery->get()->sum(function($r) use ($resort) {
-                return $r->transaction->items->where('item_id', $resort->id)->where('item_type', Resort::class)->sum('quantity');
-            });
+                $totalNightOccupancy = $nightOccupancy + $nightRescheduleHold;
+                if ($totalNightOccupancy > $maxOccupancy) {
+                    $maxOccupancy = $totalNightOccupancy;
+                }
 
-            $resort->available_stock = max(0, $resort->stock - $bookedCount - $rescheduleHoldCount);
-            $resort->is_on_hold = ($resort->available_stock <= 0 && $rescheduleHoldCount > 0);
+                if ($nightRescheduleHold > 0) $isRescheduleHold = true;
+            }
+
+            $resort->available_stock = max(0, $resort->stock - $maxOccupancy);
+            $resort->is_on_hold = ($resort->available_stock <= 0 && $isRescheduleHold);
             
             if ($resort->is_on_hold) {
-                $minExpiry = (clone $holdQuery)->whereNotNull('expires_at')->min('expires_at');
+                $minExpiry = $overlappingReschedules->whereNotNull('expires_at')->min('expires_at');
                 $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
             } else {
                 $resort->hold_expiry = null;
             }
 
-            // Adjust price based on weekend (6: Sat, 0: Sun)
-            $day = Carbon::parse($startDate)->dayOfWeek;
-            $isWeekend = ($day === 6 || $day === 0);
-            if ($isWeekend && $resort->price_weekend > 0) {
-                $resort->price = $resort->price_weekend;
+            // Adjust price based on stay duration and weekend rates
+            $checkInDate = Carbon::parse($startDate);
+            $checkOutDate = Carbon::parse($endDate);
+            $nights = max(1, $checkInDate->diffInDays($checkOutDate));
+            $totalStayPrice = 0;
+
+            for ($i = 0; $i < $nights; $i++) {
+                $currentDay = (clone $checkInDate)->addDays($i);
+                $dayOfWeek = $currentDay->dayOfWeek;
+                $isWeekend = ($dayOfWeek === 6 || $dayOfWeek === 0);
+                
+                if ($isWeekend && $resort->price_weekend > 0) {
+                    $totalStayPrice += $resort->price_weekend;
+                } else {
+                    $totalStayPrice += $resort->price;
+                }
             }
+
+            // Add metadata for frontend display
+            $resort->weekday_price = $resort->price;
+            $resort->has_weekend_price = ($resort->price_weekend > 0);
         }
 
         return response()->json($resort);

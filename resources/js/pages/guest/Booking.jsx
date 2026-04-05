@@ -4,7 +4,7 @@ import { User, Users, CreditCard, Calendar, Tag, Info, BedDouble, ShieldCheck, C
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../utils/AuthContext';
-import { formatRupiah } from '../../utils/data';
+import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
 
 export default function Booking() {
     const navigate = useNavigate();
@@ -39,9 +39,25 @@ export default function Booking() {
     const [guestLastName, setGuestLastName] = useState('');
     const [arrivalTime, setArrivalTime] = useState('Pilih waktu kedatangan');
 
-    const rooms_price = Number(bookingData.room?.price || 0);
+    const rooms_price = Number(bookingData.room?.weekday_price || bookingData.room?.price || 0);
     const nights = Number(bookingData.totalNights || 1);
-    const basePrice = rooms_price * nights * roomsNeeded;
+    const basePrice = calculateTotalStayPrice(bookingData.room, bookingData.checkIn, bookingData.checkOut) * roomsNeeded;
+
+    // Helper to get day breakdown for detailed display
+    const getStayBreakdown = () => {
+        let weekdaysCount = 0;
+        let weekendsCount = 0;
+        const start = new Date(bookingData.checkIn);
+        for (let i = 0; i < nights; i++) {
+            const current = new Date(start);
+            current.setDate(start.getDate() + i);
+            const day = current.getDay();
+            if (day === 6 || day === 0) weekendsCount++;
+            else weekdaysCount++;
+        }
+        return { weekdaysCount, weekendsCount };
+    };
+    const { weekdaysCount, weekendsCount } = getStayBreakdown();
 
     const [selectedFacilities, setSelectedFacilities] = useState([]);
     const additionalPrice = selectedFacilities.reduce((sum, f) => sum + Number(f.price || 0), 0);
@@ -493,10 +509,18 @@ export default function Booking() {
                                         <div className="h-[1px] flex-1 bg-gray-100 mx-4"></div>
                                     </div>
                                     
-                                    <div className="space-y-4 px-1">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500 font-bold uppercase tracking-widest text-[10px]">Tipe Kamar</span>
-                                            <span className="font-black text-gray-900">{formatRupiah(basePrice)}</span>
+                                    <div className="space-y-3 px-1">
+                                        <div className="flex flex-col gap-2 pb-3 border-b border-gray-50 mb-1">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="text-gray-500 font-bold uppercase tracking-widest text-[9px]">{weekdaysCount}x Weekday Stay</span>
+                                                <span className="font-black text-gray-900">{formatRupiah(weekdaysCount * rooms_price * roomsNeeded)}</span>
+                                            </div>
+                                            {weekendsCount > 0 && bookingData.room?.price_weekend > 0 && (
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-orange-400 font-bold uppercase tracking-widest text-[9px]">{weekendsCount}x Weekend Stay</span>
+                                                    <span className="font-black text-gray-900">{formatRupiah(weekendsCount * bookingData.room.price_weekend * roomsNeeded)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                         {additionalPrice > 0 && (
                                             <div className="flex justify-between items-center text-sm animate-fade-in">

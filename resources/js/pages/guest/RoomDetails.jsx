@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { formatRupiah } from '../../utils/data';
+import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
 import IconRenderer from '../../components/IconRenderer';
-import { X, Clock } from 'lucide-react';
+import { X, Clock, AlertCircle, ArrowRight, ChevronRight } from 'lucide-react';
 import CountdownTimer from '../../components/CountdownTimer';
 
 export default function RoomDetails() {
@@ -29,10 +29,16 @@ export default function RoomDetails() {
         "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=800"
     ];
 
-    const isWeekend = (dateStr) => {
-        if (!dateStr) return false;
-        const day = new Date(dateStr).getDay();
-        return day === 0 || day === 6;
+    const hasWeekend = (start, end) => {
+        if (!start || !end) return false;
+        let curr = new Date(start);
+        const finish = new Date(end);
+        while (curr < finish) {
+            const day = curr.getDay();
+            if (day === 0 || day === 6) return true;
+            curr.setDate(curr.getDate() + 1);
+        }
+        return false;
     };
 
     const hasGallery = Array.isArray(room?.gallery) && room.gallery.length > 0;
@@ -237,6 +243,24 @@ export default function RoomDetails() {
 
     const guestsNum = parseInt(guests);
     const roomsNeeded = Math.ceil(guestsNum / room.capacity);
+    const nights = Math.max(1, Math.floor((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)));
+    
+    // Helper to get day breakdown
+    const getStayBreakdown = () => {
+        let weekdaysCount = 0;
+        let weekendsCount = 0;
+        const start = new Date(startDate);
+        for (let i = 0; i < nights; i++) {
+            const current = new Date(start);
+            current.setDate(start.getDate() + i);
+            const day = current.getDay();
+            if (day === 6 || day === 0) weekendsCount++;
+            else weekdaysCount++;
+        }
+        return { weekdaysCount, weekendsCount };
+    };
+    const { weekdaysCount, weekendsCount } = getStayBreakdown();
+
     const isRoomAvailable = room.available_stock >= roomsNeeded;
     const currentPrice = room.price;
 
@@ -428,18 +452,51 @@ export default function RoomDetails() {
                     <div className="lg:col-span-1 mt-12 lg:mt-0">
                         <div className={`bg-white rounded-[3rem] p-8 lg:p-10 shadow-[0_40px_100px_-30px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-32 transition-all duration-700 ${isUpdating ? 'opacity-50 grayscale scale-[0.98]' : 'opacity-100'}`}>
                             <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100 relative overflow-hidden">
-                                {isWeekend(startDate) && (
+                                {hasWeekend(startDate, endDate) && (
                                     <div className="absolute top-0 right-0">
-                                        <div className="bg-orange-100 text-orange-600 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl">Tarif Akhir Pekan</div>
+                                        <div className="bg-orange-100 text-orange-600 text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl">Ada Tarif Akhir Pekan</div>
                                     </div>
                                 )}
-                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.3em] mb-2 text-center">Harga per Malam</p>
-                                <div className="flex items-center justify-center gap-2">
-                                    <span className="text-4xl font-black font-serif text-gray-900">{formatRupiah(currentPrice)}</span>
+                                <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-2 text-center">Harga per Malam</p>
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                    <div className="flex flex-col items-center gap-0.5">
+                                        <span className="text-4xl font-black font-serif text-gray-900">{formatRupiah(room.weekday_price || room.price)}</span>
+                                        <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">(Weekday)</span>
+                                    </div>
+                                    
+                                    {room.price_weekend > 0 && (
+                                        <div className="flex flex-col items-center gap-0.5 mt-2 pt-2 border-t border-slate-100 w-full">
+                                            <span className="text-2xl font-black font-serif text-orange-600">{formatRupiah(room.price_weekend)}</span>
+                                            <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">(Weekend)</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="space-y-6 mb-10">
+                                <div className="p-7 bg-eling-green/5 border border-eling-green/10 rounded-[2.5rem] flex flex-col gap-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-eling-green uppercase tracking-widest leading-none mb-1 text-center">Total Harga Kamar</span>
+                                            <span className="text-[11px] text-gray-500">{nights} Malam • {roomsNeeded} Unit</span>
+                                        </div>
+                                        <span className="text-2xl font-black font-serif text-gray-900">{formatRupiah(calculateTotalStayPrice(room, startDate, endDate) * roomsNeeded)}</span>
+                                    </div>
+                                    
+                                    <div className="pt-4 border-t border-eling-green/10 flex flex-col gap-2">
+                                        <div className="flex justify-between items-center text-[9px] font-bold text-gray-400 uppercase tracking-[0.1em]">
+                                            <span>{weekdaysCount}x Weekday (@{formatRupiah(room.weekday_price || room.price)})</span>
+                                            <span>{formatRupiah(weekdaysCount * (room.weekday_price || room.price) * roomsNeeded)}</span>
+                                        </div>
+                                        {weekendsCount > 0 && room.price_weekend > 0 && (
+                                            <div className="flex justify-between items-center text-[9px] font-bold text-orange-400 uppercase tracking-[0.1em]">
+                                                <span>{weekendsCount}x Weekend (@{formatRupiah(room.price_weekend)})</span>
+                                                <span>{formatRupiah(weekendsCount * room.price_weekend * roomsNeeded)}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
                                         <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Check-In</label>
@@ -496,9 +553,12 @@ export default function RoomDetails() {
                                             </div>
                                         )}
                                         {room.available_stock <= 0 && (
-                                            <div className="flex items-center gap-1.5 text-gray-400">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-gray-400"></div>
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Stok Kamar Habis Untuk Tanggal Ini</span>
+                                            <div className="flex items-center gap-2 text-eling-red bg-red-50 p-4 rounded-[2rem] border border-red-100/50 mb-2 animate-fade-in shadow-sm">
+                                                <AlertCircle size={14} className="shrink-0" />
+                                                <div className="flex flex-col">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-0.5">Penuh / Stok Habis</span>
+                                                    <span className="text-[9px] font-bold text-red-400 leading-none">Tidak tersedia untuk tanggal yang dipilih</span>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -508,7 +568,7 @@ export default function RoomDetails() {
                                             <span className="relative z-10 flex items-center justify-center gap-3">
                                                 Amankan Sekarang <i className="fas fa-arrow-right group-hover:translate-x-2 transition-transform duration-500"></i>
                                             </span>
-                                        ) : 'Stok Habis'}
+                                        ) : (room.available_stock <= 0 ? 'Kamar Habis Terpesan' : 'Stok Tidak Mencukupi')}
                                     </button>
                                 </div>
                             )}
