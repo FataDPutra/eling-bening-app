@@ -65,21 +65,40 @@ export default function AdminProfile() {
                         </div>
                     </div>
 
-                    <div className="admin-card bg-slate-900 border-none text-white">
-                        <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-5">Statistik Akun</h4>
-                        <div className="space-y-4">
-                            <div className="flex justify-between items-end border-b border-white/5 pb-3">
-                                <div>
-                                    <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-1">Status Keamanan</p>
-                                    <p className="text-xs font-bold text-green-400">Terproteksi</p>
+                    <div className="admin-card space-y-8">
+                        <section>
+                            <div className="flex items-center gap-3 mb-6 border-b border-admin-border pb-4">
+                                <div className="p-2 bg-admin-primary/10 rounded-lg text-admin-primary">
+                                    <Fingerprint size={18} />
                                 </div>
-                                <ShieldCheck size={16} className="text-green-400" />
+                                <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest leading-none">Statistik Akun</h3>
                             </div>
-                            <div>
-                                <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-1">Terakhir Login</p>
-                                <p className="text-xs font-bold">Hari ini, 14:20 WIB</p>
+                            
+                            <div className="space-y-6">
+                                <div className="px-4 py-4 rounded-2xl bg-admin-bg border border-admin-border">
+                                    <p className="text-[10px] text-admin-text-muted uppercase font-black tracking-widest mb-2">Status Keamanan</p>
+                                    <div className="flex justify-between items-center">
+                                        <p className="text-xs font-black text-emerald-600 flex items-center gap-1.5 uppercase tracking-tighter">
+                                            <ShieldCheck size={14} /> Terproteksi
+                                        </p>
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    </div>
+                                </div>
+                                
+                                <div className="px-4 py-4 rounded-2xl bg-admin-bg border border-admin-border">
+                                    <p className="text-[10px] text-admin-text-muted uppercase font-black tracking-widest mb-2">Aktivitas Terakhir</p>
+                                    <p className="text-sm font-black text-admin-text-main">
+                                        {user?.updated_at ? (
+                                            <>
+                                                {new Date(user.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}, {new Date(user.updated_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} <span className="text-[10px] font-bold text-admin-text-muted">WIB</span>
+                                            </>
+                                        ) : (
+                                            "Baru saja login"
+                                        )}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
+                        </section>
                     </div>
                 </div>
 

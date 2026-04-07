@@ -127,10 +127,14 @@ export default function AdminLayout() {
             <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
                 <div className="sidebar-header">
                     <div className="sidebar-logo flex-1">
-                        <div className="p-1.5 bg-admin-primary rounded-lg">
-                            <img src={content?.layout?.logo || "/images/logo.png"} alt="Logo" className="h-6 brightness-0 invert" />
+                        <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 overflow-hidden">
+                            <img 
+                                src={content?.layout?.favicon || content?.layout?.logo || "/favicon.ico"} 
+                                alt="Brand Icon" 
+                                className="w-7 h-7 object-contain" 
+                            />
                         </div>
-                        {!isSidebarCollapsed && <h2 className="ml-3 text-white">{content?.layout?.siteTitle || "Eling Bening"}</h2>}
+                        {!isSidebarCollapsed && <h2 className="ml-3 text-white font-black tracking-tight">{content?.layout?.siteTitle || "Eling Bening"}</h2>}
                     </div>
                     <button className="lg:hidden p-2 text-white/60 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
                         <X size={20} />

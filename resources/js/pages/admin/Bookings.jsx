@@ -130,11 +130,54 @@ export default function Bookings() {
         return basePr + addPr + rescPr;
     };
 
+    const handleExport = () => {
+        if (filteredBookings.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+        }
+
+        const periodTitle = isAllTime ? 'TOTAL SEMUA PERIODE' : `${months.find(m => m.value === selectedMonth).name.toUpperCase()} ${selectedYear}`;
+        const exportDate = new Date().toLocaleString('id-ID');
+        const totalRevenue = filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0);
+
+        const csvRows = [
+            [`"LAPORAN PESANAN RESORT - ELING BENING"`],
+            [`"PERIODE: ${periodTitle}"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['Order ID', 'Customer Name', 'Email', 'Phone', 'Check-in', 'Check-out', 'Total (IDR)', 'Status'],
+            ...filteredBookings.map(b => [
+                b.id,
+                `"${b.booker_name || b.user?.name || 'Guest'}"`,
+                b.booker_email || b.user?.email || '-',
+                `'${b.booker_phone || '-'}`, // Use ' to force string in Excel
+                new Date(b.check_in_date).toLocaleDateString('id-ID'),
+                b.check_out_date ? new Date(b.check_out_date).toLocaleDateString('id-ID') : '-',
+                getGrandTotal(b),
+                b.status.toUpperCase()
+            ].join(',')),
+            [''],
+            ['', '', '', '', '', 'TOTAL OMSET:', totalRevenue, '']
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        const fileName = isAllTime ? 'Laporan_Resort_Semua_Periode.csv' : `Laporan_Resort_${months.find(m => m.value === selectedMonth).name}_${selectedYear}.csv`;
+        a.setAttribute('download', fileName);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success('Data laporan berhasil diekspor');
+    };
+
     const stats = [
-        { label: 'Total Volume', value: bookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
-        { label: 'Confirmed', value: bookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
-        { label: 'Awaiting', value: bookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
-        { label: 'Revenue', value: formatRupiah(bookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
+        { label: 'Total Volume', value: filteredBookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
+        { label: 'Confirmed', value: filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
+        { label: 'Awaiting', value: filteredBookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
+        { label: 'Revenue', value: formatRupiah(filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
     ];
 
     return (
@@ -199,7 +242,7 @@ export default function Bookings() {
                             </>
                         )}
                     </div>
-                    <button className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm">
+                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm">
                         <Download size={18} className="text-admin-primary" /> Export Data
                     </button>
                 </div>

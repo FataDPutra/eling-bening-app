@@ -188,14 +188,17 @@ export default function Expenses() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="admin-card bg-slate-900 text-white border-none">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-white/10 rounded-2xl">
-                            <ArrowDownCircle size={28} className="text-red-400" />
+                <div className="admin-card bg-white border border-admin-border shadow-sm items-center flex">
+                    <div className="flex items-center gap-5">
+                        <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-red-500 border border-red-100 shrink-0">
+                            <ArrowDownCircle size={32} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Pengeluaran ({isAllTime ? 'Seluruh Waktu' : `${months.find(m => m.value == selectedMonth)?.name} ${selectedYear}`})</p>
-                            <h2 className="text-3xl font-black text-white">{formatRupiah(totalExpense)}</h2>
+                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-admin-text-muted mb-1.5 flex items-center gap-2">
+                                <span className="w-1 h-1 rounded-full bg-red-400"></span>
+                                Total Pengeluaran ({isAllTime ? 'Seluruh Waktu' : `${months.find(m => m.value == selectedMonth)?.name} ${selectedYear}`})
+                            </p>
+                            <h2 className="text-3xl font-black text-admin-text-main tracking-tight leading-none">{formatRupiah(totalExpense)}</h2>
                         </div>
                     </div>
                 </div>

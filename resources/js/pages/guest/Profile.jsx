@@ -386,16 +386,16 @@ export default function Profile() {
                                 </div>
                             </div>
 
-                            <div className="flex gap-4 mb-8">
+                            <div className="flex gap-4 mb-8 overflow-x-auto pb-2 no-scrollbar">
                                 <button
                                     onClick={() => setActiveTab('tickets')}
-                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shrink-0 ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
                                     Tiket & Resort
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('addons')}
-                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all shrink-0 relative ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
                                     Fasilitas Tambahan
                                     {bookings.filter(b => b.parent_id && b.status === 'pending').length > 0 && (
@@ -410,152 +410,122 @@ export default function Profile() {
                                 {filtered.map(booking => {
                                     const isResort = booking.booking_type === 'RESORT';
                                     const firstItem = booking.items?.[0]?.item || { name: 'Pemesanan Eling Bening' };
+                                    const grandTotal = getGrandTotal(booking);
                                     
                                     return (
-                                        <div key={booking.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6 hover:border-green-200 transition">
-                                            <div className="flex-1 w-full flex items-start gap-4">
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${booking.parent_id ? 'bg-purple-50 text-purple-600' : (isResort ? 'bg-green-50 text-eling-green' : 'bg-blue-50 text-blue-500')}`}>
-                                                    {booking.parent_id ? <Sparkles size={24} /> : (isResort ? <BedDouble size={24} /> : <Ticket size={24} />)}
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em]">{booking.id}</span>
-                                                        {booking.parent_id && (
-                                                            <span className="text-[8px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-purple-100">Add-on</span>
-                                                        )}
+                                        <div key={booking.id} className="bg-white border border-gray-100 rounded-[2.5rem] p-6 sm:p-8 shadow-sm hover:shadow-xl hover:border-eling-green/20 transition-all duration-500 overflow-hidden">
+                                            <div className="grid lg:grid-cols-12 gap-8 items-start">
+                                                {/* Section 1: Icon & Main Info (Col 1-7) */}
+                                                <div className="lg:col-span-7 flex gap-5">
+                                                    <div className={`w-14 h-14 sm:w-20 sm:h-20 rounded-[1.8rem] flex items-center justify-center shrink-0 shadow-sm border border-white/50 ${booking.parent_id ? 'bg-purple-50 text-purple-600' : (isResort ? 'bg-green-50 text-eling-green' : 'bg-blue-50 text-blue-500')}`}>
+                                                        {booking.parent_id ? <Sparkles size={32} /> : (isResort ? <BedDouble size={32} /> : <Ticket size={32} />)}
                                                     </div>
-                                                    <h3 className="text-xl font-bold text-gray-900 my-1">
-                                                        {booking.items?.length > 1 ? `${firstItem.name} & ${booking.items.length - 1} lainnya` : firstItem.name}
-                                                    </h3>
-                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mt-2">
-                                                        <div className="flex items-center gap-1"><Calendar size={14} /> {new Date(booking.check_in_date).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
-                                                        {isResort && booking.check_out_date && (
-                                                            <div className="text-xs italic bg-gray-50 px-2 py-0.5 rounded text-gray-400">s.d {new Date(booking.check_out_date).toLocaleDateString('id-ID')}</div>
-                                                        )}
-                                                        <div className="flex items-center gap-1"><User size={14} /> Atas Nama: <strong className="text-gray-700 font-bold ml-1">{booking.booker_name}</strong></div>
-                                                        {booking.promo && (
-                                                            <div className="flex items-center gap-1.5 px-3 py-1 bg-eling-green/10 text-eling-green rounded-full text-[11px] font-bold border border-eling-green/20">
-                                                                <Ticket size={12} /> Promo: {booking.promo.promo_code} (-{formatRupiah(booking.discount_amount)})
+                                                    
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-2">
+                                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{booking.id}</span>
+                                                            {booking.parent_id && <span className="text-[8px] font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full uppercase tracking-widest border border-purple-100">Add-on</span>}
+                                                        </div>
+                                                        <h3 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight mb-4 tracking-tight">
+                                                            {booking.items?.length > 1 ? `${firstItem.name} & ${booking.items.length - 1} lainnya` : firstItem.name}
+                                                        </h3>
+                                                        
+                                                        <div className="space-y-3">
+                                                            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-bold text-gray-500">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Calendar size={16} className="text-gray-300" />
+                                                                    <span>{new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                                    {isResort && booking.check_out_date && <span className="text-[11px] font-normal italic text-gray-400 ml-1">({new Date(booking.check_out_date).toLocaleDateString('id-ID')})</span>}
+                                                                </div>
+                                                                <div className="hidden sm:block w-1 h-1 bg-gray-200 rounded-full"></div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <User size={16} className="text-gray-300" />
+                                                                    <span>{booking.booker_name}</span>
+                                                                </div>
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                {booking.addons?.some(a => a.status === 'paid' || a.status === 'success') && (
-                                                    <div className="mt-2 flex flex-wrap gap-2">
-                                                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-purple-100/50">
-                                                            <Sparkles size={11} /> 
-                                                            {booking.addons.filter(a => a.status === 'paid' || a.status === 'success').reduce((acc, curr) => acc + (curr.items?.length || 0), 0)} Layanan Tambahan (Terbayar)
+
+                                                            <div className="flex flex-wrap gap-2 pt-2">
+                                                                {booking.promo && (
+                                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-wider border border-emerald-100/30">
+                                                                        <Ticket size={12} /> {booking.promo.promo_code} (-{formatRupiah(booking.discount_amount)})
+                                                                    </div>
+                                                                )}
+                                                                {booking.addons?.some(a => a.status === 'paid' || a.status === 'success') && (
+                                                                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-xl text-[9px] font-black uppercase tracking-wider border border-purple-100/30">
+                                                                        <Sparkles size={12} /> 
+                                                                        {booking.addons.filter(a => a.status === 'paid' || a.status === 'success').reduce((acc, curr) => acc + (curr.items?.length || 0), 0)} Layanan Terbayar
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                )}
-                                            </div>
-
-                                            <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-3 shrink-0 border-t md:border-t-0 border-gray-100 pt-4 md:pt-0">
-                                                <div className="text-xl font-bold text-gray-900">
-                                                    {formatRupiah(getGrandTotal(booking))}
                                                 </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${booking.status === 'success' || booking.status === 'paid' ? 'bg-green-100 text-green-700' : (booking.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500')}`}>
-                                                        {booking.status}
-                                                    </span>
-                                                    {booking.status === 'pending' && (
-                                                        <button 
-                                                            onClick={() => setSelectedAddonPayment(booking)}
-                                                            className="text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-xl bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-green-900/10 flex items-center justify-center gap-2"
-                                                        >
-                                                            <CreditCard size={12} /> Bayar Sekarang
-                                                        </button>
-                                                    )}
-                                                    {(() => {
-                                                        const activeReschedule = reschedules.find(r => r.transaction_id === booking.id && ['pending', 'approved_awaiting_payment', 'completed'].includes(r.status));
-                                                        if (activeReschedule) {
-                                                            const statusConfig = {
-                                                                pending: { label: 'Reschedule: Menunggu Admin', color: 'bg-yellow-50 text-yellow-600 border-yellow-100' },
-                                                                approved_awaiting_payment: { label: 'Reschedule: Siap Bayar', color: 'bg-green-50 text-green-600 border-green-200 animate-pulse' },
-                                                                completed: { label: 'Reschedule: Berhasil', color: 'bg-blue-50 text-blue-600 border-blue-100' }
-                                                            };
-                                                            const cfg = statusConfig[activeReschedule.status] || statusConfig.pending;
-                                                            return (
-                                                                <div className="flex flex-col gap-2">
-                                                                    <div className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border flex items-center gap-2 ${cfg.color}`}>
-                                                                        {cfg.label}
-                                                                        {activeReschedule.status === 'approved_awaiting_payment' && activeReschedule.expires_at && (
-                                                                            <span className="flex items-center gap-1 border-l pl-2 border-green-200">
-                                                                                <Clock size={10} />
-                                                                                <CountdownTimer expiryDate={activeReschedule.expires_at} onExpire={fetchReschedules} />
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    {activeReschedule.status === 'approved_awaiting_payment' && (
-                                                                        <button 
-                                                                            onClick={() => setSelectedReschedulePayment(activeReschedule)}
-                                                                            className="text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl bg-green-600 text-white hover:bg-green-700 transition shadow-sm flex items-center justify-center gap-1"
-                                                                        >
-                                                                            <CreditCard size={10} /> Bayar Selisih
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        }
-                                                        return null;
-                                                    })()}
-                                                    <button 
-                                                        onClick={() => handleOpenDetail(booking)}
-                                                        className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
-                                                    >
-                                                        Lihat Detail
-                                                    </button>
-                                                    {isResort && (
-                                                        <button 
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const checkIn = new Date(booking.check_in_date);
-                                                                checkIn.setHours(0,0,0,0);
-                                                                const now = new Date();
-                                                                now.setHours(0,0,0,0);
-                                                                const diff = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
-                                                                const maxDays = Number(publicSettings.max_reschedule_days || 7);
-                                                                
-                                                                if (diff < maxDays) {
-                                                                    Swal.fire({
-                                                                        title: 'Maaf',
-                                                                        text: `Reschedule sudah tidak dapat dilakukan. Batas waktu maksimal adalah ${maxDays} hari sebelum check-in.`,
-                                                                        icon: 'error',
-                                                                        confirmButtonColor: '#C62828',
-                                                                        customClass: { popup: 'rounded-[2rem]' }
-                                                                    });
-                                                                    return;
-                                                                }
 
-                                                                if (booking.reschedule_count > 0) {
-                                                                    Swal.fire({
-                                                                        title: 'Peringatan',
-                                                                        text: 'Anda sudah pernah melakukan reschedule untuk pemesanan ini. Perubahan jadwal hanya diizinkan satu kali.',
-                                                                        icon: 'warning',
-                                                                        confirmButtonColor: '#E65100',
-                                                                        customClass: { popup: 'rounded-[2rem]' }
-                                                                    });
-                                                                    return;
-                                                                }
+                                                {/* Section 2: Price & Actions (Col 8-12) */}
+                                                <div className="lg:col-span-5 flex flex-col lg:items-end justify-between gap-6 pt-6 lg:pt-0 border-t lg:border-t-0 border-gray-50 h-full lg:pl-10 lg:border-l">
+                                                    <div className="lg:text-right w-full">
+                                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] block mb-1">Total Transaksi</span>
+                                                        <span className="text-3xl font-black text-gray-900 tracking-tighter leading-none block">{formatRupiah(grandTotal)}</span>
+                                                    </div>
 
-                                                                setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date });
-                                                            }}
-                                                            disabled={booking.reschedule_count > 0}
-                                                            className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition flex items-center gap-1 ${
-                                                                booking.reschedule_count > 0 
-                                                                ? 'bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed' 
-                                                                : 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100'
-                                                            }`}
-                                                        >
-                                                            <Clock size={10} /> {booking.reschedule_count > 0 ? 'Reschedule Digunakan' : 'Reschedule'}
-                                                        </button>
-                                                    )}
+                                                    <div className="flex flex-wrap lg:justify-end items-center gap-3 w-full">
+                                                        {/* Status Badge */}
+                                                        <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.1em] border shadow-sm h-fit ${
+                                                            booking.status === 'success' || booking.status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : (booking.status === 'pending' ? 'bg-amber-50 text-amber-700 border-amber-100' : 'bg-gray-50 text-gray-400 border-gray-100')
+                                                        }`}>
+                                                            {booking.status}
+                                                        </div>
+
+                                                        {/* Reschedule Logics */}
+                                                        {(() => {
+                                                            const activeReschedule = reschedules.find(r => r.transaction_id === booking.id && ['pending', 'approved_awaiting_payment', 'completed'].includes(r.status));
+                                                            if (activeReschedule) {
+                                                                if (activeReschedule.status === 'approved_awaiting_payment') {
+                                                                    return (
+                                                                        <div className="flex flex-col items-center lg:items-end gap-2">
+                                                                            <button onClick={() => setSelectedReschedulePayment(activeReschedule)} className="px-6 py-2.5 rounded-full bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-green-900/20 text-[10px] font-black uppercase tracking-widest animate-pulse flex items-center gap-2">
+                                                                                <CreditCard size={14} /> Bayar Selisih
+                                                                            </button>
+                                                                            {activeReschedule.expires_at && (
+                                                                                <div className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-500 rounded-lg text-[8px] font-black uppercase tracking-widest border border-red-100/30">
+                                                                                    <Clock size={10} /> Batas: <CountdownTimer expiryDate={activeReschedule.expires_at} onExpire={fetchReschedules} />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                }
+                                                                const rCfg = { pending: { l: 'Pending Check', c: 'bg-amber-50 text-amber-600 border-amber-100' }, completed: { l: 'Rescheduled', c: 'bg-blue-50 text-blue-600 border-blue-100' } }[activeReschedule.status] || { l: 'Status', c: 'bg-gray-50' };
+                                                                return <div className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-sm ${rCfg.c}`}>{rCfg.l}</div>;
+                                                            }
+                                                            return null;
+                                                        })()}
+
+                                                        {/* CTA Group */}
+                                                        <div className="flex flex-wrap lg:justify-end gap-3 w-full">
+                                                            {booking.status === 'pending' && (
+                                                                <button onClick={() => setSelectedAddonPayment(booking)} className="flex-1 lg:flex-none px-6 py-3 rounded-full bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-gray-900/10 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                                                    <CreditCard size={14} /> Bayar Sekarang
+                                                                </button>
+                                                            )}
+                                                            
+                                                            <button onClick={() => handleOpenDetail(booking)} className="flex-1 lg:flex-none px-6 py-3 rounded-full bg-gray-50 text-gray-500 hover:bg-gray-200 transition text-[10px] font-black uppercase tracking-widest border border-gray-200">
+                                                                Detail
+                                                            </button>
+
+                                                            {isResort && !reschedules.find(r => r.transaction_id === booking.id && r.status !== 'rejected') && booking.reschedule_count === 0 && (
+                                                                <button onClick={() => setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date })} className="flex-1 lg:flex-none px-6 py-3 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-[10px] font-black uppercase tracking-widest border border-blue-100 flex items-center justify-center gap-2">
+                                                                    <Clock size={14} /> Reschedule
+                                                                </button>
+                                                            )}
+
+                                                            {!isResort && (booking.status === 'success' || booking.status === 'paid') && (
+                                                                <button onClick={() => setSelectedTicket(booking)} className="flex-1 lg:flex-none px-6 py-3 rounded-full bg-eling-green text-white hover:bg-green-700 transition shadow-lg shadow-green-900/20 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                                                    <QrCode size={14} /> Ambil Tiket
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                {!isResort && booking.status === 'success' && (
-                                                    <button onClick={() => setSelectedTicket(booking)} className="text-sm font-bold text-eling-green hover:underline flex items-center gap-2">
-                                                        <QrCode size={16} /> Buka E-Tiket
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
                                     );
@@ -569,7 +539,7 @@ export default function Profile() {
             {/* Reschedule Modal */}
             {rescheduleData && (
                 <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl animate-scale-up">
+                    <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-scale-up">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold font-serif">Reschedule Room</h3>
                             <button onClick={() => setRescheduleData(null)} className="text-gray-400 hover:text-gray-900"><X /></button>
@@ -657,13 +627,13 @@ export default function Profile() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedTicket(null)}>
                     <div className="w-full max-w-lg relative" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6 px-4">
-                            <h3 className="text-white text-3xl font-black font-serif uppercase tracking-tight">Access Passes</h3>
-                            <button onClick={() => setSelectedTicket(null)} className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"><X size={24} /></button>
+                            <h3 className="text-white text-2xl sm:text-3xl font-black font-serif uppercase tracking-tight">Access Passes</h3>
+                            <button onClick={() => setSelectedTicket(null)} className="p-2 sm:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"><X size={20} /></button>
                         </div>
 
-                        <div className="flex gap-6 overflow-x-auto pb-10 px-4 snap-x no-scrollbar">
+                        <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-10 px-4 snap-x no-scrollbar">
                             {(selectedTicket.tickets?.length > 0 ? selectedTicket.tickets : [{ ticket_id: selectedTicket.id, guest_name: selectedTicket.booker_name }]).map((tick, idx) => (
-                                <div key={tick.id || idx} className="snap-center shrink-0 w-[320px] bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col items-center">
+                                <div key={tick.id || idx} className="snap-center shrink-0 w-[280px] sm:w-[320px] bg-white rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col items-center">
                                     <div className={`w-full ${selectedTicket.booking_type === 'EVENT' ? 'bg-eling-red' : 'bg-eling-green'} p-6 text-center relative`}>
                                         <div className="absolute -bottom-3 left-0 right-0 flex justify-center">
                                             <div className="bg-white px-4 py-1 rounded-full text-[10px] font-black text-eling-green uppercase border border-eling-green/20 shadow-sm">PASS #{idx + 1}</div>
@@ -729,20 +699,21 @@ export default function Profile() {
             {selectedOrderDetail && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedOrderDetail(null)}>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-                        <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${selectedOrderDetail.booking_type === 'RESORT' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-eling-green'}`}>
-                                    {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={24} /> : <Ticket size={24} />}
+                        <div className="px-6 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-sm ${selectedOrderDetail.booking_type === 'RESORT' ? 'bg-blue-50 text-blue-600' : 'bg-green-50 text-eling-green'}`}>
+                                    {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={20} className="sm:hidden" /> : <Ticket size={20} className="sm:hidden" />}
+                                    {selectedOrderDetail.booking_type === 'RESORT' ? <BedDouble size={24} className="hidden sm:block" /> : <Ticket size={24} className="hidden sm:block" />}
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black font-serif text-gray-900 tracking-tight leading-none">Detail Pesanan</h3>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1.5">{selectedOrderDetail.id}</p>
+                                    <h3 className="text-lg sm:text-xl font-black font-serif text-gray-900 tracking-tight leading-none">Detail Pesanan</h3>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 sm:mt-1.5">{selectedOrderDetail.id}</p>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedOrderDetail(null)} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-eling-red transition"><X size={20}/></button>
+                            <button onClick={() => setSelectedOrderDetail(null)} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-eling-red transition"><X size={18}/></button>
                         </div>
                         
-                        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 sm:y-8">
                             {/* Status Banner */}
                             <div className={`p-5 rounded-2xl flex items-center justify-between border-2 ${
                                 selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid' 
@@ -1056,13 +1027,16 @@ export default function Profile() {
                                 )}
 
                                 {/* CONSOLIDATED TOTAL FOOTER */}
-                                <div className="flex justify-between items-center bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-gray-900/20">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30 mb-1">Grand Total Investasi</p>
-                                        <h5 className="text-[9px] font-black text-white/50 uppercase tracking-widest leading-none">Seluruh Tagihan Lunas</h5>
+                                <div className="flex flex-col sm:flex-row justify-between items-center bg-gray-900 p-8 rounded-[2.5rem] text-white shadow-2xl shadow-gray-900/20 gap-4 mt-8">
+                                    <div className="text-center sm:text-left">
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-white/40 mb-1">Grand Total Transaksi</p>
+                                        <div className="flex items-center justify-center sm:justify-start gap-2">
+                                            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></span>
+                                            <h5 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">Seluruh Tagihan Lunas</h5>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-3xl font-black font-serif tracking-tight">{formatRupiah(
+                                    <div className="text-center sm:text-right border-t sm:border-t-0 sm:border-l border-white/10 pt-4 sm:pt-0 sm:pl-8 w-full sm:w-auto">
+                                        <span className="text-3xl sm:text-4xl font-black tracking-tight block leading-none">{formatRupiah(
                                             Number(selectedOrderDetail.total_price || 0) +
                                             (selectedOrderDetail.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0) +
                                             (selectedOrderDetail.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0)
@@ -1320,17 +1294,18 @@ export default function Profile() {
             {/* Addon Order Modal */}
             {isOrderingAddon && (
                 <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-fade-in">
-                    <div className="bg-white rounded-[3rem] p-10 max-w-lg w-full shadow-2xl relative flex flex-col max-h-[85vh]">
-                        <div className="absolute top-0 right-0 p-8">
-                            <button onClick={() => setIsOrderingAddon(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
+                    <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 max-w-lg w-full shadow-2xl relative flex flex-col max-h-[85vh]">
+                        <div className="absolute top-0 right-0 p-6 sm:p-8">
+                            <button onClick={() => setIsOrderingAddon(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={20} /></button>
                         </div>
 
-                        <div className="mb-8">
-                            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm rotate-3">
-                                <Plus size={32} />
+                        <div className="mb-6 sm:mb-8">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-sm rotate-3">
+                                <Plus size={24} className="sm:hidden" />
+                                <Plus size={32} className="hidden sm:block" />
                             </div>
-                            <h3 className="text-3xl font-black font-serif text-gray-900 leading-tight">Pesan Fasilitas</h3>
-                            <p className="text-gray-500 font-bold mt-2">Pilih fasilitas tambahan untuk menemani masa stay Anda.</p>
+                            <h3 className="text-2xl sm:text-3xl font-black font-serif text-gray-900 leading-tight">Pesan Fasilitas</h3>
+                            <p className="text-gray-500 font-bold mt-2 text-sm">Pilih fasilitas tambahan untuk menemani masa stay Anda.</p>
                         </div>
 
                         <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
@@ -1381,15 +1356,16 @@ export default function Profile() {
             {/* Addon Payment Modal */}
             {selectedAddonPayment && (
                 <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setSelectedAddonPayment(null)}>
-                    <div className="bg-white rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up p-10 flex flex-col relative" onClick={e => e.stopPropagation()}>
-                        <button onClick={() => setSelectedAddonPayment(null)} className="absolute top-8 right-8 text-gray-400 hover:text-gray-900 transition-colors"><X size={24}/></button>
+                    <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up p-6 sm:p-10 flex flex-col relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setSelectedAddonPayment(null)} className="absolute top-6 sm:top-8 right-6 sm:right-8 text-gray-400 hover:text-gray-900 transition-colors"><X size={20}/></button>
                         
-                        <div className="mb-10 text-center">
-                            <div className="w-20 h-20 bg-green-50 text-green-600 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-sm rotate-3">
-                                <CreditCard size={32} />
+                        <div className="mb-6 sm:mb-10 text-center">
+                            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-50 text-green-600 rounded-2xl sm:rounded-[2rem] flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-sm rotate-3">
+                                <CreditCard size={28} className="sm:hidden" />
+                                <CreditCard size={32} className="hidden sm:block" />
                             </div>
-                            <h3 className="text-3xl font-black font-serif text-gray-900 leading-tight">Selesaikan Pembayaran</h3>
-                            <p className="text-gray-500 font-bold mt-2 uppercase tracking-widest text-[10px]">Tagihan Tambahan: {selectedAddonPayment.id}</p>
+                            <h3 className="text-2xl sm:text-3xl font-black font-serif text-gray-900 leading-tight">Selesaikan Pembayaran</h3>
+                            <p className="text-gray-500 font-bold mt-2 uppercase tracking-widest text-[9px] sm:text-[10px]">Tagihan Tambahan: {selectedAddonPayment.id}</p>
                         </div>
 
                         <div className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 mb-8 space-y-4">

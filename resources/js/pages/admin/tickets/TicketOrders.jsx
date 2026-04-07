@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag } from 'lucide-react';
+import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../../../utils/data';
@@ -121,15 +121,58 @@ export default function TicketOrders() {
     });
 
     const stats = {
-        total: orders.length,
-        success: orders.filter(o => o.status === 'success' || o.status === 'paid').length,
-        pending: orders.filter(o => o.status === 'pending').length
+        total: filteredOrders.length,
+        revenue: filteredOrders.filter(o => o.status === 'success' || o.status === 'paid').reduce((acc, curr) => acc + parseFloat(curr.total_price), 0),
+        pending: filteredOrders.filter(o => o.status === 'pending').length
     };
 
     const getStatusStyles = (status) => {
         if (status === 'paid' || status === 'success') return 'bg-success/10 text-success border-success/20';
         if (status === 'pending') return 'bg-warning/10 text-warning border-warning/20';
         return 'bg-danger/10 text-danger border-danger/20';
+    };
+
+    const handleExport = () => {
+        if (filteredOrders.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+        }
+
+        const periodTitle = isAllTime ? 'SEMUA PERIODE' : `${months.find(m => m.value === selectedMonth).name.toUpperCase()} ${selectedYear}`;
+        const exportDate = new Date().toLocaleString('id-ID');
+        const totalSales = filteredOrders.filter(o => o.status === 'success' || o.status === 'paid').reduce((acc, curr) => acc + parseFloat(curr.total_price), 0);
+
+        const csvRows = [
+            [`"LAPORAN PENJUALAN TIKET - ELING BENING"`],
+            [`"PERIODE: ${periodTitle}"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['Order ID', 'Customer Name', 'Email', 'Ticket Item', 'Total Qty', 'Total Price (IDR)', 'Visit Date', 'Status'],
+            ...filteredOrders.map(o => [
+                o.id,
+                `"${o.booker_name || o.user?.name || 'Guest'}"`,
+                o.user?.email || '-',
+                `"${o.items?.[0]?.item?.name || 'Ticket'}"`,
+                o.total_qty,
+                o.total_price,
+                new Date(o.check_in_date).toLocaleDateString('id-ID'),
+                o.status.toUpperCase()
+            ].join(',')),
+            [''],
+            ['', '', '', '', 'TOTAL PENJUALAN:', totalSales, '', '']
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        const fileName = isAllTime ? 'Laporan_Tiket_Semua_Periode.csv' : `Laporan_Tiket_${months.find(m => m.value === selectedMonth).name}_${selectedYear}.csv`;
+        a.setAttribute('download', fileName);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success('Data laporan berhasil diekspor');
     };
 
     return (
@@ -203,6 +246,9 @@ export default function TicketOrders() {
                             </>
                         )}
                     </div>
+                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
+                        <Download size={18} className="text-admin-primary" /> Export Data
+                    </button>
                 </div>
             </div>
 
@@ -222,11 +268,11 @@ export default function TicketOrders() {
                 <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-success">
                     <div className="flex items-center gap-5">
                         <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shadow-inner">
-                            <CheckCircle2 size={28} />
+                            <DollarSign size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Authenticated</p>
-                            <p className="text-3xl font-black text-success leading-none tabular-nums">{stats.success}</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Tiket Terjual</p>
+                            <p className="text-3xl font-black text-success leading-none tabular-nums">{formatRupiah(stats.revenue)}</p>
                         </div>
                     </div>
                 </div>

@@ -96,29 +96,44 @@ export default function Dashboard() {
     }, [selectedMonth, selectedYear, isAllTime]);
 
     const downloadReport = () => {
-        const headers = ['Order ID', 'Pelanggan', 'Item', 'Tanggal', 'Total', 'Status'];
+        if (bookings.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+        }
+
+        const periodTitle = isAllTime ? 'TOTAL SEMUA PERIODE' : `${months.find(m => m.value === selectedMonth).name.toUpperCase()} ${selectedYear}`;
+        const exportDate = new Date().toLocaleString('id-ID');
+        const totalRevenue = stats.periodRevenue;
+
         const csvRows = [
-            headers.join(','),
+            [`"LAPORAN AUDIT KEUANGAN - ELING BENING OVERVIEW"`],
+            [`"PERIODE: ${periodTitle}"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['Order ID', 'Pelanggan', 'Item / Layanan', 'Tanggal Transaksi', 'Total (IDR)', 'Status'],
             ...bookings.map(b => [
                 b.id,
-                b.user?.name || 'Guest',
-                `"${b.item?.name || 'Unknown Item'}"`,
+                `"${b.booker_name || b.user?.name || 'Guest'}"`,
+                `"${b.items?.[0]?.item?.name || 'Unknown Item'}"`,
                 new Date(b.created_at).toLocaleDateString('id-ID'),
                 b.total_price,
-                b.status
-            ].join(','))
+                b.status.toUpperCase()
+            ].join(',')),
+            [''],
+            ['', '', '', '', 'TOTAL OMSET PERIODE:', totalRevenue, '']
         ];
 
-        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.setAttribute('hidden', '');
         a.setAttribute('href', url);
-        a.setAttribute('download', `laporan_eling_bening_${isAllTime ? 'all' : selectedYear+'-'+selectedMonth}.csv`);
+        const fileName = isAllTime ? 'Audit_Keuangan_Semua_Periode.csv' : `Audit_Keuangan_${months.find(m => m.value === selectedMonth).name}_${selectedYear}.csv`;
+        a.setAttribute('download', fileName);
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        toast.success('Laporan berhasil diunduh');
+        toast.success('Audit laporan berhasil diunduh');
     };
 
     const statCards = [
@@ -350,9 +365,9 @@ export default function Dashboard() {
                                     <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${b.status === 'success' || b.status === 'paid' ? 'bg-success' : 'bg-warning'}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.user?.name || 'Guest User'}</h4>
+                                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.booker_name || b.user?.name || 'Guest User'}</h4>
                                     <p className="text-[11px] text-admin-text-muted font-bold leading-tight truncate">
-                                        Pesan <span className="text-admin-text-main">{b.item_name || b.item?.name || 'Item'}</span>
+                                        Pesan <span className="text-admin-text-main">{b.items?.[0]?.item?.name || 'Item'}</span>
                                     </p>
                                     <p className="text-[9px] text-admin-text-light font-black uppercase tracking-widest mt-1">
                                         {new Date(b.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {b.booking_type || 'TRANSACTION'}

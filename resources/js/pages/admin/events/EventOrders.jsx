@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag } from 'lucide-react';
+import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useNavigate } from 'react-router-dom';
 import { formatRupiah } from '../../../utils/data';
@@ -107,15 +107,59 @@ export default function EventOrders() {
     });
 
     const stats = {
-        total: orders.length,
-        revenue: orders.filter(o => o.status === 'success' || o.status === 'paid').reduce((acc, curr) => acc + parseFloat(curr.total_price), 0),
-        pending: orders.filter(o => o.status === 'pending').length
+        total: filteredOrders.length,
+        revenue: filteredOrders.filter(o => o.status === 'success' || o.status === 'paid').reduce((acc, curr) => acc + parseFloat(curr.total_price), 0),
+        pending: filteredOrders.filter(o => o.status === 'pending').length
     };
 
     const getStatusStyles = (status) => {
         if (status === 'paid' || status === 'success') return 'bg-success/10 text-success border-success/20';
         if (status === 'pending') return 'bg-warning/10 text-warning border-warning/20';
         return 'bg-danger/10 text-danger border-danger/20';
+    };
+
+    const handleExport = () => {
+        if (filteredOrders.length === 0) {
+            toast.error("Tidak ada data untuk diekspor");
+            return;
+        }
+
+        const periodTitle = isAllTime ? 'SEMUA PERIODE' : `${months.find(m => m.value === selectedMonth).name.toUpperCase()} ${selectedYear}`;
+        const exportDate = new Date().toLocaleString('id-ID');
+        const totalTurnover = filteredOrders.filter(o => o.status === 'success' || o.status === 'paid').reduce((acc, curr) => acc + parseFloat(curr.total_price), 0);
+
+        const csvRows = [
+            [`"LAPORAN PENJUALAN EVENT - ELING BENING"`],
+            [`"PERIODE: ${periodTitle}"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['Order ID', 'Customer Name', 'Email', 'Phone', 'Event Item', 'Total Qty', 'Total Price (IDR)', 'Event Date', 'Status'],
+            ...filteredOrders.map(o => [
+                o.id,
+                `"${o.booker_name || o.user?.name || 'Guest'}"`,
+                o.user?.email || '-',
+                `'${o.booker_phone || '-'}`,
+                `"${o.items?.[0]?.item?.name || 'Event'}"`,
+                o.total_qty,
+                o.total_price,
+                new Date(o.check_in_date).toLocaleDateString('id-ID'),
+                o.status.toUpperCase()
+            ].join(',')),
+            [''],
+            ['', '', '', '', '', '', 'TOTAL OMSET EVENT:', totalTurnover, '']
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        const fileName = isAllTime ? 'Laporan_Event_Semua_Periode.csv' : `Laporan_Event_${months.find(m => m.value === selectedMonth).name}_${selectedYear}.csv`;
+        a.setAttribute('download', fileName);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success('Data laporan berhasil diekspor');
     };
 
     return (
@@ -183,6 +227,9 @@ export default function EventOrders() {
                             </>
                         )}
                     </div>
+                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
+                        <Download size={18} className="text-admin-primary" /> Export Data
+                    </button>
                 </div>
             </div>
 

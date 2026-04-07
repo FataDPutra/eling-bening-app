@@ -7,6 +7,8 @@ import axios from 'axios';
 export default function Finance() {
     const navigate = useNavigate();
     const [stats, setStats] = useState({ income: 0, expense: 0, balance: 0 });
+    const [allTransactions, setAllTransactions] = useState([]);
+    const [allExpenses, setAllExpenses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchData = async () => {
@@ -19,6 +21,8 @@ export default function Finance() {
 
             const transactions = transRes.data;
             const expenses = expRes.data;
+            setAllTransactions(transactions);
+            setAllExpenses(expenses);
 
             const totalIncome = transactions
                 .filter(b => ['success', 'paid'].includes(b.status))
@@ -41,6 +45,60 @@ export default function Finance() {
             console.error("Failed to fetch finance stats", error);
             setIsLoading(false);
         }
+    };
+
+    const handleExport = () => {
+        if (allTransactions.length === 0 && allExpenses.length === 0) {
+            alert("Tidak ada data finansial untuk diekspor");
+            return;
+        }
+
+        const exportDate = new Date().toLocaleString('id-ID');
+        const combined = [
+            ...allTransactions.filter(b => ['success', 'paid'].includes(b.status)).map(b => ({
+                date: b.created_at,
+                name: b.booking_type === 'RESORT' ? `Resort: ${b.booker_name || b.user?.name}` : `Ticket: ${b.booker_name || b.user?.name}`,
+                type: 'INCOME',
+                amount: Number(b.total_price || 0) + (b.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0)
+            })),
+            ...allExpenses.map(e => ({
+                date: e.transaction_date,
+                name: e.name,
+                type: 'EXPENSE',
+                amount: -Number(e.amount)
+            }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const csvRows = [
+            [`"LAPORAN AUDIT FINANSIAL KESELURUHAN - ELING BENING"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['"RINGKASAN EKSEKUTIF"'],
+            [`"TOTAL PENDAPATAN (BRUTO)",${stats.income}`],
+            [`"TOTAL PENGELUARAN",${stats.expense}`],
+            [`"PROFIT/LOSS (NET)",${stats.balance}`],
+            [''],
+            ['"DETAIL ARUS KAS KESELURUHAN"'],
+            ['"Tanggal"', '"Keterangan / Aktivitas"', '"Kategori"', '"Jumlah (IDR)"'],
+            ...combined.map(row => [
+                new Date(row.date).toLocaleDateString('id-ID'),
+                `"${row.name}"`,
+                row.type,
+                row.amount
+            ].join(',')),
+            [''],
+            ['', '"FINAL AUDIT BALANCE:"', '', stats.balance]
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `Audit_Finansial_Keseluruhan_Eling_Bening.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     };
 
     useEffect(() => {
@@ -89,11 +147,6 @@ export default function Finance() {
                     <h1>Pusat Keuangan</h1>
                     <p>Sistem informasi akuntansi, pelaporan laba rugi, dan rekonsiliasi kas.</p>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-admin-bg transition-all">
-                        <Download size={16} className="text-admin-primary" /> Download Audit
-                    </button>
-                </div>
             </div>
 
             {/* Financial Overview Cards */}
@@ -137,7 +190,7 @@ export default function Finance() {
                         <h3 className="text-xl font-black mb-2">Audit Report</h3>
                         <p className="text-xs text-white/60 font-medium leading-relaxed">Seluruh data finansial disinkronkan secara real-time dari database.</p>
                     </div>
-                    <button className="btn-primary !bg-white !text-admin-text-main w-full py-3.5 justify-center shadow-xl shadow-white/5 hover:scale-105 transition-all" onClick={() => window.print()}>
+                    <button className="btn-primary !bg-white !text-admin-text-main w-full py-3.5 justify-center shadow-xl shadow-white/5 hover:scale-105 transition-all" onClick={handleExport}>
                         <PieChart size={18} /> Print Financial Report
                     </button>
                 </div>

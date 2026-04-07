@@ -91,6 +91,50 @@ export default function FinanceRecap() {
 
     const { income, expense, combined } = getFilteredSummary();
 
+    const handleExport = () => {
+        if (combined.length === 0) {
+            alert("Tidak ada data untuk periode ini");
+            return;
+        }
+
+        const periodTitle = isAllTime ? 'TOTAL SEMUA PERIODE' : `${months.find(m => m.value === selectedMonth).name.toUpperCase()} ${selectedYear}`;
+        const exportDate = new Date().toLocaleString('id-ID');
+
+        const csvRows = [
+            [`"LAPORAN REKAPITULASI KEUANGAN - ELING BENING"`],
+            [`"PERIODE: ${periodTitle}"`],
+            [`"TANGGAL EKSPOR: ${exportDate}"`],
+            [''],
+            ['"RINGKASAN"'],
+            [`"TOTAL PEMASUKAN",${income}`],
+            [`"TOTAL PENGELUARAN",${expense}`],
+            [`"SALDO BERSIH",${income - expense}`],
+            [''],
+            ['"DETAIL ARUS KAS"'],
+            ['"Tanggal"', '"Keterangan / Item"', '"Jenis"', '"Jumlah (IDR)"', '"Status"'],
+            ...combined.map(tr => [
+                new Date(tr.date).toLocaleDateString('id-ID'),
+                `"${tr.itemName}"`,
+                tr.type === 'income' ? 'PEMASUKAN' : 'PENGELUARAN',
+                tr.type === 'income' ? tr.total : -tr.total,
+                tr.status.toUpperCase()
+            ].join(',')),
+            [''],
+            ['', '"FINAL BALANCE:"', '', income - expense, '']
+        ];
+
+        const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        const fileName = isAllTime ? 'Rekap_Keuangan_Semua_Periode.csv' : `Rekap_Keuangan_${months.find(m => m.value === selectedMonth).name}_${selectedYear}.csv`;
+        a.setAttribute('download', fileName);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    };
+
     return (
         <div className="animate-fade-in font-sans">
             <header className="admin-page-header">
@@ -153,8 +197,12 @@ export default function FinanceRecap() {
                             </>
                         )}
                     </div>
-                    <button className="btn-primary-outline" onClick={() => window.print()}>
-                        <Download size={18} /> Cetak Laporan
+                    <button 
+                        onClick={handleExport}
+                        className="flex items-center gap-3 px-8 py-2.5 rounded-xl bg-admin-primary/5 border-2 border-admin-primary/20 text-admin-primary font-black text-[10px] uppercase tracking-widest hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm h-[45px] group"
+                    >
+                        <Download size={18} className="group-hover:-translate-y-0.5 transition-transform" /> 
+                        Cetak Laporan
                     </button>
                 </div>
             </header>

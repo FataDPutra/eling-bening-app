@@ -24,6 +24,11 @@ class SystemSettingSeeder extends Seeder
                 'key' => 'app_name',
                 'value' => 'Eling Bening Resort',
                 'description' => 'Nama aplikasi publik.'
+            ],
+            [
+                'key' => 'google_analytics_id',
+                'value' => '',
+                'description' => 'Measurement ID untuk Google Analytics 4 (GA4).'
             ]
         ];
 
