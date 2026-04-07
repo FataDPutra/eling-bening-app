@@ -4,6 +4,14 @@ Sistem manajemen terpadu untuk destinasi wisata **Eling Bening**, mencakup reser
 
 ---
 
+## 🌐 Lingkungan Aplikasi
+| Lingkungan | URL | Branch | Database |
+| :--- | :--- | :--- | :--- |
+| **Produksi** | [elingbening.com](https://elingbening.com) | `main` | `eling_bening_prod` |
+| **Staging** | [stagging.elingbening.com](https://stagging.elingbening.com) | `staging` | `eling_bening_staging` |
+
+---
+
 ## 🛠️ Persyaratan Sistem (Prerequisites)
 
 Sebelum melakukan instalasi, pastikan server Anda memenuhi spesifikasi berikut:
@@ -111,7 +119,23 @@ php artisan view:cache
 
 ---
 
-## 🛠️ Persiapan Produksi (Checklist Deployment)
+## 🧪 Prosedur Staging Server
+Lakukan verifikasi di **Staging Server** sebelum melakukan merge ke `main`:
+1. Pindah ke branch staging: `git checkout staging`
+2. Merge update terbaru: `git merge main` (jika ada update dari main)
+3. Push ke remote backup: `git push backup staging`
+4. Di server staging, jalankan:
+   ```bash
+   git pull backup staging
+   composer install --optimize-autoloader --no-dev
+   npm run build
+   php artisan migrate --force
+   php artisan optimize
+   ```
+
+---
+
+## 🏗️ Persiapan Produksi (Checklist Deployment)
 
 1. **Jalankan Migrasi Database**: Sangat penting untuk fitur Reschedule dan Audit Keuangan.
    ```bash
