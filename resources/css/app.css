@@ -53,3 +53,46 @@ input[type="number"] {
 .input-with-prefix input, .input-with-suffix input {
     @apply bg-transparent border-none focus:ring-0 py-3 px-4 text-sm font-black text-admin-text-main w-full;
 }
+
+/* React Datepicker Custom Styling */
+.react-datepicker {
+    @apply border-none shadow-2xl rounded-2xl overflow-hidden font-sans !important;
+}
+
+.react-datepicker__header {
+    @apply bg-white border-b border-gray-100 pt-6 !important;
+}
+
+.react-datepicker__current-month {
+    @apply text-gray-900 font-serif font-black !important;
+}
+
+.react-datepicker__day-name {
+    @apply text-gray-400 font-black text-[10px] uppercase !important;
+}
+
+.react-datepicker__day {
+    @apply rounded-lg hover:bg-green-50 hover:text-eling-green transition-all !important;
+}
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range,
+.react-datepicker__day--in-selecting-range {
+    @apply bg-eling-green text-white hover:bg-green-700 !important;
+}
+
+.react-datepicker__day--keyboard-selected {
+    @apply bg-eling-green/10 text-eling-green !important;
+}
+
+.react-datepicker__day--disabled {
+    @apply text-gray-200 cursor-not-allowed hover:bg-transparent !important;
+}
+
+.react-datepicker__navigation-icon::before {
+    @apply border-gray-400 border-2 !important;
+}
+
+.react-datepicker__triangle {
+    @apply hidden !important;
+}

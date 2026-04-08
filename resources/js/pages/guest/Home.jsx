@@ -70,7 +70,7 @@ export default function Home() {
             `}</style>
 
             {/* 1. Hero Section (Above the Fold) */}
-            <section id="hero" className="relative h-screen flex items-center justify-center text-center overflow-hidden pt-20">
+            <section id="hero" className="relative min-h-screen md:h-screen flex items-center justify-center text-center overflow-hidden pt-24 pb-20 md:pt-20 md:pb-0">
                 <img src={content.home.heroImage || "/images/generated/hero.png"} alt="Eling Bening View" className="absolute inset-0 w-full h-full object-cover scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60"></div>
                 <div className="relative z-10 text-white max-w-5xl px-4 flex flex-col items-center">
@@ -87,39 +87,39 @@ export default function Home() {
                         {content.home.heroSubtitle}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center opacity-0 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-                        <Link to="/ticketing" className="w-full sm:w-auto bg-eling-red hover:bg-red-800 text-white font-bold py-5 px-12 rounded-full text-lg transition shadow-2xl flex items-center justify-center gap-3 group">
-                            {content.home.ctaPrimary} <ArrowRight size={20} className="group-hover:translate-x-1 transition" />
+                        <Link to="/ticketing" className="w-full sm:w-auto bg-eling-red hover:bg-red-800 text-white font-bold py-5 px-12 rounded-full text-lg transition-all duration-300 shadow-2xl hover:shadow-red-900/40 hover:scale-105 active:scale-95 flex items-center justify-center gap-3 group">
+                            {content.home.ctaPrimary} <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform duration-300" />
                         </Link>
-                        <Link to="/rooms" className="w-full sm:w-auto backdrop-blur-md bg-white/10 hover:bg-white/20 text-white border border-white/30 font-bold py-5 px-12 rounded-full text-lg transition shadow-2xl flex items-center justify-center gap-3">
+                        <Link to="/rooms" className="w-full sm:w-auto backdrop-blur-md bg-white/10 hover:bg-white/30 text-white border border-white/30 font-bold py-5 px-12 rounded-full text-lg transition-all duration-300 shadow-2xl hover:scale-105 active:scale-95 flex items-center justify-center gap-3">
                             {content.home.ctaSecondary}
                         </Link>
                     </div>
 
                     {/* Quick Info Bar */}
-                    <div className="mt-20 w-full max-w-4xl opacity-0 animate-slide-up" style={{ animationDelay: '0.6s' }}>
-                        <div className="flex flex-wrap justify-center md:grid md:grid-cols-3 bg-white/20 backdrop-blur-2xl border border-white/20 rounded-[2rem] p-6 lg:p-8 gap-8 md:gap-0 shadow-2xl">
-                            <div className="md:border-r border-white/10 flex flex-col items-center px-8">
-                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                    <MapPin size={24} className="text-green-400" />
+                    <div className="mt-8 md:mt-20 w-full max-w-4xl opacity-0 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+                        <div className="grid grid-cols-3 bg-white/10 backdrop-blur-3xl border border-white/10 rounded-2xl md:rounded-full p-2 md:p-4 lg:p-6 gap-0 shadow-2xl">
+                            <div className="md:border-r border-white/10 flex flex-col items-center px-2 md:px-8 py-2 md:py-2">
+                                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4">
+                                    <MapPin size={16} className="md:size-6 text-green-400" />
                                 </div>
-                                <span className="text-xs text-white/60 uppercase tracking-widest mb-1">Lokasi</span>
-                                <span className="text-sm md:text-base font-bold">Ambarawa, Semarang</span>
+                                <span className="text-[7px] md:text-xs text-white/60 uppercase tracking-widest mb-0.5 md:mb-1">Lokasi</span>
+                                <span className="text-[9px] md:text-base font-bold whitespace-nowrap">Ambarawa</span>
                             </div>
-                            <div className="md:border-r border-white/10 flex flex-col items-center px-8">
-                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                    <Calendar size={24} className="text-green-400" />
+                            <div className="border-x md:border-x-0 md:border-r border-white/10 flex flex-col items-center px-2 md:px-8 py-2 md:py-2">
+                                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4">
+                                    <Calendar size={16} className="md:size-6 text-green-400" />
                                 </div>
-                                <span className="text-xs text-white/60 uppercase tracking-widest mb-1">Jam Buka</span>
-                                <span className="text-sm md:text-base font-bold">08:00 - 18:00 WIB</span>
+                                <span className="text-[7px] md:text-xs text-white/60 uppercase tracking-widest mb-0.5 md:mb-1">Jam Buka</span>
+                                <span className="text-[9px] md:text-base font-bold whitespace-nowrap">08:00-18:00</span>
                             </div>
-                            <div className="flex flex-col items-center px-8">
-                                <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                                    <div className="flex gap-1">
-                                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={14} fill="#4ade80" className="text-green-400" />)}
+                            <div className="flex flex-col items-center px-2 md:px-8 py-2 md:py-2">
+                                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4">
+                                    <div className="flex gap-0.5 md:gap-1">
+                                        {[1, 2, 3, 4, 5].map(s => <Star key={s} size={8} md:size={14} fill="#4ade80" className="text-green-400" />)}
                                     </div>
                                 </div>
-                                <span className="text-xs text-white/60 uppercase tracking-widest mb-1">Rating</span>
-                                <span className="text-sm md:text-base font-bold">4.8 (5k+ Review)</span>
+                                <span className="text-[7px] md:text-xs text-white/60 uppercase tracking-widest mb-0.5 md:mb-1">Rating</span>
+                                <span className="text-[9px] md:text-base font-bold whitespace-nowrap">4.8 (5k+)</span>
                             </div>
                         </div>
                     </div>
@@ -148,8 +148,8 @@ export default function Home() {
                                 {content.home.discoveryText}
                             </p>
                         </div>
-                        <Link to="/about" className="mt-12 inline-flex items-center gap-3 bg-eling-green text-white font-bold py-4 px-10 rounded-full hover:bg-green-800 transition shadow-xl group">
-                            Selengkapnya <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition" />
+                        <Link to="/about" className="mt-12 inline-flex items-center gap-3 bg-eling-green text-white font-bold py-4 px-10 rounded-full hover:bg-green-800 transition-all duration-300 shadow-xl hover:shadow-emerald-900/20 hover:scale-105 active:scale-95 group">
+                            Selengkapnya <ArrowUpRight size={20} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
                         </Link>
                     </div>
                 </div>
@@ -175,12 +175,12 @@ export default function Home() {
                             { icon: <Calendar size={32} />, title: "Event & Wedding", desc: "Venue outdoor romantis untuk pernikahan atau acara gathering perusahaan." },
                             { icon: <Users size={32} />, title: "Family Recreation", desc: "Wahana bermain anak dan area outbound yang aman serta menyenangkan." }
                         ].map((item, i) => (
-                            <div key={i} className="group bg-white p-10 rounded-3xl shadow-sm hover:shadow-2xl transition duration-500 border border-gray-100 flex flex-col items-start gap-6">
-                                <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-eling-green group-hover:bg-eling-green group-hover:text-white transition duration-500">
+                            <div key={i} className="group bg-white p-10 rounded-3xl shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 border border-gray-100 flex flex-col items-start gap-6">
+                                <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center text-eling-green group-hover:bg-white group-hover:ring-2 group-hover:ring-eling-green/20 transition-all duration-500 group-hover:scale-110 group-hover:shadow-lg">
                                     {item.icon}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-2xl mb-4 text-gray-900">{item.title}</h3>
+                                    <h3 className="font-bold text-2xl mb-4 text-gray-900 group-hover:text-eling-green transition-colors duration-300">{item.title}</h3>
                                     <p className="text-gray-500 leading-relaxed font-light">{item.desc}</p>
                                 </div>
                             </div>
@@ -200,7 +200,7 @@ export default function Home() {
 
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:h-[800px]">
                         <div 
-                            className="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-3xl cursor-pointer"
+                            className="md:col-span-2 md:row-span-2 h-64 md:h-auto relative group overflow-hidden rounded-3xl cursor-pointer"
                             onClick={() => setSelectedImage("/images/generated/hero.png")}
                         >
                             <img src="/images/generated/hero.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 1" />
@@ -211,7 +211,7 @@ export default function Home() {
                             </div>
                         </div>
                         <div 
-                            className="relative group overflow-hidden rounded-3xl cursor-pointer"
+                            className="relative group overflow-hidden rounded-3xl cursor-pointer h-64 md:h-auto"
                             onClick={() => setSelectedImage("/images/generated/restaurant.png")}
                         >
                             <img src="/images/generated/restaurant.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 2" />
@@ -222,7 +222,7 @@ export default function Home() {
                             </div>
                         </div>
                         <div 
-                            className="relative group overflow-hidden rounded-3xl cursor-pointer"
+                            className="relative group overflow-hidden rounded-3xl cursor-pointer h-64 md:h-auto"
                             onClick={() => setSelectedImage("/images/generated/event.png")}
                         >
                             <img src="/images/generated/event.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 3" />
@@ -233,7 +233,7 @@ export default function Home() {
                             </div>
                         </div>
                         <div 
-                            className="md:col-span-2 relative group overflow-hidden rounded-3xl cursor-pointer"
+                            className="md:col-span-2 relative group overflow-hidden rounded-3xl cursor-pointer h-64 md:h-auto"
                             onClick={() => setSelectedImage("/images/generated/resort.png")}
                         >
                             <img src="/images/generated/resort.png" className="absolute inset-0 w-full h-full object-cover hover-scale" alt="Gallery 4" />
@@ -246,8 +246,12 @@ export default function Home() {
                     </div>
 
                     <div className="text-center mt-12">
-                        <Link to="/gallery" className="inline-flex items-center gap-2 font-bold text-eling-green hover:underline underline-offset-8">
-                            Lihat Semua Galeri <ArrowRight size={18} />
+                        <Link to="/gallery" className="inline-flex items-center gap-2 font-bold text-eling-green hover:text-green-800 transition-all duration-300 group">
+                            <span className="relative overflow-hidden inline-block py-1">
+                                Lihat Semua Galeri
+                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-eling-green group-hover:w-full transition-all duration-500"></span>
+                            </span>
+                            <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-300" />
                         </Link>
                     </div>
                 </div>

@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { id } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
@@ -15,13 +18,17 @@ export default function Rooms() {
     const todayStr = new Date().toISOString().split('T')[0];
     const tomorrowStr = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    const [checkIn, setCheckIn] = useState(todayStr);
-    const [checkOut, setCheckOut] = useState(tomorrowStr);
+    const [checkIn, setCheckIn] = useState(new Date());
+    const [checkOut, setCheckOut] = useState(new Date(new Date().getTime() + 24 * 60 * 60 * 1000));
+    
+    // Refs
+    const checkInRef = useRef(null);
+    const checkOutRef = useRef(null);
     
     // Reschedule states
     const [bookingCode, setBookingCode] = useState('');
     const [oldDate, setOldDate] = useState('');
-    const [newDate, setNewDate] = useState('');
+    const [newDate, setNewDate] = useState(null);
     const [isChecking, setIsChecking] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [bookingData, setBookingData] = useState(null);
@@ -29,6 +36,13 @@ export default function Rooms() {
     const [costPreview, setCostPreview] = useState(null); // { isWeekendChange, priceDiff, adminFee, penalty, finalCharge }
     const { user } = useAuth();
     const navigate = useNavigate();
+
+    const isWeekend = (date) => {
+        if (!date) return false;
+        const d = new Date(date);
+        const day = d.getDay();
+        return day === 0 || day === 6;
+    };
 
     const hasWeekend = (start, end) => {
         if (!start || !end) return false;
@@ -70,7 +84,7 @@ export default function Rooms() {
     };
 
     useEffect(() => {
-        fetchRooms(checkIn, checkOut);
+        fetchRooms(checkIn.toISOString().split('T')[0], checkOut.toISOString().split('T')[0]);
     }, []);
 
     // Fetch public fee settings when reschedule modal opens
@@ -107,14 +121,11 @@ export default function Rooms() {
         navigate(`/rooms/${roomId}`);
     };
 
-    const handleCheckInChange = (newCi) => {
-        setCheckIn(newCi);
-        const ciDate = new Date(newCi);
-        const coDate = new Date(checkOut);
-        
+    const handleCheckInChange = (date) => {
+        setCheckIn(date);
         // If check out is not after check in, set it to ci + 1 day
-        if (coDate <= ciDate) {
-            const nextDay = new Date(ciDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        if (checkOut <= date) {
+            const nextDay = new Date(date.getTime() + 24 * 60 * 60 * 1000);
             setCheckOut(nextDay);
         }
     };
@@ -150,7 +161,7 @@ export default function Rooms() {
         setIsSubmitting(true);
         try {
             const { data } = await axios.post(`/api/transactions/${bookingCode}/reschedule`, {
-                new_check_in_date: newDate,
+                new_check_in_date: newDate?.toISOString().split('T')[0],
                 reason: 'Reschedule from guest dashboard'
             });
 
@@ -179,51 +190,69 @@ export default function Rooms() {
 
     return (
         <div className="pt-12 pb-20 px-6 max-w-7xl mx-auto animate-fade-in">
-            <div className="flex flex-col lg:flex-row justify-between items-end mb-12 gap-6">
-                <div>
+            <div className="flex flex-col lg:flex-row justify-between items-start md:items-center lg:items-end mb-12 gap-6">
+                <div className="text-left md:text-center lg:text-left">
                     <h1 className="text-4xl font-bold mb-4 font-serif">Pilih Villa & Resort</h1>
                     <p className="text-gray-500">Temukan kenyamanan istirahat di tengah alam Ambarawa.</p>
                 </div>
-                <div className="bg-white p-6 lg:p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 w-full lg:w-auto relative z-10 transition-all hover:shadow-2xl">
-                    <div className="flex flex-1 items-center gap-4 p-4 lg:p-2 bg-gray-50/50 rounded-2xl border border-gray-100 lg:border-none lg:bg-transparent">
-                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0">
-                            <Calendar size={18} />
+                <div className="bg-white p-6 lg:p-4 rounded-3xl shadow-xl border border-gray-100 flex flex-col lg:flex-row items-stretch lg:items-center gap-4 w-full lg:w-max relative z-10 transition-all hover:shadow-2xl">
+                    {/* Check In */}
+                    <div 
+                        onClick={() => checkInRef.current?.setOpen(true)}
+                        className="flex flex-1 items-center gap-4 p-4 lg:p-3 bg-gray-50/50 hover:bg-white hover:border-eling-green/30 hover:shadow-lg hover:shadow-eling-green/5 rounded-2xl border border-gray-100 transition-all cursor-pointer group"
+                    >
+                        <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                            <Calendar size={22} />
                         </div>
                         <div className="flex flex-col flex-1">
-                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1">Check In</span>
-                            <input 
-                                type="date" 
-                                className="font-black text-sm focus:outline-none bg-transparent text-gray-700 w-full" 
-                                value={checkIn} 
-                                min={todayStr}
-                                onChange={e => handleCheckInChange(e.target.value)}
+                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1.5 border-b border-gray-100 pb-1.5 group-hover:text-eling-green transition-colors">Check In</span>
+                            <DatePicker
+                                selected={checkIn}
+                                onChange={handleCheckInChange}
+                                selectsStart
+                                startDate={checkIn}
+                                endDate={checkOut}
+                                minDate={new Date()}
+                                locale={id}
+                                dateFormat="dd MMMM yyyy"
+                                ref={checkInRef}
+                                className="font-black text-md focus:outline-none bg-transparent text-gray-800 w-full cursor-pointer"
                             />
                         </div>
                     </div>
 
-                    <div className="hidden lg:block w-px h-10 bg-gray-100 shrink-0"></div>
+                    <div className="hidden lg:block w-px h-12 bg-gray-100 shrink-0"></div>
 
-                    <div className="flex flex-1 items-center gap-4 p-4 lg:p-2 bg-gray-50/50 rounded-2xl border border-gray-100 lg:border-none lg:bg-transparent">
-                        <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0">
-                            <Calendar size={18} />
+                    {/* Check Out */}
+                    <div 
+                        onClick={() => checkOutRef.current?.setOpen(true)}
+                        className="flex flex-1 items-center gap-4 p-4 lg:p-3 bg-gray-50/50 hover:bg-white hover:border-eling-green/30 hover:shadow-lg hover:shadow-eling-green/5 rounded-2xl border border-gray-100 transition-all cursor-pointer group"
+                    >
+                        <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-eling-green shadow-sm shrink-0 group-hover:scale-110 transition-transform">
+                            <Calendar size={22} />
                         </div>
                         <div className="flex flex-col flex-1">
-                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1">Check Out</span>
-                            <input 
-                                type="date" 
-                                className="font-black text-sm focus:outline-none bg-transparent text-gray-700 w-full" 
-                                value={checkOut}
-                                min={new Date(new Date(checkIn).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                                onChange={e => setCheckOut(e.target.value)}
+                            <span className="text-[10px] uppercase font-black text-gray-400 tracking-widest leading-none mb-1.5 border-b border-gray-100 pb-1.5 group-hover:text-eling-green transition-colors">Check Out</span>
+                            <DatePicker
+                                selected={checkOut}
+                                onChange={(date) => setCheckOut(date)}
+                                selectsEnd
+                                startDate={checkIn}
+                                endDate={checkOut}
+                                minDate={new Date(checkIn.getTime() + 24 * 60 * 60 * 1000)}
+                                locale={id}
+                                dateFormat="dd MMMM yyyy"
+                                ref={checkOutRef}
+                                className="font-black text-md focus:outline-none bg-transparent text-gray-800 w-full cursor-pointer"
                             />
                         </div>
                     </div>
 
                     <button 
-                        onClick={() => fetchRooms(checkIn, checkOut)}
-                        className="bg-eling-green text-white px-8 h-14 lg:h-auto lg:py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-green-800 transition-all shadow-lg shadow-green-900/10 active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap"
+                        onClick={() => fetchRooms(checkIn.toISOString().split('T')[0], checkOut.toISOString().split('T')[0])}
+                        className="bg-eling-green text-white px-10 h-14 lg:h-[72px] rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-green-800 hover:-translate-y-1 hover:scale-[1.02] hover:shadow-2xl hover:shadow-eling-green/20 transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 whitespace-nowrap lg:ml-2"
                     >
-                        <Search size={16} strokeWidth={3} />
+                        <Search size={18} strokeWidth={3} />
                         Cek Ketersediaan
                     </button>
                 </div>
@@ -298,18 +327,19 @@ export default function Rooms() {
                                             )}
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                                                <div className="flex justify-between items-end mb-1">
+                                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                                <div className="flex flex-col lg:flex-row lg:justify-between gap-6 lg:gap-2">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Weekday</span>
+                                                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-2">Weekday</span>
                                                         <div className="flex items-baseline gap-1 text-eling-green">
                                                             <span className="text-sm font-black font-serif">Rp</span>
                                                             <span className="text-xl font-black font-serif tracking-tight">{Number(r.weekday_price || r.price).toLocaleString('id-ID')}</span>
                                                         </div>
                                                     </div>
+                                                    
                                                     {r.price_weekend > 0 && (
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-[8px] font-bold text-orange-400 uppercase tracking-widest leading-none mb-1 text-right">Weekend</span>
+                                                        <div className="flex flex-col lg:items-end lg:text-right pt-4 lg:pt-0 border-t lg:border-t-0 lg:border-l border-gray-100 lg:pl-6">
+                                                            <span className="text-[8px] font-bold text-orange-400 uppercase tracking-widest leading-none mb-2">Weekend</span>
                                                             <div className="flex items-baseline gap-1 text-orange-600">
                                                                 <span className="text-sm font-black font-serif">Rp</span>
                                                                 <span className="text-xl font-black font-serif tracking-tight">{Number(r.price_weekend).toLocaleString('id-ID')}</span>
@@ -323,9 +353,6 @@ export default function Rooms() {
                                                 <div className="flex flex-col">
                                                     <span className="text-[10px] font-bold text-eling-green">Total Est. {Math.max(1, Math.floor((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)))} Malam</span>
                                                     <span className="text-sm font-black text-gray-900">{formatRupiah(calculateTotalStayPrice(r, checkIn, checkOut))}</span>
-                                                </div>
-                                                <div className="w-8 h-8 rounded-full bg-eling-green text-white flex items-center justify-center shadow-lg hover:scale-110 transition cursor-pointer">
-                                                    <ChevronRight size={18} />
                                                 </div>
                                             </div>
                                         </div>
@@ -467,14 +494,14 @@ export default function Rooms() {
                                         </div>
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">Tanggal Baru</label>
-                                            <input 
-                                                type="date" 
-                                                className="w-full bg-white border border-eling-green rounded-xl px-4 py-3 focus:outline-none ring-2 ring-eling-green/20" 
-                                                value={newDate}
-                                                onChange={(e) => setNewDate(e.target.value)}
-                                                min={
-                                                    new Date(new Date().getTime() + (feeSettings.min_reschedule_lead_days || 2) * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                                                }
+                                            <DatePicker
+                                                selected={newDate}
+                                                onChange={(date) => setNewDate(date)}
+                                                minDate={new Date(new Date().getTime() + (feeSettings.min_reschedule_lead_days || 2) * 24 * 60 * 60 * 1000)}
+                                                locale={id}
+                                                placeholderText="Pilih tanggal baru"
+                                                dateFormat="dd MMMM yyyy"
+                                                className="w-full bg-white border border-eling-green rounded-xl px-4 py-3 focus:outline-none ring-2 ring-eling-green/20 font-bold"
                                             />
                                         </div>
                                     </div>

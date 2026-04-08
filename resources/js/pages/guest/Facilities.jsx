@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Utensils, BedDouble, Waves, MapPin, Phone, Mail, X, Loader2 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
+import IconRenderer from '../../components/IconRenderer';
 
 export default function Facilities() {
     const { content, isLoading } = useContent();
@@ -38,8 +39,8 @@ export default function Facilities() {
                         <div key={i} className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:border-eling-green hover:-translate-y-2 transition duration-500 group relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-bl-full -z-10 transition duration-500 group-hover:scale-150 group-hover:bg-eling-green/5"></div>
 
-                            <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-eling-green transition duration-500 shadow-sm">
-                                <i className={`fas fa-${item.icon} text-eling-green text-2xl group-hover:text-white transition duration-500`}></i>
+                            <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-white group-hover:ring-2 group-hover:ring-eling-green/20 transition-all duration-500 shadow-sm group-hover:shadow-lg group-hover:scale-110">
+                                <IconRenderer icon={item.icon} size={32} className="text-eling-green transition duration-500" />
                             </div>
 
                             <h3 className="font-bold text-xl mb-4 text-gray-900 font-serif leading-tight">{item.title || item.name}</h3>
@@ -60,9 +61,9 @@ export default function Facilities() {
                         </p>
                         <button
                             onClick={() => setShowMap(true)}
-                            className="bg-eling-green text-white px-8 py-3 rounded-xl font-bold hover:bg-green-800 transition shadow-lg flex items-center gap-2"
+                            className="bg-eling-green text-white px-8 py-4 rounded-xl font-bold hover:bg-green-800 transition-all duration-300 shadow-lg hover:shadow-emerald-900/20 hover:scale-105 active:scale-95 flex items-center gap-3 group"
                         >
-                            <MapPin size={20} /> Lihat Peta Lengkap
+                            <MapPin size={20} className="group-hover:rotate-12 transition-transform duration-300" /> Lihat Peta Lengkap
                         </button>
                     </div>
                     <div className="flex-1 w-full relative group">
@@ -86,7 +87,7 @@ export default function Facilities() {
                                 <h3 className="font-bold text-xl font-serif text-gray-900">Peta Area Eling Bening</h3>
                                 <p className="text-xs text-gray-500">Ambarawa, Jawa Tengah</p>
                             </div>
-                            <button onClick={() => setShowMap(false)} className="w-10 h-10 bg-gray-100 hover:bg-eling-red hover:text-white rounded-full flex items-center justify-center transition">
+                            <button onClick={() => setShowMap(false)} className="w-10 h-10 bg-gray-100 hover:bg-eling-red hover:text-white hover:rotate-90 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90">
                                 <X size={20} />
                             </button>
                         </div>

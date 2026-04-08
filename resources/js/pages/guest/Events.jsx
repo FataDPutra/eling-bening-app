@@ -83,7 +83,7 @@ export default function Events() {
 
             {/* EVENT LISTING ENGINE */}
             <section className="max-w-7xl mx-auto px-4 pt-16 pb-32 relative z-20">
-                <div className="flex flex-col mb-16">
+                <div className="flex flex-col items-start md:items-center lg:items-start text-left md:text-center lg:text-left mb-16">
                     <span className="text-eling-green font-black uppercase tracking-[0.4em] text-[10px] mb-4">Official Manifest</span>
                     <h2 className="text-3xl md:text-4xl font-black text-gray-900 font-serif leading-none uppercase tracking-tighter">Event & Reservation Manifest</h2>
                     <div className="w-20 h-1.5 bg-eling-green mt-6 rounded-full" />
@@ -184,9 +184,9 @@ export default function Events() {
                             Konsultasikan kebutuhan pernikahan, gathering, atau event spesial Anda dengan wedding planner dan event coordinator profesional kami.
                         </p>
                     </div>
-                    <div className="relative z-10 flex flex-col sm:flex-row gap-4">
-                        <Link to="/contact" className="bg-white text-eling-green font-black py-5 px-10 rounded-2xl shadow-xl hover:bg-gray-50 transition text-sm uppercase tracking-widest">
-                            Hubungi Tim Event
+                    <div className="relative z-10 flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                        <Link to="/contact" className="bg-white text-eling-green font-black py-5 px-12 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 text-sm uppercase tracking-widest flex items-center justify-center gap-3 group">
+                            Hubungi Tim Event <ArrowRight size={20} className="group-hover:translate-x-2 transition-transform duration-300" />
                         </Link>
                     </div>
                 </div>

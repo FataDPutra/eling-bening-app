@@ -41,70 +41,114 @@ export default function Contact() {
                             {content.contact.supportDesc}
                         </p>
 
-                        <div className="space-y-8 mb-12">
-                            <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green">
-                                    <MapPin size={24} />
+                        <div className="space-y-4 mb-10">
+                            <div className="flex items-center gap-5 bg-gray-50 p-5 rounded-2xl border border-gray-100 hover:border-eling-green/30 transition-colors group/card">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green group-hover/card:scale-110 transition-transform">
+                                    <MapPin size={22} />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-gray-900 text-lg mb-1">Lokasi</p>
-                                    <p className="text-gray-600 text-sm leading-relaxed">{content.contact.address}</p>
+                                    <p className="font-black text-gray-900 text-sm mb-0.5 uppercase tracking-wide">Lokasi</p>
+                                    <p className="text-gray-500 text-xs leading-relaxed">{content.contact.address}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green">
-                                    <Phone size={24} />
+                            <div className="flex items-center gap-5 bg-gray-50 p-5 rounded-2xl border border-gray-100 hover:border-eling-green/30 transition-colors group/card">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green group-hover/card:scale-110 transition-transform">
+                                    <Phone size={22} />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-gray-900 text-lg mb-1">Telepon</p>
-                                    <p className="text-gray-600 text-sm">{content.contact.phone}</p>
+                                    <p className="font-black text-gray-900 text-sm mb-0.5 uppercase tracking-wide">Telepon</p>
+                                    <p className="text-gray-500 text-xs font-bold">{content.contact.phone}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-start gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-                                <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green">
-                                    <Mail size={24} />
+                            <div className="flex items-center gap-5 bg-gray-50 p-5 rounded-2xl border border-gray-100 hover:border-eling-green/30 transition-colors group/card">
+                                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center flex-shrink-0 shadow-sm text-eling-green group-hover/card:scale-110 transition-transform">
+                                    <Mail size={22} />
                                 </div>
                                 <div>
-                                    <p className="font-bold text-gray-900 text-lg mb-1">Email</p>
-                                    <p className="text-gray-600 text-sm">{content.contact.email}</p>
+                                    <p className="font-black text-gray-900 text-sm mb-0.5 uppercase tracking-wide">Email</p>
+                                    <p className="text-gray-500 text-xs font-bold">{content.contact.email}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <a href="https://wa.me/6281123456789" className="inline-flex justify-center items-center gap-3 bg-green-500 text-white font-bold py-4 px-8 w-full md:w-auto rounded-2xl hover:bg-green-600 transition shadow-lg text-lg">
-                            <i className="fab fa-whatsapp text-2xl"></i>
+                        <a href="https://wa.me/6281123456789" target="_blank" rel="noreferrer" className="flex justify-center items-center gap-3 bg-[#25D366] text-white font-black py-5 w-full rounded-2xl hover:bg-[#22c35e] transition-all duration-300 shadow-xl shadow-green-200 hover:scale-[1.02] active:scale-[0.98] text-xs uppercase tracking-[0.3em] group/wa">
+                            <i className="fab fa-whatsapp text-xl group-hover/wa:rotate-12 transition-transform"></i>
                             Chat via WhatsApp
                         </a>
                     </div>
 
-                    <div className="lg:w-1/2 bg-gray-50 border border-gray-200 shadow-xl rounded-3xl p-8 lg:p-12 h-fit">
-                        <h3 className="text-2xl font-bold font-serif text-gray-900 mb-6">Kirim Pesan Langsung</h3>
-                        <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
-                                <input type="text" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/50 transition shadow-sm" placeholder="Masukkan nama Anda" />
+                    <div className="lg:w-1/2 bg-white border border-gray-100 shadow-[0_32px_80px_rgba(0,0,0,0.06)] rounded-[3rem] p-8 lg:p-12 h-fit relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-eling-green/5 rounded-bl-[100%] transition-transform duration-700 group-hover:scale-150"></div>
+                        
+                        <h3 className="text-3xl font-black font-serif text-gray-900 mb-8 relative z-10">Kirim Pesan Langsung</h3>
+                        
+                        <form className="space-y-6 relative z-10" onSubmit={(e) => e.preventDefault()}>
+                            <div className="space-y-4">
+                                <div className="group/field">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">Nama Lengkap</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within/field:text-eling-green transition-colors">
+                                            <i className="fas fa-user-circle"></i>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/20 focus:bg-white focus:border-eling-green/30 transition-all shadow-sm text-sm font-medium" 
+                                            placeholder="Masukkan nama Anda" 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="group/field">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">Alamat Email</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within/field:text-eling-green transition-colors">
+                                            <i className="fas fa-envelope"></i>
+                                        </div>
+                                        <input 
+                                            type="email" 
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/20 focus:bg-white focus:border-eling-green/30 transition-all shadow-sm text-sm font-medium" 
+                                            placeholder="nama@email.com" 
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="group/field">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">Subjek Pesan</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within/field:text-eling-green transition-colors">
+                                            <i className="fas fa-layer-group"></i>
+                                        </div>
+                                        <select className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/20 focus:bg-white focus:border-eling-green/30 transition-all shadow-sm text-sm font-black text-gray-600 appearance-none cursor-pointer">
+                                            <option>Pertanyaan Umum</option>
+                                            <option>Reservasi Resort</option>
+                                            <option>Gathering & Event</option>
+                                            <option>Keluhan Pelanggan</option>
+                                        </select>
+                                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                                            <i className="fas fa-chevron-down text-[10px]"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="group/field">
+                                    <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1">Pesan Anda</label>
+                                    <div className="relative">
+                                        <div className="absolute top-4 left-0 pl-4 pointer-events-none text-gray-400 group-focus-within/field:text-eling-green transition-colors">
+                                            <i className="fas fa-comment-dots"></i>
+                                        </div>
+                                        <textarea 
+                                            rows="4" 
+                                            className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-11 pr-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/20 focus:bg-white focus:border-eling-green/30 transition-all shadow-sm resize-none text-sm font-medium" 
+                                            placeholder="Apa yang ingin Anda sampaikan?"
+                                        ></textarea>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Alamat Email</label>
-                                <input type="email" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/50 transition shadow-sm" placeholder="nama@email.com" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Subjek Pesan</label>
-                                <select className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/50 transition shadow-sm text-gray-600">
-                                    <option>Pertanyaan Umum</option>
-                                    <option>Reservasi Resort</option>
-                                    <option>Gathering & Event</option>
-                                    <option>Keluhan Pelanggan</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Pesan Anda</label>
-                                <textarea rows="5" className="w-full bg-white border border-gray-200 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-eling-green/50 transition shadow-sm resize-none" placeholder="Apa yang ingin Anda sampaikan?"></textarea>
-                            </div>
-                            <button type="submit" className="w-full bg-eling-red text-white font-bold py-4 rounded-xl hover:bg-red-800 transition shadow-lg text-lg mt-4">
-                                Kirim Pesan
+
+                            <button type="submit" className="w-full bg-eling-red text-white font-black text-xs uppercase tracking-[0.3em] py-5 rounded-2xl hover:bg-red-800 transition-all duration-300 shadow-xl shadow-eling-red/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 group/btn">
+                                Kirim Pesan <i className="fas fa-paper-plane group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform"></i>
                             </button>
                         </form>
                     </div>

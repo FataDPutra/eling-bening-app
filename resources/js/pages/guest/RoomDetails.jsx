@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { id as localeId } from 'date-fns/locale';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
@@ -13,9 +16,13 @@ export default function RoomDetails() {
     const [room, setRoom] = useState(null);
     const [isInitialLoading, setIsInitialLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
-    const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
-    const [endDate, setEndDate] = useState(new Date(new Date().getTime() + 86400000).toISOString().split('T')[0]);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date(new Date().getTime() + 86400000));
     const [guests, setGuests] = useState(2);
+    
+    // Refs
+    const checkInRef = useRef(null);
+    const checkOutRef = useRef(null);
     
     // Gallery & Lightbox states
     const [showFullGallery, setShowFullGallery] = useState(false);
@@ -148,32 +155,29 @@ export default function RoomDetails() {
         );
     };
 
-    const handleStartDateChange = (val) => {
-        setStartDate(val);
-        const d1 = new Date(val);
-        const d2 = new Date(endDate);
-        
+    const handleStartDateChange = (date) => {
+        setStartDate(date);
         // If checkout is before or same as checkin, move it to next day
-        if (d2 <= d1) {
-            const nextDay = new Date(d1);
+        if (endDate <= date) {
+            const nextDay = new Date(date);
             nextDay.setDate(nextDay.getDate() + 1);
-            setEndDate(nextDay.toISOString().split('T')[0]);
+            setEndDate(nextDay);
         }
     };
 
     const minCheckoutDate = startDate ? (() => {
         const d = new Date(startDate);
         d.setDate(d.getDate() + 1);
-        return d.toISOString().split('T')[0];
-    })() : new Date(new Date().getTime() + 86400000).toISOString().split('T')[0];
+        return d;
+    })() : new Date(new Date().getTime() + 86400000);
 
     const fetchRoomDetails = async () => {
         if (!isInitialLoading) setIsUpdating(true);
         try {
             const response = await axios.get(`/api/resorts/${id}`, {
                 params: {
-                    check_in: startDate,
-                    check_out: endDate
+                    check_in: startDate.toISOString().split('T')[0],
+                    check_out: endDate.toISOString().split('T')[0]
                 }
             });
             setRoom(response.data);
@@ -201,8 +205,8 @@ export default function RoomDetails() {
                 ...room,
                 image: galleryToDisplay[0] || "/images/resort-room.png"
             },
-            checkIn: startDate,
-            checkOut: endDate,
+            checkIn: startDate.toISOString().split('T')[0],
+            checkOut: endDate.toISOString().split('T')[0],
             guests: guestsNum,
             totalNights: days,
             roomsNeeded: roomsNeeded
@@ -404,7 +408,7 @@ export default function RoomDetails() {
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-10">
                                 {(room.facilities || []).map((a, i) => (
                                     <div key={i} className="flex items-center gap-5 group">
-                                        <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 text-eling-green flex items-center justify-center group-hover:bg-eling-green group-hover:text-white transition-all duration-500 shadow-sm group-hover:shadow-xl group-hover:shadow-eling-green/20 group-hover:-translate-y-1.5">
+                                        <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 text-eling-green flex items-center justify-center group-hover:bg-white group-hover:ring-2 group-hover:ring-eling-green/20 transition-all duration-500 shadow-sm group-hover:shadow-xl group-hover:shadow-eling-green/20 group-hover:-translate-y-1.5 group-hover:scale-105">
                                             <IconRenderer icon={a.icon} size={28} />
                                         </div>
                                         <div>
@@ -418,31 +422,32 @@ export default function RoomDetails() {
 
                         {/* Reviews Section */}
                         <div className="pt-16 border-t border-gray-100 flex flex-col gap-10">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <h2 className="text-3xl font-bold font-serif text-gray-900">Ulasan Pengalaman</h2>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex text-yellow-500">
+                                <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-2xl border border-gray-100 shadow-sm self-start md:self-auto">
+                                    <div className="flex text-yellow-500 text-xs">
                                         <i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i><i className="fas fa-star"></i>
                                     </div>
-                                    <span className="font-bold text-gray-900">4.9 / 5.0</span>
+                                    <div className="h-4 w-px bg-gray-200"></div>
+                                    <span className="font-black text-gray-900 text-sm">4.9 / 5.0</span>
                                 </div>
                             </div>
 
                             <div className="space-y-6">
-                                <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
+                                <div className="bg-white p-6 md:p-10 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/40 relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-8 text-6xl text-slate-50 font-serif rotate-12 pointer-events-none group-hover:text-eling-green/10 transition-colors">"</div>
-                                    <div className="flex justify-between items-start mb-6">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start mb-6 gap-4">
                                         <div className="flex items-center gap-5">
-                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-eling-green to-emerald-700 text-white flex items-center justify-center font-serif text-3xl shadow-lg">
+                                            <div className="w-14 h-14 md:w-16 md:h-16 shrink-0 rounded-2xl bg-gradient-to-br from-eling-green to-emerald-700 text-white flex items-center justify-center font-serif text-2xl md:text-3xl shadow-lg">
                                                 R
                                             </div>
                                             <div>
-                                                <h4 className="font-black text-gray-900 uppercase tracking-tight">Rina Gunawan</h4>
-                                                <p className="text-xs text-gray-400 font-bold">Terverifikasi • 2 hari yang lalu</p>
+                                                <h4 className="font-black text-gray-900 uppercase tracking-tight text-sm md:text-base">Rina Gunawan</h4>
+                                                <p className="text-[10px] md:text-xs text-gray-400 font-bold">Terverifikasi • 2 hari yang lalu</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <p className="text-gray-600 text-lg leading-relaxed text-left italic font-light font-serif">"Pengalaman menginap yang tak terlupakan. Kamarnya jauh lebih bagus dari foto. Staff sangat ramah dan pemandangan paginya benar-benar tiada tanding..."</p>
+                                    <p className="text-gray-600 text-base md:text-lg leading-relaxed text-left italic font-light font-serif">"Pengalaman menginap yang tak terlupakan. Kamarnya jauh lebih bagus dari foto. Staff sangat ramah dan pemandangan paginya benar-benar tiada tanding..."</p>
                                 </div>
                             </div>
                         </div>
@@ -458,15 +463,15 @@ export default function RoomDetails() {
                                     </div>
                                 )}
                                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] mb-2 text-center">Harga per Malam</p>
-                                <div className="flex flex-col items-center justify-center gap-1">
-                                    <div className="flex flex-col items-center gap-0.5">
-                                        <span className="text-4xl font-black font-serif text-gray-900">{formatRupiah(room.weekday_price || room.price)}</span>
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <span className="text-3xl md:text-4xl font-black font-serif text-gray-900 whitespace-nowrap">{formatRupiah(room.weekday_price || room.price)}</span>
                                         <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">(Weekday)</span>
                                     </div>
                                     
                                     {room.price_weekend > 0 && (
-                                        <div className="flex flex-col items-center gap-0.5 mt-2 pt-2 border-t border-slate-100 w-full">
-                                            <span className="text-2xl font-black font-serif text-orange-600">{formatRupiah(room.price_weekend)}</span>
+                                        <div className="flex flex-col items-center gap-1 mt-3 pt-3 border-t border-slate-100 w-full">
+                                            <span className="text-xl md:text-2xl font-black font-serif text-orange-600 whitespace-nowrap">{formatRupiah(room.price_weekend)}</span>
                                             <span className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">(Weekend)</span>
                                         </div>
                                     )}
@@ -474,41 +479,65 @@ export default function RoomDetails() {
                             </div>
 
                             <div className="space-y-6 mb-10">
-                                <div className="p-7 bg-eling-green/5 border border-eling-green/10 rounded-[2.5rem] flex flex-col gap-4">
-                                    <div className="flex justify-between items-center">
+                                <div className="p-6 md:p-7 bg-eling-green/5 border border-eling-green/10 rounded-[2.5rem] flex flex-col gap-4">
+                                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2 text-center sm:text-left">
                                         <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-eling-green uppercase tracking-widest leading-none mb-1 text-center">Total Harga Kamar</span>
+                                            <span className="text-[10px] font-bold text-eling-green uppercase tracking-widest leading-none mb-1">Total Harga Kamar</span>
                                             <span className="text-[11px] text-gray-500">{nights} Malam • {roomsNeeded} Unit</span>
                                         </div>
-                                        <span className="text-2xl font-black font-serif text-gray-900">{formatRupiah(calculateTotalStayPrice(room, startDate, endDate) * roomsNeeded)}</span>
+                                        <span className="text-2xl font-black font-serif text-gray-900 whitespace-nowrap">{formatRupiah(calculateTotalStayPrice(room, startDate, endDate) * roomsNeeded)}</span>
                                     </div>
                                     
                                     <div className="pt-4 border-t border-eling-green/10 flex flex-col gap-2">
-                                        <div className="flex justify-between items-center text-[9px] font-bold text-gray-400 uppercase tracking-[0.1em]">
+                                        <div className="flex flex-col sm:flex-row justify-between items-center text-[9px] font-bold text-gray-400 uppercase tracking-[0.1em] gap-1">
                                             <span>{weekdaysCount}x Weekday (@{formatRupiah(room.weekday_price || room.price)})</span>
-                                            <span>{formatRupiah(weekdaysCount * (room.weekday_price || room.price) * roomsNeeded)}</span>
+                                            <span className="text-gray-900">{formatRupiah(weekdaysCount * (room.weekday_price || room.price) * roomsNeeded)}</span>
                                         </div>
                                         {weekendsCount > 0 && room.price_weekend > 0 && (
-                                            <div className="flex justify-between items-center text-[9px] font-bold text-orange-400 uppercase tracking-[0.1em]">
+                                            <div className="flex flex-col sm:flex-row justify-between items-center text-[9px] font-bold text-orange-400 uppercase tracking-[0.1em] gap-1">
                                                 <span>{weekendsCount}x Weekend (@{formatRupiah(room.price_weekend)})</span>
-                                                <span>{formatRupiah(weekendsCount * room.price_weekend * roomsNeeded)}</span>
+                                                <span className="text-orange-600">{formatRupiah(weekendsCount * room.price_weekend * roomsNeeded)}</span>
                                             </div>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
-                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Check-In</label>
-                                        <input type="date" value={startDate} min={new Date().toISOString().split('T')[0]}
-                                            onChange={e => handleStartDateChange(e.target.value)} 
-                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer" />
+                                    <div 
+                                        onClick={() => checkInRef.current?.setOpen(true)}
+                                        className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all cursor-pointer group"
+                                    >
+                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer group-hover:text-eling-green transition-colors">Check-In</label>
+                                        <DatePicker
+                                            selected={startDate}
+                                            onChange={handleStartDateChange}
+                                            selectsStart
+                                            startDate={startDate}
+                                            endDate={endDate}
+                                            minDate={new Date()}
+                                            locale={localeId}
+                                            dateFormat="dd/MM/yyyy"
+                                            ref={checkInRef}
+                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer bg-transparent"
+                                        />
                                     </div>
-                                    <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
-                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest">Check-Out</label>
-                                        <input type="date" value={endDate} min={minCheckoutDate}
-                                            onChange={e => setEndDate(e.target.value)} 
-                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer" />
+                                    <div 
+                                        onClick={() => checkOutRef.current?.setOpen(true)}
+                                        className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all cursor-pointer group"
+                                    >
+                                        <label className="block mb-2 text-[10px] text-gray-400 font-black uppercase tracking-widest cursor-pointer group-hover:text-eling-green transition-colors">Check-Out</label>
+                                        <DatePicker
+                                            selected={endDate}
+                                            onChange={(date) => setEndDate(date)}
+                                            selectsEnd
+                                            startDate={startDate}
+                                            endDate={endDate}
+                                            minDate={minCheckoutDate}
+                                            locale={localeId}
+                                            dateFormat="dd/MM/yyyy"
+                                            ref={checkOutRef}
+                                            className="w-full text-sm font-black text-gray-900 outline-none border-0 p-0 focus:ring-0 cursor-pointer bg-transparent"
+                                        />
                                     </div>
                                 </div>
                                 <div className="p-5 bg-white border border-gray-100 rounded-3xl shadow-sm hover:border-eling-green transition-all">
