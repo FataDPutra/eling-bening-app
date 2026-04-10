@@ -16,6 +16,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\StatController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\ReviewController;
 
 // Breeze Auth Routes
 require __DIR__.'/auth.php';
@@ -41,6 +42,7 @@ Route::post('/midtrans/callback', [\App\Http\Controllers\PaymentCallbackControll
 Route::get('/events', [EventController::class, 'index']);
 Route::get('/events/{event}', [EventController::class, 'show']);
 Route::get('/contents', [ContentController::class, 'index']);
+Route::get('/reviews', [ReviewController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function() {
     Route::get('/user', function (Request $request) {
@@ -66,6 +68,7 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::get('/addon-facilities', [TransactionController::class, 'getAddonFacilities']);
     Route::post('/transactions/{id}/addons', [TransactionController::class, 'storeAddon']);
     Route::get('/transactions/check-booking/{id}', [TransactionController::class, 'checkBooking']);
+    Route::post('/reviews', [ReviewController::class, 'store']);
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function() {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
@@ -30,6 +30,35 @@ export default function Profile() {
     const [selectedReschedulePayment, setSelectedReschedulePayment] = useState(null);
     const [isPayingReschedule, setIsPayingReschedule] = useState(false);
     const [activeTab, setActiveTab] = useState('tickets'); // 'tickets' or 'addons'
+    const [selectedReview, setSelectedReview] = useState(null);
+    const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '', media: [] });
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmittingReview(true);
+        const formData = new FormData();
+        formData.append('transaction_id', selectedReview.id);
+        formData.append('rating', reviewForm.rating);
+        formData.append('comment', reviewForm.comment);
+        Array.from(reviewForm.media).forEach((file) => {
+            formData.append('media[]', file);
+        });
+
+        try {
+            await axios.post('/api/reviews', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            toast.success('Terima kasih atas ulasan Anda!');
+            setSelectedReview(null);
+            setReviewForm({ rating: 5, comment: '', media: [] });
+            fetchBookings();
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Gagal mengirimkan ulasan.');
+        } finally {
+            setIsSubmittingReview(false);
+        }
+    };
 
     useEffect(() => {
         fetchBookings();
@@ -477,9 +506,15 @@ export default function Profile() {
                                                         </button>
                                                     )}
                                                     
-                                                    <button onClick={() => handleOpenDetail(booking)} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-gray-50 text-gray-500 hover:bg-gray-100 transition text-[10px] font-black uppercase tracking-widest border border-gray-100">
+                                                    <button onClick={() => setSelectedOrderDetail(booking)} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-white text-gray-700 hover:bg-gray-50 transition text-[10px] font-black uppercase tracking-widest border border-gray-100 flex items-center justify-center gap-2">
                                                         Detail
                                                     </button>
+
+                                                    {(booking.status === 'success' || booking.status === 'paid') && (
+                                                        <button onClick={() => setSelectedReview(booking)} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-amber-50 text-amber-600 hover:bg-amber-100 transition text-[10px] font-black uppercase tracking-widest border border-amber-100 flex items-center justify-center gap-2">
+                                                            <Star size={14} className="fill-amber-600" /> Ulasan
+                                                        </button>
+                                                    )}
 
                                                     {isResort && !reschedules.find(r => r.transaction_id === booking.id && r.status !== 'rejected') && booking.reschedule_count === 0 && (
                                                         <button onClick={() => setRescheduleData({ ...booking, id: booking.id, oldDate: booking.check_in_date })} className="flex-1 sm:flex-none px-6 py-3 rounded-2xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-[10px] font-black uppercase tracking-widest border border-blue-100 flex items-center justify-center gap-2">
@@ -591,74 +626,171 @@ export default function Profile() {
 
             {/* Ticket Modal */}
             {selectedTicket && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedTicket(null)}>
-                    <div className="w-full max-w-lg relative" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6 px-4">
-                            <h3 className="text-white text-2xl sm:text-3xl font-black font-serif uppercase tracking-tight">Access Passes</h3>
-                            <button onClick={() => setSelectedTicket(null)} className="p-2 sm:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"><X size={20} /></button>
+                <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-fade-in" onClick={() => setSelectedTicket(null)}>
+                    <div className="w-full max-w-sm sm:max-w-md relative" onClick={e => e.stopPropagation()}>
+                        <div className="relative flex justify-center items-center mb-6 px-2">
+                            <h3 className="text-white text-xl sm:text-2xl font-black font-serif uppercase tracking-tight text-center">Access Passes</h3>
+                            <button onClick={() => setSelectedTicket(null)} className="absolute right-0 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"><X size={18} /></button>
                         </div>
 
-                        <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-10 px-4 snap-x no-scrollbar">
+                        <div className={`flex gap-4 sm:gap-6 overflow-x-auto pb-4 px-2 snap-x no-scrollbar ${(selectedTicket.tickets?.length || 1) <= 1 ? 'justify-center' : ''}`}>
                             {(selectedTicket.tickets?.length > 0 ? selectedTicket.tickets : [{ ticket_id: selectedTicket.id, guest_name: selectedTicket.booker_name }]).map((tick, idx) => (
-                                <div key={tick.id || idx} className="snap-center shrink-0 w-[280px] sm:w-[320px] bg-white rounded-[2.5rem] sm:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col items-center">
-                                    <div className={`w-full ${selectedTicket.booking_type === 'EVENT' ? 'bg-eling-red' : 'bg-eling-green'} p-6 text-center relative`}>
-                                        <div className="absolute -bottom-3 left-0 right-0 flex justify-center">
-                                            <div className="bg-white px-4 py-1 rounded-full text-[10px] font-black text-eling-green uppercase border border-eling-green/20 shadow-sm">PASS #{idx + 1}</div>
+                                <div key={tick.id || idx} className="snap-center shrink-0 w-[260px] sm:w-[320px] bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col items-center relative isolation-auto">
+                                    {/* Header Section */}
+                                    <div className={`w-full ${selectedTicket.booking_type === 'EVENT' ? 'bg-eling-red' : 'bg-eling-green'} pb-6 pt-5 px-4 text-center relative`}>
+                                        <div className="absolute -bottom-3 left-0 right-0 flex justify-center z-10">
+                                            <div className="bg-white px-4 py-1 rounded-full text-[10px] font-black text-eling-green uppercase border border-gray-100 shadow-sm">PASS #{idx + 1}</div>
                                         </div>
-                                        <h4 className="text-white font-black uppercase tracking-[0.2em] text-[11px] mb-1">Eling Bening Official</h4>
-                                        <p className="text-white/60 text-[9px] font-bold uppercase tracking-widest">{selectedTicket.check_in_date ? new Date(selectedTicket.check_in_date).toLocaleDateString() : 'Active Pass'}</p>
+                                        <h4 className="text-white font-black uppercase tracking-[0.2em] text-[12px] mb-1">Eling Bening Official</h4>
+                                        <p className="text-white/80 text-[9px] font-bold uppercase tracking-widest">{selectedTicket.check_in_date ? new Date(selectedTicket.check_in_date).toLocaleDateString() : 'Active Pass'}</p>
                                     </div>
-                                    <div className="p-10 flex flex-col items-center w-full text-center">
-                                        <div className="p-8 bg-white rounded-[3rem] mb-8 border-4 border-gray-50 shadow-inner flex items-center justify-center relative group">
-                                            <div className="absolute inset-0 bg-eling-green/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-[2.8rem]"></div>
+
+                                    {/* QR Code Section */}
+                                    <div className="px-6 py-8 flex flex-col items-center w-full text-center">
+                                        <div className="p-4 bg-white rounded-3xl mb-6 shadow-[0_0_20px_rgba(0,0,0,0.04)] border border-gray-100/50 flex items-center justify-center relative">
                                             <QRCodeCanvas 
                                                 value={tick.ticket_id} 
-                                                size={200}
+                                                size={180}
                                                 level="H"
                                                 includeMargin={false}
                                                 imageSettings={{
                                                     src: "/images/logo.png",
-                                                    x: undefined,
-                                                    y: undefined,
-                                                    height: 45,
-                                                    width: 45,
+                                                    x: undefined, y: undefined,
+                                                    height: 40, width: 40,
                                                     excavate: true,
                                                 }}
-                                                className="relative z-10"
+                                                className="relative z-10 mix-blend-multiply"
                                             />
                                         </div>
-                                        <div className="space-y-4 w-full">
-                                            <div className="bg-gray-50 py-4 px-6 rounded-2xl border border-gray-100">
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Visitor Name</p>
-                                                <h5 className="text-xl font-black text-gray-900 leading-tight uppercase tracking-tight">{tick.guest_name}</h5>
+                                        <div className="space-y-3 w-full">
+                                            <div className="bg-gray-50/50 py-3 px-4 rounded-xl border border-gray-100">
+                                                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Visitor Name</p>
+                                                <h5 className="text-lg font-black text-gray-900 leading-tight uppercase tracking-tight truncate">{tick.guest_name}</h5>
                                             </div>
-                                            <div className="pt-4 border-t-4 border-dotted border-gray-100">
+                                            <div className="pt-3 border-t-2 border-dashed border-gray-200 relative">
+                                                {/* Dashed line effect visually supported by border-dashed */}
                                                 <div className="flex justify-between items-center mb-1">
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Entry UID</p>
-                                                    <div className="w-2 h-2 rounded-full bg-eling-green animate-pulse"></div>
+                                                    <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Entry UID</p>
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-eling-green animate-pulse"></div>
                                                 </div>
-                                                <p className="font-mono text-[11px] text-gray-900 font-black uppercase tracking-tighter bg-gray-50 p-3 rounded-xl border border-gray-100">{tick.ticket_id}</p>
+                                                <p className="font-mono text-[10px] sm:text-[11px] text-gray-800 font-bold uppercase tracking-widest bg-gray-50 py-2.5 px-3 rounded-lg border border-gray-100">{tick.ticket_id}</p>
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="w-full p-4 bg-gray-50 border-t border-gray-100 flex gap-3">
-                                        <button className="flex-1 py-3 bg-white text-eling-green border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-eling-green hover:text-white transition-all shadow-sm">
+
+                                    {/* Footer Section */}
+                                    <div className="w-full px-6 pb-6 pt-2 bg-white flex gap-3">
+                                        <button className="w-full py-3 bg-white text-eling-green shadow-sm border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-eling-green hover:text-white transition-all">
                                             <Download size={14}/> Save Media
                                         </button>
                                         {tick.is_used && (
-                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-white/60 backdrop-blur-sm flex items-center justify-center z-20">
                                                 <div className="bg-red-500 text-white px-6 py-2 rounded-full font-black uppercase text-xs rotate-[-15deg] border-4 border-white shadow-2xl">REDEEMED</div>
                                             </div>
                                         )}
                                     </div>
+                                    
+                                    {/* Perforation Hole effect left/right */}
+                                    <div className="absolute top-[75px] -left-3 w-6 h-6 bg-slate-900/40 rounded-full mix-blend-overlay"></div>
+                                    <div className="absolute top-[75px] -right-3 w-6 h-6 bg-slate-900/40 rounded-full mix-blend-overlay"></div>
                                 </div>
                             ))}
                         </div>
-                        <div className="flex justify-center gap-2 mt-4">
+                        <div className="flex justify-center mt-2">
                             {(selectedTicket.tickets?.length || 1) > 1 && (
-                                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest">Swipe for more ({selectedTicket.tickets?.length} tickets)</p>
+                                <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest bg-black/20 px-4 py-1.5 rounded-full backdrop-blur-sm">Swipe for {selectedTicket.tickets?.length} passes</p>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Review Modal */}
+            {selectedReview && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold font-serif">Berikan Ulasan</h3>
+                            <button onClick={() => setSelectedReview(null)} className="text-gray-400 hover:text-gray-900"><X /></button>
+                        </div>
+                        <form onSubmit={handleReviewSubmit} className="space-y-6">
+                            <div className="flex justify-center gap-2 mb-4">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                        key={star}
+                                        size={40}
+                                        className={`cursor-pointer transition-colors ${reviewForm.rating >= star ? 'text-amber-400 fill-amber-400' : 'text-gray-200'}`}
+                                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                    />
+                                ))}
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Ceritakan Pengalaman Anda</label>
+                                <textarea
+                                    required
+                                    className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 focus:border-eling-green outline-none transition-all resize-none font-bold text-sm"
+                                    rows="4"
+                                    placeholder="Apa yang paling Anda sukai tentang kunjungan ini?"
+                                    value={reviewForm.comment}
+                                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">Upload Foto/Video (Opsional)</label>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*,video/*"
+                                    onChange={(e) => {
+                                        const newFiles = Array.from(e.target.files);
+                                        setReviewForm({ ...reviewForm, media: [...reviewForm.media, ...newFiles] });
+                                        // clear the input so user can add identically named files again if needed
+                                        e.target.value = null;
+                                    }}
+                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-eling-green hover:file:bg-green-100 transition-all font-bold"
+                                />
+                                {reviewForm.media && reviewForm.media.length > 0 && (
+                                    <div className="flex flex-wrap gap-3 mt-4">
+                                        {reviewForm.media.map((file, idx) => {
+                                            const isVideo = file.type?.startsWith('video/');
+                                            const objectUrl = URL.createObjectURL(file);
+                                            return (
+                                                <div key={idx} className="relative group w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                                                    {isVideo ? (
+                                                        <video src={objectUrl} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <img src={objectUrl} className="w-full h-full object-cover" />
+                                                    )}
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition duration-300 flex justify-center items-center">
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                const newArr = [...reviewForm.media];
+                                                                newArr.splice(idx, 1);
+                                                                setReviewForm({...reviewForm, media: newArr});
+                                                            }}
+                                                            className="bg-red-500/80 p-1.5 rounded-full hover:bg-red-600 transition text-white shadow-md">
+                                                            <X size={16} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isSubmittingReview}
+                                className="w-full text-white font-bold py-4 rounded-xl transition-all font-serif bg-eling-green hover:bg-green-800 shadow-lg shadow-green-900/20 disabled:opacity-50"
+                            >
+                                {isSubmittingReview ? 'Mengirim...' : 'Kirim Ulasan'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             )}

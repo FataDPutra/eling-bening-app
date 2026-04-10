@@ -332,6 +332,16 @@ class TransactionController extends Controller
         }
 
         $transaction->update(['status' => 'paid']);
+
+        try {
+            $email = $transaction->booker_email ?? $transaction->user->email;
+            if ($email) {
+                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\TransactionReceipt($transaction));
+            }
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed sending receipt ' . $transaction->id . ': ' . $e->getMessage());
+        }
+
         return response()->json([
             'message' => 'Status transaksi diperbarui menjadi PAID',
             'transaction' => $transaction

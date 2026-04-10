@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Shield, Globe, Lock, Key, BarChart3, RefreshCw, CreditCard } from 'lucide-react';
+import { Save, Shield, Globe, Lock, Key, BarChart3, RefreshCw, CreditCard, Mail, Server, AtSign } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 
@@ -11,7 +11,14 @@ export default function Settings() {
         google_client_id: '',
         google_client_secret: '',
         google_analytics_id: '',
-        max_reschedule_days: '7'
+        max_reschedule_days: '7',
+        mail_host: '',
+        mail_port: '587',
+        mail_username: '',
+        mail_password: '',
+        mail_encryption: 'tls',
+        mail_from_address: '',
+        mail_from_name: 'Eling Bening',
     });
     const [isLoading, setIsLoading] = useState(true);
 
@@ -153,6 +160,103 @@ export default function Settings() {
                         </div>
                     </section>
                 </div>
+            </div>
+
+            {/* Row 1.5: SMTP Email Config */}
+            <div className="mb-8">
+                <section className="bg-white rounded-[2.5rem] border border-admin-border p-10 shadow-sm">
+                    <div className="flex items-center gap-4 mb-10 pb-6 border-b border-admin-border">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Mail size={28} />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black text-admin-text-main">Email / SMTP Configuration</h3>
+                            <p className="text-xs font-bold text-admin-text-muted uppercase tracking-widest mt-1">Pengaturan pengiriman email nota transaksi otomatis</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">SMTP Host</label>
+                            <div className="relative">
+                                <Server className="absolute left-5 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                                <input 
+                                    type="text"
+                                    placeholder="smtp.gmail.com"
+                                    className="admin-input !pl-14 font-mono text-xs" 
+                                    value={settings.mail_host}
+                                    onChange={e => setSettings({...settings, mail_host: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">SMTP Port</label>
+                            <input 
+                                type="text"
+                                placeholder="587"
+                                className="admin-input font-mono text-xs"
+                                value={settings.mail_port}
+                                onChange={e => setSettings({...settings, mail_port: e.target.value})}
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">Encryption</label>
+                            <select 
+                                className="admin-input"
+                                value={settings.mail_encryption}
+                                onChange={e => setSettings({...settings, mail_encryption: e.target.value})}
+                            >
+                                <option value="tls">TLS (Port 587)</option>
+                                <option value="ssl">SSL (Port 465)</option>
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">Email Username</label>
+                            <div className="relative">
+                                <AtSign className="absolute left-5 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                                <input 
+                                    type="email"
+                                    placeholder="email@gmail.com"
+                                    className="admin-input !pl-14 text-xs" 
+                                    value={settings.mail_username}
+                                    onChange={e => setSettings({...settings, mail_username: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">Email Password / App Password</label>
+                            <div className="relative">
+                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                                <input 
+                                    type="password"
+                                    className="admin-input !pl-14 font-serif tracking-widest" 
+                                    value={settings.mail_password}
+                                    onChange={e => setSettings({...settings, mail_password: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-3 block">From Address</label>
+                            <div className="relative">
+                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                                <input 
+                                    type="email"
+                                    placeholder="info@elingbening.com"
+                                    className="admin-input !pl-14 text-xs" 
+                                    value={settings.mail_from_address}
+                                    onChange={e => setSettings({...settings, mail_from_address: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="mt-6 p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                        <p className="text-[11px] font-bold text-blue-700 leading-relaxed">
+                            💡 <strong>Gmail:</strong> Gunakan App Password (bukan password akun biasa) yang dibuat di Google Account → Security → 2-Step Verification → App Passwords.
+                            Host: <code className="bg-blue-100 px-1 rounded">smtp.gmail.com</code>, Port: <code className="bg-blue-100 px-1 rounded">587</code>, Encryption: <code className="bg-blue-100 px-1 rounded">TLS</code>.
+                        </p>
+                    </div>
+                </section>
             </div>
 
             {/* Row 2: OAuth & Global Sync */}

@@ -5,14 +5,115 @@ import { useContent } from '../../context/ContentContext';
 import {
     Mountain, Utensils, BedDouble, Waves, MapPin,
     Phone, Mail, Star,
-    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight, Loader2, X
+    ArrowRight, Camera, Users, Calendar, Ticket, ArrowUpRight, Loader2, X, Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
+
+const ReviewCard = ({ item, setSelectedImage }) => {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const media = item.media || [];
+    const isPlaceholder = media.length === 0;
+
+    return (
+        <div className="group bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
+            {/* Media Slider */}
+            <div className="relative h-72 sm:h-80 overflow-hidden">
+                {!isPlaceholder ? (
+                    <>
+                        <div 
+                            className="flex h-full transition-transform duration-500 ease-out"
+                            style={{ transform: `translateX(-${activeIndex * 100}%)` }}
+                        >
+                            {media.map((url, idx) => (
+                                <img 
+                                    key={idx}
+                                    src={url} 
+                                    className="w-full h-full object-cover flex-shrink-0 cursor-pointer" 
+                                    alt={`Review gallery ${idx}`} 
+                                    onClick={() => setSelectedImage(url)}
+                                />
+                            ))}
+                        </div>
+                        
+                        {/* Dots Pagination */}
+                        {media.length > 1 && (
+                            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 bg-black/20 backdrop-blur-md p-2 rounded-full z-10">
+                                {media.map((_, idx) => (
+                                    <button 
+                                        key={idx}
+                                        onClick={(e) => { e.stopPropagation(); setActiveIndex(idx); }}
+                                        className={`w-2 h-2 rounded-full transition-all duration-300 ${activeIndex === idx ? 'bg-white w-6' : 'bg-white/40 hover:bg-white/60'}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* Navigation Arrows */}
+                        {media.length > 1 && (
+                            <>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => (prev > 0 ? prev - 1 : media.length - 1)); }}
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-800 hover:bg-white transition opacity-0 group-hover:opacity-100 z-10"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setActiveIndex(prev => (prev < media.length - 1 ? prev + 1 : 0)); }}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 shadow-lg flex items-center justify-center text-gray-800 hover:bg-white transition opacity-0 group-hover:opacity-100 z-10"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </>
+                        )}
+                    </>
+                ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-green-50/50 to-emerald-50 flex items-center justify-center">
+                        <Mountain size={64} className="text-eling-green/10" />
+                    </div>
+                )}
+                
+                {/* Rating Badge */}
+                <div className="absolute top-6 left-6 flex gap-0.5 bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl z-10">
+                    {[...Array(item.rating)].map((_, r) => <Star key={`r-${r}`} size={14} fill="#FACC15" className="text-yellow-400" />)}
+                    {[...Array(5 - item.rating)].map((_, r) => <Star key={`e-${r}`} size={14} className="text-gray-200" />)}
+                </div>
+            </div>
+
+            <div className="p-8 flex flex-col flex-1">
+                <div className="flex-1">
+                    <p className="text-gray-600 italic font-light leading-relaxed text-lg mb-8 group-hover:text-gray-900 transition-colors line-clamp-3">
+                        &ldquo;{item.comment || 'Pengalaman yang sangat luar biasa di Eling Bening!'}&rdquo;
+                    </p>
+                </div>
+
+                <div className="flex items-center gap-4 border-t border-gray-100 pt-6 relative">
+                    <div className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center font-bold text-eling-green bg-green-50 shadow-inner group-hover:ring-2 group-hover:ring-eling-green/20 transition-all duration-500">
+                        {item.user?.profile_photo_path ? (
+                            <img src={`/storage/${item.user.profile_photo_path}`} className="w-full h-full object-cover" alt={item.user_name} />
+                        ) : (
+                            <span className="text-xl">{item.user_name.charAt(0)}</span>
+                        )}
+                    </div>
+                    <div>
+                        <p className="font-bold text-gray-900 group-hover:text-eling-green transition-colors">{item.user_name}</p>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
+                                <Check size={10} className="text-white" />
+                            </div>
+                            <p className="text-[10px] text-green-600 font-black uppercase tracking-widest">Verified Guest</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function Home() {
     const { content, isLoading: contentLoading } = useContent();
     const [events, setEvents] = useState([]);
     const [isLoadingEvents, setIsLoadingEvents] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
+    const [reviews, setReviews] = useState([]);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -26,7 +127,20 @@ export default function Home() {
                 setIsLoadingEvents(false);
             }
         };
+
+        const fetchReviews = async () => {
+            try {
+                const { data } = await axios.get('/api/reviews');
+                if (Array.isArray(data) && data.length > 0) {
+                    setReviews(data.slice(0, 3));
+                }
+            } catch (error) {
+                console.error('Failed to fetch reviews:', error);
+            }
+        };
+
         fetchEvents();
+        fetchReviews();
     }, []);
 
     if (contentLoading) return (
@@ -312,24 +426,43 @@ export default function Home() {
                         <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">{content.home.testimonialTitle}</h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {(content.home.testimonials || []).map((item, i) => (
-                            <div key={i} className="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 flex flex-col gap-6">
-                                <div className="flex gap-1">
-                                    {[...Array(item.rating)].map((_, r) => <Star key={r} size={16} fill="#FACC15" className="text-yellow-400" />)}
+                    <div className="flex flex-wrap justify-center gap-8">
+                        {reviews.length > 0 ? (
+                            reviews.map((item, i) => (
+                                <div key={i} className="w-full md:w-[calc(33.333%-1.5rem)] max-w-md">
+                                    <ReviewCard item={item} setSelectedImage={setSelectedImage} />
                                 </div>
-                                <p className="text-gray-600 italic font-light leading-relaxed">"{item.quote}"</p>
-                                <div className="flex items-center gap-4 mt-4">
-                                    <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center font-bold text-eling-green bg-green-50">
-                                        {item.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-gray-900">{item.name}</p>
-                                        <p className="text-xs text-gray-400">Pengunjung Terverifikasi</p>
+                            ))
+                        ) : (
+                            (content.home.testimonials || []).map((item, i) => (
+                                <div key={i} className="w-full md:w-[calc(33.333%-1.5rem)] max-w-md">
+                                    <div className="group bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
+                                        <div className="relative h-72 sm:h-80 overflow-hidden bg-gray-100">
+                                            <img 
+                                                src={["/images/generated/hero.png", "/images/generated/room.png", "/images/generated/restaurant.png"][i % 3]} 
+                                                className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" 
+                                                alt="Default review background" 
+                                            />
+                                            <div className="absolute top-6 left-6 flex gap-0.5 bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl">
+                                                {[...Array(item.rating)].map((_, r) => <Star key={r} size={14} fill="#FACC15" className="text-yellow-400" />)}
+                                            </div>
+                                        </div>
+                                        <div className="p-8 flex flex-col flex-1">
+                                            <p className="text-gray-600 italic font-light leading-relaxed text-lg mb-8 group-hover:text-gray-900 transition-colors line-clamp-3">"{item.quote}"</p>
+                                            <div className="flex items-center gap-4 mt-auto border-t border-gray-100 pt-6">
+                                                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center font-bold text-eling-green shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                    {item.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-gray-900 group-hover:text-eling-green transition-colors">{item.name}</p>
+                                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Verified Guest</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
 
                     <div className="mt-20 flex flex-col md:flex-row items-center justify-center gap-12 bg-white/50 backdrop-blur-sm rounded-[3rem] p-10 border border-white">
@@ -345,9 +478,9 @@ export default function Home() {
                             <p className="font-bold text-2xl text-gray-900 mb-2">Puas dengan Layanan Kami?</p>
                             <p className="text-gray-500 font-light">Berikan ulasan Anda dan bantu kami menjadi lebih baik.</p>
                         </div>
-                        <button className="bg-eling-green text-white font-bold py-4 px-10 rounded-2xl shadow-lg hover:bg-green-800 transition">
+                        <Link to="/profile" className="bg-eling-green text-white font-bold py-4 px-10 rounded-2xl shadow-lg hover:bg-green-700 hover:scale-105 hover:shadow-xl active:scale-95 transition-all duration-300">
                             Tulis Review
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
