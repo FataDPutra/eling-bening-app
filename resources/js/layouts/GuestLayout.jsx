@@ -159,13 +159,10 @@ export default function GuestLayout() {
                                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Akun Saya</p>
                             </div>
                             {user ? (
-                                <>
-                                    <div className="px-6 py-2 mb-2 bg-green-50/50">
-                                        <p className="text-sm font-black text-eling-green uppercase tracking-tight">{user.name}</p>
-                                        <p className="text-[10px] text-gray-400 font-bold">{user.email}</p>
-                                    </div>
-                                    <button onClick={handleLogout} className="w-full text-left px-6 py-2 hover:bg-gray-50 hover:text-eling-red transition text-xs font-black uppercase tracking-widest">Logout</button>
-                                </>
+                                <div className="px-6 py-2 mb-2 bg-green-50/50">
+                                    <p className="text-sm font-black text-eling-green uppercase tracking-tight">{user.name}</p>
+                                    <p className="text-[10px] text-gray-400 font-bold">{user.email}</p>
+                                </div>
                             ) : (
                                 <>
                                     <Link to="/login" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Login</Link>
@@ -174,7 +171,15 @@ export default function GuestLayout() {
                             )}
                             <div className="h-px bg-gray-100 my-2 mx-4"></div>
                             {user && <Link to="/profile" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Profil & Riwayat</Link>}
-                            <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-eling-red">Panel Admin</Link>
+                            {user?.role === 'admin' && (
+                                <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-eling-red">Panel Admin</Link>
+                            )}
+                            {user && (
+                                <>
+                                    <div className="h-px bg-gray-50 my-1 mx-4"></div>
+                                    <button onClick={handleLogout} className="w-full text-left px-6 py-2 hover:bg-gray-50 hover:text-eling-red transition text-xs font-black uppercase tracking-widest">Logout</button>
+                                </>
+                            )}
                         </div>
                     </div>
 
