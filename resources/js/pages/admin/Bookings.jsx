@@ -312,13 +312,13 @@ export default function Bookings() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Transaction ID</th>
-                            <th>Lead Customer</th>
-                            <th>Stay Dates</th>
-                            <th>Net Total</th>
-                            <th>Check Info</th>
+                            <th>ID Transaksi</th>
+                            <th>Pelanggan Utama</th>
+                            <th>Tanggal Inap</th>
+                            <th>Total Bersih</th>
+                            <th>Info Kedatangan</th>
                             <th>Status</th>
-                            <th>Operations</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -368,9 +368,9 @@ export default function Bookings() {
                                 </td>
                                 <td>
                                     {booking.stay_status === 'checked_in' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 animate-pulse-slow">
+                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 text-blue-600 rounded-xl border border-blue-100 animate-pulse-slow">
                                             <DoorOpen size={14} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Udah Cekin</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Sudah Check-in</span>
                                         </div>
                                     ) : booking.stay_status === 'checked_out' ? (
                                         <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl border border-slate-200">
@@ -422,9 +422,9 @@ export default function Bookings() {
                     <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-up border border-white/20">
                         <button
                             onClick={() => setSelectedBooking(null)}
-                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-admin-bg hover:bg-admin-primary hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-sm border border-admin-border"
+                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
                         >
-                            <X size={20} />
+                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                         </button>
 
                         <div className="md:w-1/3 bg-admin-bg p-12 border-r border-admin-border flex flex-col">
@@ -437,9 +437,9 @@ export default function Bookings() {
                             <div className={`mt-auto p-6 rounded-3xl border ${getStatusStyles(selectedBooking.status)}`}>
                                 <div className="flex items-center gap-3 mb-2">
                                     <Clock size={16} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Order Progress</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Progres Pesanan</span>
                                 </div>
-                                <div className="text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? 'Terkonfirmasi' : 'Menunggu Audit'}</div>
+                                <div className="text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? 'Terkonfirmasi' : 'Antrean Audit'}</div>
                             </div>
                         </div>
 
@@ -781,41 +781,56 @@ export default function Bookings() {
 
                             <div className="flex gap-4">
                                 {selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? (
-                                    <>
+                                    <div className="w-full space-y-4">
                                         {selectedBooking.stay_status === 'pending' && (
                                             <button
                                                 onClick={() => handleCheckAction('check-in')}
-                                                className="flex-1 bg-eling-green text-white py-5 rounded-[2rem] shadow-xl shadow-green-900/10 active:scale-95 transition-all duration-300 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-between px-10 group hover:scale-[1.02] hover:shadow-2xl hover:bg-green-600"
+                                                className="group relative w-full h-24 rounded-[2.5rem] bg-eling-green hover:bg-green-700 transition-all duration-500 shadow-xl overflow-hidden active:scale-95"
                                             >
-                                                <div className="flex items-center gap-4 transition-transform duration-300 group-hover:translate-x-1">
-                                                    <DoorOpen size={20} className="group-hover:rotate-6 transition-transform" />
-                                                    <span>Konfirmasi Check-In</span>
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
+                                                <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                                                
+                                                <div className="relative flex flex-col items-center justify-center h-full text-white">
+                                                    <div className="p-2 rounded-full bg-white/20 mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner border border-white/10">
+                                                        <DoorOpen size={24} />
+                                                    </div>
+                                                    <div className="flex flex-col items-center leading-none text-center">
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Konfirmasi Kedatangan</span>
+                                                        <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest mt-1 text-center">Proses Check-In Tamu</span>
+                                                    </div>
                                                 </div>
-                                                <ChevronRight size={20} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300" />
                                             </button>
                                         )}
                                         {selectedBooking.stay_status === 'checked_in' && (
                                             <button
                                                 onClick={() => handleCheckAction('check-out')}
-                                                className="flex-1 bg-slate-900 text-white py-5 rounded-[2rem] shadow-xl shadow-slate-900/10 active:scale-95 transition-all duration-300 text-xs font-black uppercase tracking-[0.2em] flex items-center justify-between px-10 group hover:scale-[1.02] hover:shadow-2xl hover:bg-black"
+                                                className="group relative w-full h-24 rounded-[2.5rem] bg-slate-900 hover:bg-black transition-all duration-500 shadow-xl overflow-hidden active:scale-95"
                                             >
-                                                <div className="flex items-center gap-4 transition-transform duration-300 group-hover:translate-x-1">
-                                                    <DoorClosed size={20} className="group-hover:-rotate-6 transition-transform" />
-                                                    <span>Proses Check-Out</span>
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                                                
+                                                <div className="relative flex flex-col items-center justify-center h-full text-white">
+                                                    <div className="p-2 rounded-full bg-white/10 mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner border border-white/5">
+                                                        <DoorClosed size={24} />
+                                                    </div>
+                                                    <div className="flex flex-col items-center leading-none text-center">
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Check-Out Tamu</span>
+                                                        <span className="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-1">Selesaikan Sesi Menginap</span>
+                                                    </div>
                                                 </div>
-                                                <ChevronRight size={20} className="opacity-40 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300" />
                                             </button>
                                         )}
                                         {selectedBooking.stay_status === 'checked_out' && (
                                             <button
                                                 onClick={() => setSelectedBooking(null)}
-                                                className="flex-1 bg-white border-2 border-slate-100 text-slate-400 py-5 rounded-[2rem] text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-4 group hover:border-eling-green/30 hover:text-eling-green transition-all duration-300 hover:scale-[1.02]"
+                                                className="w-full py-6 rounded-[2.5rem] bg-white border-2 border-slate-100 text-slate-400 font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-4 group hover:border-eling-green/30 hover:text-eling-green transition-all duration-300 active:scale-95"
                                             >
                                                 <span>Kunjungan Selesai</span>
-                                                <Check size={18} className="group-hover:scale-125 transition-transform" />
+                                                <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-eling-green group-hover:text-white transition-all">
+                                                    <CheckCircle2 size={16} />
+                                                </div>
                                             </button>
                                         )}
-                                    </>
+                                    </div>
                                 ) : (
                                     <button
                                         disabled

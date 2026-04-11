@@ -9,9 +9,10 @@ import {
     Car, ParkingCircle, Bus, Bike as BikeIcon, Building2, Stethoscope, Zap, Contact, MapPin, Compass, Sparkles,
     UtensilsCrossed, Monitor, AirVent, Fan, Refrigerator, Smartphone, Tablet, Laptop,
     Mic, Music2, Camera, Video, MonitorPlay, Heart, Brain, Library,
-    Droplet, Brush,
+    Droplet, Brush, Anchor, Target, BedDouble,
     Users, Maximize, User, UserCircle, Square,
-    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info
+    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info, Eye,
+    Baby, Accessibility, CigaretteOff, Hand, Venus, Mars, Toilet
 } from 'lucide-react';
 
 // ─── CUSTOM ICONS (For missing ones in older Lucide versions) ───────────────
@@ -33,7 +34,7 @@ const ICON_MAP = {
     Plus, Edit, Trash2, Search, ConciergeBell, LayoutGrid, X,
     Package, ShoppingBasket, Check, ChevronDown, Loader2,
     
-    // Original Icons
+    // Nature & Scenery
     Bed, Bath, ShowerHead, Wind, Tv, Wifi, Lightbulb, Lamp, DoorOpen, Lock,
     Coffee, Utensils, Soup, Pizza, GlassWater, Wine, Beer, IceCream, Cake,
     Waves, Trees, Mountain, Flame, Tent, Flower, Sun, Moon, Cloud, Fish,
@@ -41,9 +42,10 @@ const ICON_MAP = {
     Car, ParkingCircle, Bus, BikeIcon, Building2, Stethoscope, Zap, Contact, MapPin, Compass, Sparkles,
     UtensilsCrossed, Monitor, AirVent, Fan, Refrigerator, Smartphone, Tablet, Laptop,
     Mic, Music2, Camera, Video, MonitorPlay, Heart, Brain, Library,
-    Droplet, Brush, Soap: CustomSoap,
+    Droplet, Brush, Soap: CustomSoap, Anchor, Target, BedDouble, Eye,
     Users, Maximize, User, UserCircle, Square,
-    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info
+    Clock, Calendar, History, ShieldCheck, Mail, Phone, Info,
+    Baby, Accessibility, CigaretteOff, Hand, Venus, Mars, Toilet
 };
 
 // ─── Icon Renderer Helper ──────────────────────────────────────────────────

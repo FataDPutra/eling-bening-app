@@ -11,8 +11,11 @@ class ReviewController extends Controller
 {
     public function index()
     {
+        $minRating = (int) \App\Models\Content::getByKey('home_testimonial_min_rating', 1);
+
         $reviews = Review::with('user')
             ->where('is_visible', true)
+            ->where('rating', '>=', $minRating)
             ->latest()
             ->get()
             ->map(function($review) {
@@ -22,7 +25,11 @@ class ReviewController extends Controller
                     'user' => $review->user,
                     'rating' => $review->rating,
                     'comment' => $review->comment,
-                    'media' => collect($review->media ?? [])->map(fn($path) => asset('storage/' . $path))->toArray(),
+                    'media' => collect($review->media ?? [])->map(function($path) {
+                        if (str_starts_with($path, 'http')) return $path;
+                        if (str_contains($path, 'images/reviews')) return asset($path);
+                        return asset('storage/' . ltrim($path, '/'));
+                    })->toArray(),
                     'created_at' => $review->created_at->diffForHumans(),
                 ];
             });

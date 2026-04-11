@@ -22,6 +22,7 @@ const defaultContent = {
         
         testimonialBadge: 'Guest Reviews',
         testimonialTitle: 'Apa Kata Mereka?',
+        testimonialMinRating: '1',
         testimonials: [
             { name: "Andi Saputra", quote: "Pemandangannya luar biasa, sangat cocok untuk liburan keluarga. Pelayanannya ramah sekali.", rating: 5 },
             { name: "Siti Rahma", quote: "Tempat favorit saya di Semarang. Makanannya enak dan spot fotonya banyak banget.", rating: 5 },
@@ -114,6 +115,7 @@ export const ContentProvider = ({ children }) => {
                 if (item.key === 'home_discovery_text') newContent.home.discoveryText = item.content;
                 if (item.key === 'home_testimonial_badge') newContent.home.testimonialBadge = item.content;
                 if (item.key === 'home_testimonial_title') newContent.home.testimonialTitle = item.content;
+                if (item.key === 'home_testimonial_min_rating') newContent.home.testimonialMinRating = item.content;
                 if (item.key === 'home_testimonials') newContent.home.testimonials = item.data;
                 if (item.key === 'home_final_cta_title') newContent.home.finalCtaTitle = item.content;
                 if (item.key === 'home_final_cta_subtitle') newContent.home.finalCtaSubtitle = item.content;
@@ -211,6 +213,7 @@ export const ContentProvider = ({ children }) => {
                 { key: 'home_discovery_text', content: content.home.discoveryText, type: 'text', page: 'home' },
                 { key: 'home_testimonial_badge', content: content.home.testimonialBadge, type: 'text', page: 'home' },
                 { key: 'home_testimonial_title', content: content.home.testimonialTitle, type: 'text', page: 'home' },
+                { key: 'home_testimonial_min_rating', content: content.home.testimonialMinRating, type: 'text', page: 'home' },
                 { key: 'home_testimonials', data: content.home.testimonials, type: 'json', page: 'home' },
                 { key: 'home_final_cta_title', content: content.home.finalCtaTitle, type: 'text', page: 'home' },
                 { key: 'home_final_cta_subtitle', content: content.home.finalCtaSubtitle, type: 'text', page: 'home' },

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useContent } from '../../context/ContentContext';
@@ -66,8 +66,22 @@ const ReviewCard = ({ item, setSelectedImage }) => {
                         )}
                     </>
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-green-50/50 to-emerald-50 flex items-center justify-center">
-                        <Mountain size={64} className="text-eling-green/10" />
+                    <div className="w-full h-full bg-[#fdfdfd] flex items-center justify-center relative overflow-hidden group-hover:bg-eling-green/[0.02] transition-colors duration-700">
+                        {/* Decorative Background Elements */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-eling-green/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-eling-red/5 rounded-full -ml-16 -mb-16 blur-3xl"></div>
+                        
+                        <div className="relative z-10 flex flex-col items-center gap-4">
+                            <div className="w-20 h-20 rounded-full bg-white shadow-xl flex items-center justify-center text-eling-green/20 group-hover:text-eling-green/40 group-hover:scale-110 transition-all duration-700">
+                                <Mountain size={40} strokeWidth={1.5} />
+                            </div>
+                            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-300">Experience Nature</span>
+                        </div>
+                        
+                        {/* Large Quote Mark Background */}
+                        <div className="absolute -bottom-4 -right-2 text-gray-50 opacity-10 font-serif text-[12rem] select-none leading-none">
+                            &rdquo;
+                        </div>
                     </div>
                 )}
                 
@@ -114,6 +128,57 @@ export default function Home() {
     const [isLoadingEvents, setIsLoadingEvents] = useState(true);
     const [selectedImage, setSelectedImage] = useState(null);
     const [reviews, setReviews] = useState([]);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const sliderRef = useRef(null);
+
+    // Triple the reviews for infinite loop effect
+    const infiniteReviews = [...reviews, ...reviews, ...reviews];
+
+    const handleMouseDown = (e) => {
+        setIsDragging(true);
+        setStartX(e.pageX - sliderRef.current.offsetLeft);
+        setScrollLeft(sliderRef.current.scrollLeft);
+    };
+
+    const handleMouseLeave = () => setIsDragging(false);
+    const handleMouseUp = () => setIsDragging(false);
+
+    const handleMouseMove = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - sliderRef.current.offsetLeft;
+        const walk = (x - startX) * 2;
+        sliderRef.current.scrollLeft = scrollLeft - walk;
+    };
+
+    const scroll = (direction) => {
+        const itemWidth = sliderRef.current.offsetWidth / (window.innerWidth < 768 ? 1 : 3);
+        const scrollAmount = direction === 'left' ? -itemWidth : itemWidth;
+        sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    };
+
+    // Auto loop logic
+    useEffect(() => {
+        const slider = sliderRef.current;
+        if (!slider || reviews.length === 0) return;
+
+        const handleScroll = () => {
+            const { scrollLeft, scrollWidth, offsetWidth } = slider;
+            if (scrollLeft <= 0) {
+                slider.scrollLeft = scrollWidth / 3;
+            } else if (scrollLeft >= (scrollWidth * 2) / 3) {
+                slider.scrollLeft = scrollWidth / 3;
+            }
+        };
+
+        slider.addEventListener('scroll', handleScroll);
+        // Initial position in the middle set
+        slider.scrollLeft = slider.scrollWidth / 3;
+
+        return () => slider.removeEventListener('scroll', handleScroll);
+    }, [reviews]);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -132,7 +197,9 @@ export default function Home() {
             try {
                 const { data } = await axios.get('/api/reviews');
                 if (Array.isArray(data) && data.length > 0) {
-                    setReviews(data.slice(0, 3));
+                    const minRating = parseInt(content.home.testimonialMinRating || 1);
+                    const filtered = data.filter(r => r.rating >= minRating);
+                    setReviews(filtered.slice(0, 6)); // Display up to 6 reviews on Home
                 }
             } catch (error) {
                 console.error('Failed to fetch reviews:', error);
@@ -180,6 +247,13 @@ export default function Home() {
                 }
                 .animate-slide-up {
                     animation: slide-up 0.8s ease-out forwards;
+                }
+                .scrollbar-hide::-webkit-scrollbar {
+                    display: none;
+                }
+                .scrollbar-hide {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
                 }
             `}</style>
 
@@ -421,48 +495,70 @@ export default function Home() {
             {/* 7. Testimoni Pengunjung */}
             <section id="testimonials" className="section-container bg-white overflow-hidden">
                 <div className="max-w-7xl mx-auto relative">
-                    <div className="text-center mb-16 relative z-10">
-                        <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">{content.home.testimonialBadge}</span>
-                        <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">{content.home.testimonialTitle}</h2>
+                    <div className="flex justify-between items-center mb-10">
+                        <div className="text-left">
+                            <span className="text-eling-red uppercase tracking-[0.3em] font-bold text-sm block mb-4">{content.home.testimonialBadge}</span>
+                            <h2 className="text-4xl md:text-5xl font-bold font-serif text-gray-900">{content.home.testimonialTitle}</h2>
+                        </div>
+                        {reviews.length > 0 && (
+                            <div className="flex gap-4">
+                                <button onClick={() => scroll('left')} className="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-eling-green hover:border-eling-green hover:shadow-lg transition-all active:scale-95">
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button onClick={() => scroll('right')} className="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 hover:text-eling-green hover:border-eling-green hover:shadow-lg transition-all active:scale-95">
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-8">
-                        {reviews.length > 0 ? (
-                            reviews.map((item, i) => (
-                                <div key={i} className="w-full md:w-[calc(33.333%-1.5rem)] max-w-md">
-                                    <ReviewCard item={item} setSelectedImage={setSelectedImage} />
-                                </div>
-                            ))
-                        ) : (
-                            (content.home.testimonials || []).map((item, i) => (
-                                <div key={i} className="w-full md:w-[calc(33.333%-1.5rem)] max-w-md">
-                                    <div className="group bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
-                                        <div className="relative h-72 sm:h-80 overflow-hidden bg-gray-100">
-                                            <img 
-                                                src={["/images/generated/hero.png", "/images/generated/room.png", "/images/generated/restaurant.png"][i % 3]} 
-                                                className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" 
-                                                alt="Default review background" 
-                                            />
-                                            <div className="absolute top-6 left-6 flex gap-0.5 bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl">
-                                                {[...Array(item.rating)].map((_, r) => <Star key={r} size={14} fill="#FACC15" className="text-yellow-400" />)}
-                                            </div>
-                                        </div>
-                                        <div className="p-8 flex flex-col flex-1">
-                                            <p className="text-gray-600 italic font-light leading-relaxed text-lg mb-8 group-hover:text-gray-900 transition-colors line-clamp-3">"{item.quote}"</p>
-                                            <div className="flex items-center gap-4 mt-auto border-t border-gray-100 pt-6">
-                                                <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center font-bold text-eling-green shadow-inner group-hover:scale-110 transition-transform duration-500">
-                                                    {item.name.charAt(0)}
+                    <div 
+                        ref={sliderRef}
+                        className={`overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing select-none scroll-smooth flex snap-x snap-mandatory`}
+                        onMouseDown={handleMouseDown}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                    >
+                        <div className="flex w-fit">
+                            {reviews.length > 0 ? (
+                                infiniteReviews.map((item, i) => (
+                                    <div key={i} className="w-[85vw] md:w-[28vw] flex-shrink-0 px-3 snap-center">
+                                        <ReviewCard item={item} setSelectedImage={setSelectedImage} />
+                                    </div>
+                                ))
+                            ) : (
+                                (content.home.testimonials || []).map((item, i) => (
+                                    <div key={i} className="w-[85vw] md:w-[28vw] flex-shrink-0 px-3 snap-center">
+                                        {/* Fallback card content remains same */}
+                                        <div className="group bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
+                                            <div className="relative h-72 overflow-hidden bg-gray-100">
+                                                <img 
+                                                    src={["/images/generated/hero.png", "/images/generated/room.png", "/images/generated/restaurant.png"][i % 3]} 
+                                                    className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" 
+                                                    alt="Default review background" 
+                                                />
+                                                <div className="absolute top-6 left-6 flex gap-0.5 bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl">
+                                                    {[...Array(item.rating)].map((_, r) => <Star key={r} size={14} fill="#FACC15" className="text-yellow-400" />)}
                                                 </div>
-                                                <div>
-                                                    <p className="font-bold text-gray-900 group-hover:text-eling-green transition-colors">{item.name}</p>
-                                                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Verified Guest</p>
+                                            </div>
+                                            <div className="p-8 flex flex-col flex-1">
+                                                <p className="text-gray-600 italic font-light leading-relaxed text-lg mb-8 group-hover:text-gray-900 transition-colors line-clamp-3">"{item.quote}"</p>
+                                                <div className="flex items-center gap-4 mt-auto border-t border-gray-100 pt-6">
+                                                    <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center font-bold text-eling-green shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                                        {item.name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 group-hover:text-eling-green transition-colors">{item.name}</p>
+                                                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Verified Guest</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
-                        )}
+                                ))
+                            )}
+                        </div>
                     </div>
 
                     <div className="mt-20 flex flex-col md:flex-row items-center justify-center gap-12 bg-white/50 backdrop-blur-sm rounded-[3rem] p-10 border border-white">

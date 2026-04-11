@@ -27,9 +27,14 @@ class TransactionReceipt extends Mailable
         $this->applyMailConfig();
 
         // Load branding from CMS
-        $logoPath = Content::getByKey('site_logo');
-        $this->logoUrl = $logoPath ? asset('storage/' . $logoPath) : null;
-        $this->siteName = Content::getByKey('site_name', 'Eling Bening');
+        $logoPath = Content::getByKey('layout_logo');
+        if ($logoPath) {
+            $this->logoUrl = str_starts_with($logoPath, 'http') ? $logoPath : asset('storage/' . $logoPath);
+        } else {
+            $this->logoUrl = asset('images/logo.png');
+        }
+
+        $this->siteName = Content::getByKey('layout_site_title', 'Eling Bening');
         $this->contactEmail = Content::getByKey('contact_email', 'info@elingbening.com');
     }
 

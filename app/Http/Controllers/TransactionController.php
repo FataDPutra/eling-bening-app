@@ -23,7 +23,7 @@ class TransactionController extends Controller
         $year = $request->query('year');
 
         // Lighter eager loading for list view — addons.items.item only needed in show()
-        $query = Transaction::with(['items.item', 'promo', 'addons', 'reschedules', 'user'])
+        $query = Transaction::with(['items.item', 'promo', 'addons', 'reschedules', 'user', 'tickets'])
             ->orderBy('created_at', 'desc');
 
         if ($user && $user->role !== 'admin' || $isMine) {
@@ -237,7 +237,7 @@ class TransactionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $transaction = Transaction::with(['user', 'items.item', 'promo', 'reschedules', 'addons.items.item'])->findOrFail($id);
+        $transaction = Transaction::with(['user', 'items.item', 'promo', 'reschedules', 'addons.items.item', 'tickets'])->findOrFail($id);
         
         $user = $request->user();
         if ($user->role !== 'admin' && $user->id !== $transaction->user_id) {

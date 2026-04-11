@@ -319,13 +319,13 @@ export default function EventOrders() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                <th>Registry ID</th>
-                                <th>Participant</th>
-                                <th>Event Manifest</th>
-                                <th>Scanned</th>
-                                <th>Payment</th>
+                                <th>ID Registry</th>
+                                <th>Peserta</th>
+                                <th>Item Tiket</th>
+                                <th>Check-in</th>
+                                <th>Pembayaran</th>
                                 <th>Status</th>
-                                <th className="text-right">Actions</th>
+                                <th className="text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -347,7 +347,7 @@ export default function EventOrders() {
                                 <tr 
                                     key={order.id} 
                                     onClick={() => setSelectedOrder(order)}
-                                    className="group hover:bg-admin-primary/5 cursor-pointer transition-all active:scale-[0.99]"
+                                    className="group hover:bg-admin-primary/10 cursor-pointer transition-all active:scale-[0.99] border-b border-admin-border/50 last:border-0"
                                 >
                                     <td>
                                         <div className="flex items-center gap-2 font-black text-admin-primary text-xs tracking-tighter uppercase italic">
@@ -420,21 +420,21 @@ export default function EventOrders() {
                                 <Ticket size={32} />
                             </div>
                             
-                            <div className="mb-8">
-                                <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] mb-2 block">Booking Identifier</span>
-                                <h2 className="text-2xl font-black text-admin-text-main tracking-tighter italic uppercase">{selectedOrder.id}</h2>
+                            <div className="mb-8 font-black">
+                                <span className="text-[10px] text-admin-text-muted uppercase tracking-[0.3em] mb-2 block">ID Pemesanan</span>
+                                <h2 className="text-2xl text-admin-text-main tracking-tighter italic uppercase">{selectedOrder.id}</h2>
                             </div>
 
                             <div className="space-y-6 flex-1">
                                 <div className="p-5 rounded-2xl bg-white border border-admin-border shadow-sm">
-                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-3 block">Transaction Status</span>
+                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-3 block">Status Transaksi</span>
                                     <div className={`px-4 py-3 rounded-xl border-2 border-dashed font-black uppercase text-center text-xs tracking-widest ${getStatusStyles(selectedOrder.status)}`}>
-                                        {selectedOrder.status}
+                                        {selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'BERHASIL' : 'TERTUNDA'}
                                     </div>
                                 </div>
 
                                 <div className="p-5 rounded-2xl bg-white border border-admin-border shadow-sm">
-                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 block">Payment Method</span>
+                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 block">Metode Pembayaran</span>
                                     <div className="flex items-center gap-3 text-admin-text-main font-bold">
                                         <div className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center border border-admin-border">
                                             <DollarSign size={16} />
@@ -444,27 +444,42 @@ export default function EventOrders() {
                                 </div>
                             </div>
 
-                            <div className="mt-8 pt-8 border-t border-dashed border-admin-border">
+                            <div className="mt-8 pt-8 border-t border-dashed border-admin-border space-y-4">
                                 <button 
                                     onClick={() => handleUpdateStatus(selectedOrder.id, selectedOrder.status === 'pending' ? 'success' : 'pending')}
-                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 ${selectedOrder.status === 'pending' ? 'bg-success text-white' : 'bg-warning text-white'}`}
+                                    className={`group relative w-full h-24 rounded-[2rem] transition-all duration-500 shadow-xl overflow-hidden active:scale-95 ${selectedOrder.status === 'pending' ? 'bg-eling-green hover:bg-green-700' : 'bg-amber-500 hover:bg-amber-600'}`}
                                 >
-                                    {selectedOrder.status === 'pending' ? <CheckCircle2 size={18} /> : <RotateCcw size={18} />}
-                                    {selectedOrder.status === 'pending' ? 'Verify Payment' : 'Rollback to Pending'}
+                                    {/* Glass reflection effect */}
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
+                                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                                    
+                                    <div className="relative flex flex-col items-center justify-center h-full text-white">
+                                        <div className="p-2 rounded-full bg-white/20 mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                            {selectedOrder.status === 'pending' ? <CheckCircle2 size={24} /> : <RotateCcw size={24} />}
+                                        </div>
+                                        <div className="flex flex-col items-center leading-none">
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em]">{selectedOrder.status === 'pending' ? 'Konfirmasi' : 'Setel Ulang'}</span>
+                                            <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest mt-1">{selectedOrder.status === 'pending' ? 'Pembayaran' : 'Ke Pending'}</span>
+                                        </div>
+                                    </div>
                                 </button>
+
                                 <button 
                                     onClick={() => handleUpdateStatus(selectedOrder.id, 'failed')}
-                                    className="w-full mt-3 py-4 rounded-xl font-black uppercase tracking-widest text-danger hover:bg-danger/5 transition-all text-xs"
+                                    className="w-full py-4 rounded-2xl border-2 border-eling-red/20 text-eling-red font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-800 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                                 >
-                                    Cancel Transaction
+                                    <X size={16} /> Batalkan Transaksi
                                 </button>
                             </div>
                         </div>
 
                         {/* Order Details Content */}
                         <div className="lg:w-[68%] p-8 lg:p-14 overflow-y-auto bg-white custom-scrollbar">
-                            <button onClick={() => setSelectedOrder(null)} className="absolute top-8 right-8 z-20 w-10 h-10 rounded-xl bg-admin-bg hover:bg-danger hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-sm">
-                                <X size={20} />
+                            <button 
+                                onClick={() => setSelectedOrder(null)} 
+                                className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
+                            >
+                                <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                             </button>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
@@ -483,7 +498,7 @@ export default function EventOrders() {
                                             <span className="text-xs font-black text-admin-text-main uppercase">{selectedOrder.booker_phone || '-'}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2 border-b border-admin-border border-dashed">
-                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase">Email Address</span>
+                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase">Alamat Email</span>
                                             <span className="text-xs font-black text-admin-text-main">{selectedOrder.user?.email || 'Guest Member'}</span>
                                         </div>
                                     </div>
@@ -507,23 +522,23 @@ export default function EventOrders() {
                                             
                                             <div className="pt-4 border-t border-admin-border border-dashed space-y-2">
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-admin-text-muted">
-                                                    <span>Subtotal Gross</span>
+                                                    <span>Subtotal Kotor</span>
                                                     <span>{formatRupiah(Number(selectedOrder.total_price || 0) + Number(selectedOrder.discount_amount || 0) - (Number(selectedOrder.total_price || 0) * 0.1))}</span>
                                                 </div>
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-admin-text-muted">
-                                                    <span>Fiscal Tax 10%</span>
+                                                    <span>PPN (Tax) 10%</span>
                                                     <span>{formatRupiah(Number(selectedOrder.total_price || 0) * 0.1)}</span>
                                                 </div>
                                                 {selectedOrder.discount_amount > 0 && (
                                                     <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-eling-red">
-                                                        <span>Promo Audit</span>
+                                                        <span>Potongan Promo</span>
                                                         <span>-{formatRupiah(selectedOrder.discount_amount)}</span>
                                                     </div>
                                                 )}
                                             </div>
 
                                             <div className="pt-3 border-t border-admin-border flex justify-between items-center">
-                                                <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Grand Total</span>
+                                                <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Total Bayar</span>
                                                 <span className="text-xl font-black text-admin-primary tabular-nums italic">
                                                     {formatRupiah(Number(selectedOrder.total_price || 0))}
                                                 </span>
@@ -534,8 +549,8 @@ export default function EventOrders() {
 
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="w-1 h-6 bg-success rounded-full" />
-                                <h3 className="text-base font-black text-admin-text-main uppercase tracking-tight text-success flex items-center gap-2">
-                                    Peserta Manifest ({selectedOrder.tickets?.length || 0})
+                                <h3 className="text-base font-black text-admin-text-main uppercase tracking-tight text-eling-green flex items-center gap-2">
+                                    Daftar Peserta Event ({selectedOrder.tickets?.length || 0})
                                 </h3>
                             </div>
 
@@ -562,9 +577,9 @@ export default function EventOrders() {
                                                 
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleTicketCheckIn(t.ticket_id); }}
-                                                    className={`mt-3 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${t.is_used ? 'bg-white border border-success text-success' : 'bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary hover:shadow-lg hover:shadow-admin-primary/20'}`}
+                                                    className={`mt-3 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${t.is_used ? 'bg-success text-white shadow-lg shadow-success/20' : 'bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary hover:shadow-lg hover:shadow-admin-primary/20'}`}
                                                 >
-                                                    {t.is_used ? 'Batal Check-in' : 'Validate QR'}
+                                                    {t.is_used ? 'Batal Check-in' : 'Validasi Kedatangan'}
                                                 </button>
                                             </div>
                                         </div>
