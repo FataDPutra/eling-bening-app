@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             ContentSeeder::class,
             EventSeeder::class,
             TransactionSeeder::class,
+            ReviewSeeder::class,
         ]);
     }
 }

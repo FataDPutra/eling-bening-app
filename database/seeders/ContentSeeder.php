@@ -118,9 +118,10 @@ class ContentSeeder extends Seeder
                 'content' => null,
                 'data' => [
                     ['id' => 1, 'name' => 'Kolam Renang Infinity', 'desc' => 'Kolam renang dengan pemandangan pegunungan yang menakjubkan.', 'icon' => 'Waves', 'image' => '/images/hero-bg.png'],
-                    ['id' => 2, 'name' => 'Restoran & Cafe', 'desc' => 'Hidangan lezat dengan bahan lokal segar dan suasana nyaman.', 'icon' => 'Coffee', 'image' => '/images/hero-bg.png'],
-                    ['id' => 3, 'name' => 'Taman Bermain', 'desc' => 'Area aman dan menyenangkan untuk aktifitas anak-anak.', 'icon' => 'Gamepad2', 'image' => '/images/hero-bg.png'],
-                    ['id' => 4, 'name' => 'Spot Foto Skydeck', 'desc' => 'Sudut terbaik untuk mengabadikan momen dengan latar Rawa Pening.', 'icon' => 'Camera', 'image' => '/images/hero-bg.png']
+                    ['id' => 2, 'name' => 'Restoran & Cafe', 'desc' => 'Hidangan lezat dengan bahan lokal segar dan suasana nyaman.', 'icon' => 'Utensils', 'image' => '/images/hero-bg.png'],
+                    ['id' => 3, 'name' => 'Entertainment & Musik', 'desc' => 'Live music dan hiburan setiap akhir pekan untuk keceriaan Anda.', 'icon' => 'Music', 'image' => '/images/hero-bg.png'],
+                    ['id' => 4, 'name' => 'Spot Foto Skydeck', 'desc' => 'Sudut terbaik untuk mengabadikan momen dengan latar Rawa Pening.', 'icon' => 'Camera', 'image' => '/images/hero-bg.png'],
+                    ['id' => 5, 'name' => 'Fasilitas Umum & Toilet', 'desc' => 'Area bersih dan nyaman yang tersebar di seluruh lokasi wisata.', 'icon' => 'Toilet', 'image' => '/images/hero-bg.png']
                 ],
                 'type' => 'json',
                 'page' => 'facilities'
