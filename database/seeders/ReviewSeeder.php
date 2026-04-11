@@ -8,33 +8,31 @@ class ReviewSeeder extends Seeder
 {
     public function run(): void
     {
+        // Ambil satu user dan satu transaksi untuk contoh
+        $user = \App\Models\User::where('role', 'customer')->first() ?? \App\Models\User::first();
+        $transaction = \App\Models\Transaction::first();
+
+        // Jika tidak ada data transaksi, jangan seed review dulu karena akan error Foreign Key
+        if (!$user || !$transaction) {
+            return;
+        }
+
         $reviews = [
             [
-                'name' => 'Budi Santoso',
-                'email' => 'budi.s@example.com',
+                'transaction_id' => $transaction->id,
+                'user_id' => $user->id,
                 'rating' => 5,
                 'comment' => 'Pemandangannya luar biasa indah! Pelayanan sangat ramah dan kolam renangnya juara. Sangat cocok untuk liburan keluarga.',
-                'image' => null,
                 'is_visible' => true,
                 'created_at' => now()->subDays(10),
             ],
             [
-                'name' => 'Siti Aminah',
-                'email' => 'siti.a@example.com',
+                'transaction_id' => $transaction->id,
+                'user_id' => $user->id,
                 'rating' => 4,
                 'comment' => 'Tempatnya estetik banget buat foto-foto. Makanannya juga enak, walaupun pas weekend agak ramai.',
-                'image' => null,
                 'is_visible' => true,
                 'created_at' => now()->subDays(5),
-            ],
-            [
-                'name' => 'Andi Wijaya',
-                'email' => 'andi.w@example.com',
-                'rating' => 5,
-                'comment' => 'Resort-nya nyaman dan bersih. Pagi-pagi bisa lihat kabut di atas Rawa Pening. Pengalaman yang tak terlupakan!',
-                'image' => null,
-                'is_visible' => true,
-                'created_at' => now()->subDays(2),
             ]
         ];
 
