@@ -59,6 +59,11 @@
     width: var(--sidebar-collapsed-width);
 }
 
+.admin-sidebar.collapsed .sidebar-header {
+    padding: 0;
+    justify-content: center;
+}
+
 .sidebar-header {
     height: var(--topbar-height);
     display: flex;

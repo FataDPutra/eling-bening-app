@@ -125,19 +125,19 @@ export default function AdminLayout() {
 
             {/* Sidebar */}
             <aside className={`admin-sidebar ${isSidebarCollapsed ? 'collapsed' : ''} ${isMobileMenuOpen ? 'mobile-open' : ''}`}>
-                <div className="sidebar-header">
-                    <div className="sidebar-logo flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 overflow-hidden">
-                            <img 
-                                src={content?.layout?.logo || "/images/logo.png"} 
-                                alt="Brand Icon" 
-                                className="w-7 h-7 object-contain" 
-                            />
-                        </div>
+                <div className="sidebar-header group">
+                    <div className={`sidebar-logo flex-1 flex items-center ${isSidebarCollapsed ? 'justify-center' : ''}`}>
+                        <img 
+                            src={content?.layout?.logo || "/images/logo.png"} 
+                            alt="Eling Bening" 
+                            className={`${isSidebarCollapsed ? 'h-8' : 'h-10'} w-auto object-contain transition-all duration-500 group-hover:scale-110`} 
+                        />
                     </div>
-                    <button className="lg:hidden p-2 text-white/60 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
-                        <X size={20} />
-                    </button>
+                    {!isSidebarCollapsed && (
+                        <button className="lg:hidden p-2 text-white/60 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
+                            <X size={20} />
+                        </button>
+                    )}
                 </div>
 
                 <nav className="sidebar-nav">
