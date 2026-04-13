@@ -5,6 +5,7 @@ import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import IconRenderer from '../../components/IconRenderer';
+import Swal from 'sweetalert2';
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
@@ -31,16 +32,34 @@ export default function Rooms() {
     }, []);
 
     const handleDelete = async (id) => {
-        if (confirm('Yakin ingin menghapus kamar tipe ini? Semua pemesanan terkait mungkin terdampak.')) {
-            try {
-                await axios.delete(`/api/resorts/${id}`);
-                setRooms(rooms.filter(r => r.id !== id));
-                toast.success('Kamar berhasil dihapus');
-            } catch (error) {
-                console.error("Failed to delete room", error);
-                toast.error("Gagal menghapus kamar");
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: "Kamar yang dihapus tidak dapat dikembalikan dan mungkin berdampak pada reservasi yang ada!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48', // rose-600
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            background: '#ffffff',
+            borderRadius: '1.5rem',
+            customClass: {
+                title: 'font-black text-admin-text-main',
+                popup: 'rounded-[2rem]'
             }
-        }
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const load = toast.loading('Memproses penghapusan...');
+                try {
+                    await axios.delete(`/api/resorts/${id}`);
+                    setRooms(rooms.filter(r => r.id !== id));
+                    toast.success('Kamar berhasil dihapus', { id: load });
+                } catch (error) {
+                    console.error("Failed to delete room", error);
+                    toast.error("Gagal menghapus kamar", { id: load });
+                }
+            }
+        });
     };
 
     const filteredRooms = rooms.filter(r =>
@@ -65,14 +84,14 @@ export default function Rooms() {
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Building size={18} />
                         </div>
-                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Inventory List</h3>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Daftar Inventori</h3>
                     </div>
                     <div className="flex gap-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search room type..."
+                                placeholder="Cari tipe kamar..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
@@ -84,19 +103,28 @@ export default function Rooms() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Preview</th>
-                            <th>Room Specification</th>
-                            <th>Capacity</th>
-                            <th>Availability</th>
-                            <th>Rate / Night</th>
-                            <th>Operations</th>
+                            <th>Pratinjau</th>
+                            <th>Tipe & Spesifikasi</th>
+                            <th>Kapasitas</th>
+                            <th>Ketersediaan</th>
+                            <th>Harga / Malam</th>
+                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredRooms.map(room => (
                             <tr key={room.id} className="group">
                                 <td className="w-28">
-                                    <div className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm">
+                                    <div 
+                                        onClick={() => {
+                                            setSelectedRoom(room);
+                                            setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
+                                        }}
+                                        className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm cursor-pointer"
+                                    >
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity z-10">
+                                            <Eye size={16} />
+                                        </div>
                                         <img
                                             src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png'}
                                             alt={room.name}
@@ -120,27 +148,35 @@ export default function Rooms() {
                                         <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-main">
                                             <Users size={14} />
                                         </div>
-                                        <span className="text-xs font-black text-admin-text-main">{room.capacity} Guests</span>
+                                        <span className="text-xs font-black text-admin-text-main">{room.capacity} Tamu</span>
                                     </div>
                                 </td>
                                 <td>
                                     {room.stock > 0 ? (
-                                        <div className="flex flex-col gap-1">
-                                            <span className="badge-status bg-success/10 text-success border-success/20">
-                                                Active Stock
-                                            </span>
-                                            <span className="text-[10px] font-bold text-admin-text-light pl-2">{room.stock} Units Left</span>
+                                        <div className="flex flex-col gap-1.5">
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 w-fit">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Tersedia</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-admin-text-muted pl-1.5">{room.stock} Unit Tersisa</span>
                                         </div>
                                     ) : (
-                                        <span className="badge-status bg-danger/10 text-danger border-danger/20">
-                                            Out of Stock
-                                        </span>
+                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-200 w-fit">
+                                            <X size={10} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Habis</span>
+                                        </div>
                                     )}
                                 </td>
                                 <td>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-primary">{formatRupiah(room.price)}</span>
-                                        <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Base Fare</span>
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex flex-col">
+                                            <p className="text-[8px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-0.5 leading-none">Weekday</p>
+                                            <span className="text-sm font-black text-admin-primary tracking-tight">{formatRupiah(room.price)}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <p className="text-[8px] font-black text-orange-400 uppercase tracking-[0.2em] mb-0.5 leading-none">Weekend</p>
+                                            <span className="text-sm font-black text-orange-600 tracking-tight">{formatRupiah(room.price_weekend)}</span>
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -150,7 +186,9 @@ export default function Rooms() {
                                             setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
                                         }}><Eye size={18} /></button>
                                         <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/rooms/edit/${room.id}`)}><Edit size={18} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-danger flex items-center justify-center hover:bg-danger hover:text-white hover:border-danger transition-all shadow-sm" title="Terminate" onClick={() => handleDelete(room.id)}><Trash2 size={18} /></button>
+                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm" title="Hapus Kamar" onClick={() => handleDelete(room.id)}>
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -175,7 +213,7 @@ export default function Rooms() {
                     <div className="bg-white w-full max-w-5xl rounded-[3rem] overflow-hidden flex flex-col lg:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-up border border-white/20">
                         <button
                             onClick={() => setSelectedRoom(null)}
-                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/30 text-white flex items-center justify-center backdrop-blur-xl transition-all shadow-2xl border border-white/20"
+                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-slate-900/10 text-slate-900 hover:bg-rose-500 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all shadow-sm border border-black/5"
                         >
                             <X size={24} />
                         </button>
@@ -233,7 +271,7 @@ export default function Rooms() {
                                 <div className="p-2 rounded-lg bg-admin-primary/10 text-admin-primary">
                                     <ShieldCheck size={16} />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Property Specification</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Spesifikasi Properti</span>
                             </div>
 
                             <div className="flex justify-between items-start mb-10">
@@ -242,23 +280,28 @@ export default function Rooms() {
 
                             <div className="grid grid-cols-2 gap-6 mb-12">
                                 <div className="p-6 rounded-3xl bg-admin-bg border border-admin-border flex flex-col">
-                                    <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-3">Configurations</span>
+                                    <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-3">Konfigurasi</span>
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2">
                                             <BedDouble size={16} className="text-admin-primary" />
-                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.bed_type} Room</span>
+                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.bed_type}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Maximize size={16} className="text-admin-primary" />
-                                            <span className="text-sm font-black text-admin-text-main">{selectedRoom.room_size} Square Meters</span>
+                                            <span className="text-sm font-black text-admin-text-main">Luas {selectedRoom.room_size} m²</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="p-6 rounded-3xl bg-admin-primary text-white flex flex-col shadow-xl shadow-admin-primary/20">
-                                    <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-3">Starting From</span>
-                                    <div className="flex flex-col">
+                                    <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-3">Mulai Dari (Hari Kerja)</span>
+                                    <div className="flex flex-col mb-4">
                                         <span className="text-2xl font-black">{formatRupiah(selectedRoom.price)}</span>
-                                        <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">Net Per Night</span>
+                                        <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">Net Per Malam</span>
+                                    </div>
+                                    <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-3 border-t border-white/20 pt-4">Tarif Akhir Pekan</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-xl font-black">{formatRupiah(selectedRoom.price_weekend)}</span>
+                                        <span className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">Sabtu - Minggu</span>
                                     </div>
                                 </div>
                             </div>
@@ -266,7 +309,7 @@ export default function Rooms() {
                             <div className="space-y-10">
                                 <section>
                                     <h4 className="text-xs font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
-                                        Service Amenities
+                                        Fasilitas & Layanan
                                         <span className="w-12 h-px bg-admin-border" />
                                     </h4>
                                     <div className="flex flex-wrap gap-3">
@@ -280,7 +323,7 @@ export default function Rooms() {
                                 </section>
 
                                 <section>
-                                    <h4 className="text-xs font-black text-admin-text-main uppercase tracking-widest mb-4">Description Text</h4>
+                                    <h4 className="text-xs font-black text-admin-text-main uppercase tracking-widest mb-4">Deskripsi Kamar</h4>
                                     <p className="text-sm font-medium text-admin-text-muted leading-relaxed italic border-l-4 border-admin-primary/10 pl-6">
                                         "{selectedRoom.description}"
                                     </p>
@@ -289,15 +332,16 @@ export default function Rooms() {
                                 <div className="pt-10 flex gap-4">
                                     <button
                                         onClick={() => navigate(`/admin/rooms/edit/${selectedRoom.id}`)}
-                                        className="flex-1 btn-primary py-5 rounded-[2rem] shadow-2xl shadow-admin-primary/30 active:scale-95 transition-all text-sm uppercase tracking-[0.2em] font-black"
+                                        className="flex-[3] btn-primary py-5 rounded-[2rem] shadow-2xl shadow-admin-primary/30 active:scale-95 transition-all text-sm uppercase tracking-[0.2em] font-black flex items-center justify-center gap-3 group"
                                     >
-                                        Edit Specifications
+                                        <span>Ubah Spesifikasi</span>
+                                        <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                                     </button>
                                     <button
                                         onClick={() => setSelectedRoom(null)}
-                                        className="w-20 h-20 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted flex items-center justify-center hover:bg-white transition-all shadow-xl"
+                                        className="flex-1 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-admin-text-main transition-all"
                                     >
-                                        <ChevronRight size={32} />
+                                        Kembali
                                     </button>
                                 </div>
                             </div>

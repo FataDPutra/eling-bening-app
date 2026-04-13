@@ -91,10 +91,10 @@ export default function Promos() {
                         onClick={() => setShowStatsModal(true)}
                         className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm"
                     >
-                        <ShoppingBag size={18} className="text-admin-primary" /> Campaign Stats
+                        <ShoppingBag size={18} className="text-admin-primary" /> Statistik Promo
                     </button>
                     <button className="btn-primary py-3 px-6 shadow-xl shadow-admin-primary/20" onClick={() => navigate('/admin/promos/add')}>
-                        <Plus size={20} /> Create Voucher
+                        <Plus size={20} /> Buat Voucher
                     </button>
                 </div>
             </div>
@@ -105,14 +105,14 @@ export default function Promos() {
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Tag size={18} />
                         </div>
-                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Pricing Incentives</h3>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Insentif Harga</h3>
                     </div>
                     <div className="flex gap-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search by code/name..."
+                                placeholder="Cari kode atau nama..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
@@ -124,25 +124,25 @@ export default function Promos() {
                 <table className="admin-table w-full">
                     <thead>
                         <tr>
-                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '22%' }}>Voucher Identity</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '12%' }}>Market Scope</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '14%' }}>Benefit Value</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '18%' }}>Active Timeline</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-center" style={{ width: '12%' }}>System Status</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-left" style={{ width: '15%' }}>Usage Quota</th>
-                            <th className="py-5 px-6 whitespace-nowrap text-right" style={{ width: '7%' }}>Operations</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-left" style={{ width: '25%' }}>Identitas Voucher</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-left" style={{ width: '10%' }}>Cakupan</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-left" style={{ width: '12%' }}>Keuntungan</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-left" style={{ width: '15%' }}>Masa Berlaku</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-center" style={{ width: '10%' }}>Status</th>
+                            <th className="py-5 px-4 whitespace-nowrap text-left" style={{ width: '13%' }}>Penggunaan</th>
+                            <th className="py-5 px-6 whitespace-nowrap !text-center" style={{ width: '15%' }}>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             <tr>
                                 <td colSpan="7" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
-                                    Auditing promotional registry...
+                                    Memeriksa registri promosi...
                                 </td>
                             </tr>
                         ) : filteredPromos.map(promo => (
                             <tr key={promo.id} className="group">
-                                <td className="px-6">
+                                <td className="px-3">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary group-hover:border-admin-primary transition-all shadow-sm shrink-0">
                                             <Ticket size={18} />
@@ -153,7 +153,7 @@ export default function Promos() {
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-6">
+                                <td className="px-3">
                                     <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
                                         <div className={`w-7 h-7 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-[10px] font-black ${
                                             promo.applicable_to === 'ALL' ? 'text-indigo-500' : 
@@ -167,7 +167,7 @@ export default function Promos() {
                                         </span>
                                     </div>
                                 </td>
-                                <td className="px-6">
+                                <td className="px-3">
                                     <div className="flex flex-col">
                                         <span className="text-[13px] font-black text-admin-primary">
                                             {promo.discount_type === 'percentage' ? `${promo.discount_value}% OFF` : `-${(Number(promo.discount_value) / 1000).toFixed(0)}K IDR`}
@@ -175,14 +175,14 @@ export default function Promos() {
                                         <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest">Min: {Number(promo.min_purchase).toLocaleString()}</span>
                                     </div>
                                 </td>
-                                <td className="px-6">
-                                    <div className="flex items-center gap-2 text-[10px] font-black text-admin-text-muted uppercase tracking-tighter">
+                                <td className="px-4">
+                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-tighter">
                                         <span className="text-admin-text-light">{new Date(promo.start_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                        <span className="text-admin-primary/30">/</span>
-                                        <span>{new Date(promo.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        <span className="opacity-20">-</span>
+                                        <span>{new Date(promo.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}</span>
                                     </div>
                                 </td>
-                                <td className="px-6 text-center">
+                                <td className="px-3 text-center">
                                     <button
                                         onClick={() => toggleStatus(promo.id)}
                                         className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
@@ -191,14 +191,14 @@ export default function Promos() {
                                                 : 'bg-rose-50 text-rose-600 border-rose-200'
                                         }`}
                                     >
-                                        {promo.is_active ? 'Active' : 'Paused'}
+                                        {promo.is_active ? 'Aktif' : 'Dijeda'}
                                     </button>
                                 </td>
-                                <td className="px-6">
+                                <td className="px-3">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex flex-col text-[8px] font-black uppercase tracking-[0.15em] leading-tight space-y-0.5">
-                                            <span className="text-admin-text-muted">{promo.used_count || 0} REDEEMED</span>
-                                            <span className="text-admin-primary">{promo.usage_limit ? `LIMIT: ${promo.usage_limit}` : 'UNLIMITED'}</span>
+                                            <span className="text-admin-text-muted">{promo.used_count || 0} DIGUNAKAN</span>
+                                            <span className="text-admin-primary">{promo.usage_limit ? `BATAS: ${promo.usage_limit}` : 'TAK TERBATAS'}</span>
                                         </div>
                                         {promo.usage_limit && (
                                             <div className="w-full h-1.5 bg-admin-bg border border-admin-border rounded-full overflow-hidden">
@@ -213,12 +213,12 @@ export default function Promos() {
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 text-right">
-                                    <div className="flex justify-end gap-1.5">
-                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
+                                <td className="px-6 text-center">
+                                    <div className="flex justify-center items-center gap-3 w-full">
+                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm active:scale-90" onClick={() => navigate(`/admin/promos/edit/${promo.id}`)}>
                                             <Edit size={14} />
                                         </button>
-                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(promo.id)}>
+                                        <button className="p-2 rounded-lg bg-admin-bg border border-admin-border text-rose-500 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm active:scale-90" onClick={() => handleDelete(promo.id)}>
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
@@ -233,7 +233,7 @@ export default function Promos() {
                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
                             <LayoutGrid size={40} />
                         </div>
-                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">No matching campaigns found</h4>
+                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">Kampanye tidak ditemukan</h4>
                     </div>
                 )}
             </div>
@@ -248,8 +248,8 @@ export default function Promos() {
                                     <TrendingUp size={24} />
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-black text-admin-text-main uppercase tracking-tight">Campaign Analytics</h2>
-                                    <p className="text-xs text-admin-text-muted font-bold uppercase tracking-widest">Performance Dashboard</p>
+                                    <h2 className="text-xl font-black text-admin-text-main uppercase tracking-tight">Analisa Kampanye</h2>
+                                    <p className="text-xs text-admin-text-muted font-bold uppercase tracking-widest">Dashboard Performa</p>
                                 </div>
                             </div>
                             <button onClick={() => setShowStatsModal(false)} className="p-2 hover:bg-admin-bg rounded-xl transition-colors"><X /></button>
@@ -260,22 +260,22 @@ export default function Promos() {
                                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
                                     <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4"><Users size={20}/></div>
                                     <div className="text-2xl font-black text-indigo-600">{stats?.totalRedemptions}</div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Total Usage</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Total Penggunaan</div>
                                 </div>
                                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
                                     <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4"><DollarSign size={20}/></div>
                                     <div className="text-xl font-black text-emerald-600 leading-tight tracking-tighter">{formatRupiah(stats?.totalDiscountGiven)}</div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Discount Given</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Diskon Terpakai</div>
                                 </div>
                                 <div className="p-6 bg-gray-50 rounded-3xl border border-gray-100 flex flex-col items-center text-center">
                                     <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-4"><Award size={20}/></div>
                                     <div className="text-2xl font-black text-amber-600">{stats?.activePromos}</div>
-                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Live Campaigns</div>
+                                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Promo Aktif</div>
                                 </div>
                             </div>
 
                             <div className="space-y-4">
-                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4">Most Redeemed Vouchers</h3>
+                                <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4">Voucher Paling Banyak Digunakan</h3>
                                 <div className="space-y-3">
                                     {stats?.topPromos.map((p, idx) => (
                                         <div key={p.id} className="p-5 bg-white border border-gray-100 rounded-[2rem] shadow-sm flex items-center justify-between hover:shadow-md transition-all group">
@@ -290,7 +290,7 @@ export default function Promos() {
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-lg font-black text-admin-text-main">{p.used_count || 0}</div>
-                                                <div className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest">Redemptions</div>
+                                                <div className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest">Penggunaan</div>
                                             </div>
                                         </div>
                                     ))}
@@ -313,9 +313,9 @@ export default function Promos() {
                     <Info size={24} />
                 </div>
                 <div>
-                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-widest mb-2">Campaign Protocol</h4>
+                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-widest mb-2">Protokol Kampanye</h4>
                     <p className="text-xs text-admin-text-muted leading-relaxed font-medium">
-                        Pastikan tanggal kedaluwarsa selalu terpantau. Promo yang sudah melewati batas waktu akan otomatis tidak valid pada sistem checkout guest meskipun statusnya masih 'Active'. Gunakan tombol status untuk memberhentikan kampanye secara manual.
+                        Pastikan tanggal kedaluwarsa selalu terpantau. Promo yang sudah melewati batas waktu akan otomatis tidak valid pada sistem checkout pengunjung meskipun statusnya masih 'Aktif'. Gunakan tombol status untuk memberhentikan kampanye secara manual.
                     </p>
                 </div>
             </div>

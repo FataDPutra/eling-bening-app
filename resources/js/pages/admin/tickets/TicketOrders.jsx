@@ -180,14 +180,14 @@ export default function TicketOrders() {
             <div className="admin-page-header">
                 <div>
                     <button onClick={() => navigate('/admin/tickets')} className="flex items-center text-admin-text-muted hover:text-admin-primary mb-3 transition-colors font-black text-[10px] uppercase tracking-[0.2em]">
-                        <ArrowLeft size={14} className="mr-2" /> Back to Ticket Assets
+                        <ArrowLeft size={14} className="mr-2" /> Kembali ke Aset Tiket
                     </button>
                     <h1>Registry Pesanan Tiket</h1>
                     <p>Audit rincian transaksi tiket wisata (Tiket Kolam Renang / Masuk) secara eksklusif.</p>
                     <div className="mt-4 flex items-center gap-3">
                         <div className="px-3 py-1 bg-admin-primary/10 rounded-full border border-admin-primary/20 flex items-center gap-2">
                             <User size={12} className="text-admin-primary" />
-                            <span className="text-[10px] font-bold text-admin-primary uppercase tracking-widest">Logged as: {currentUser?.name} ({currentUser?.role})</span>
+                            <span className="text-[10px] font-bold text-admin-primary uppercase tracking-widest">Masuk sebagai: {currentUser?.name} ({currentUser?.role})</span>
                         </div>
                     </div>
                 </div>
@@ -247,7 +247,7 @@ export default function TicketOrders() {
                         )}
                     </div>
                     <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
-                        <Download size={18} className="text-admin-primary" /> Export Data
+                        <Download size={18} className="text-admin-primary" /> Ekspor Data
                     </button>
                 </div>
             </div>
@@ -260,7 +260,7 @@ export default function TicketOrders() {
                             <ShoppingBag size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Ticket Orders</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Pesanan Tiket</p>
                             <p className="text-3xl font-black text-admin-text-main leading-none tabular-nums">{stats.total}</p>
                         </div>
                     </div>
@@ -271,7 +271,7 @@ export default function TicketOrders() {
                             <DollarSign size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Tiket Terjual</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Pendapatan Tiket</p>
                             <p className="text-3xl font-black text-success leading-none tabular-nums">{formatRupiah(stats.revenue)}</p>
                         </div>
                     </div>
@@ -282,7 +282,7 @@ export default function TicketOrders() {
                             <Clock size={28} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Waiting Payment</p>
+                            <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Menunggu Pembayaran</p>
                             <p className="text-3xl font-black text-warning leading-none tabular-nums">{stats.pending}</p>
                         </div>
                     </div>
@@ -339,7 +339,7 @@ export default function TicketOrders() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                <th>ID Registry</th>
+                                <th>ID Registrasi</th>
                                 <th>Pengunjung Utama</th>
                                 <th>Item Tiket</th>
                                 <th>Check-in</th>
@@ -429,8 +429,8 @@ export default function TicketOrders() {
                                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20 shadow-inner">
                                             <Ticket size={40} />
                                         </div>
-                                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">No matching ticket records</h4>
-                                        <button onClick={() => { setSearchTerm(''); setFilter('all'); }} className="text-admin-primary text-[10px] font-black uppercase tracking-widest mt-4 hover:underline">Reset Protocols</button>
+                                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">Tidak ada data tiket ditemukan</h4>
+                                        <button onClick={() => { setSearchTerm(''); setFilter('all'); }} className="text-admin-primary text-[10px] font-black uppercase tracking-widest mt-4 hover:underline">Reset Pencarian</button>
                                     </td>
                                 </tr>
                             )}

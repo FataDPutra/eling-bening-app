@@ -593,12 +593,12 @@ export default function AdminContent() {
     };
 
     const tabs = [
-        { id: 'home', label: 'Landpage', icon: HomeIcon },
-        { id: 'about', label: 'Identity', icon: Info },
-        { id: 'gallery', label: 'Showcase', icon: Camera },
-        { id: 'facilities', label: 'Fasilitas', icon: Sparkles },
-        { id: 'contact', label: 'Connect', icon: PhoneIcon },
-        { id: 'layout', label: 'Layout', icon: Layout },
+        { id: 'home', label: 'BERANDA', icon: HomeIcon },
+        { id: 'about', label: 'TENTANG KAMI', icon: Info },
+        { id: 'gallery', label: 'GALERI', icon: Camera },
+        { id: 'facilities', label: 'FASILITAS', icon: Tent },
+        { id: 'contact', label: 'KONTAK', icon: PhoneIcon },
+        { id: 'layout', label: 'TATA LETAK', icon: Layout },
     ];
 
     const ImageUpload = ({ label, value, onChange, placeholder = "Input URL atau upload gambar" }) => {
@@ -1273,19 +1273,19 @@ export default function AdminContent() {
                     </button>
                 </div>
 
-                <div className="flex p-4 gap-2 bg-admin-bg/50 border-b border-admin-border">
+                <div className="grid grid-cols-3 gap-2 p-5 bg-admin-bg/30 border-b border-admin-border">
                     {tabs.map(t => (
                         <button
                             key={t.id}
                             onClick={() => setActiveTab(t.id)}
-                            className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-2xl transition-[background-color,color,shadow,transform] duration-300 active:scale-95 ${
+                            className={`flex flex-col items-center justify-center gap-2 py-4 rounded-xl transition-all duration-300 active:scale-95 ${
                                 activeTab === t.id
-                                    ? 'bg-white text-admin-primary shadow-[0_10px_20px_-5px_rgba(46,125,50,0.15)] border border-admin-primary/5'
-                                    : 'text-admin-text-muted hover:text-admin-text-main hover:bg-white/50 bg-transparent'
+                                    ? 'bg-white text-admin-primary shadow-md border-b-2 border-admin-primary'
+                                    : 'text-admin-text-muted hover:text-admin-main hover:bg-white/40 bg-transparent border-b-2 border-transparent'
                             }`}
                         >
-                            <t.icon size={18} className={`${activeTab === t.id ? 'scale-110' : ''} transition-transform duration-300`} />
-                            <span className="text-[10px] font-black uppercase tracking-wider">{t.label}</span>
+                            <t.icon size={16} className={`${activeTab === t.id ? 'scale-110' : ''} transition-transform duration-300`} />
+                            <span className="text-[9px] font-black uppercase tracking-[0.15em]">{t.label}</span>
                         </button>
                     ))}
                 </div>

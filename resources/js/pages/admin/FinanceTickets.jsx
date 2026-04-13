@@ -133,11 +133,11 @@ export default function FinanceTickets() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>ID Pesanan</th>
-                            <th>Item Tiket</th>
-                            <th>Jumlah Beli</th>
-                            <th className="text-right">Total Bayar</th>
+                            <th className="px-6 whitespace-nowrap">Tanggal</th>
+                            <th className="px-6 whitespace-nowrap">ID Pesanan</th>
+                            <th className="px-6 whitespace-nowrap">Item Tiket</th>
+                            <th className="px-6 whitespace-nowrap">Jumlah Beli</th>
+                            <th className="px-6 whitespace-nowrap !text-right">Total Bayar</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -146,7 +146,7 @@ export default function FinanceTickets() {
                                 <td colSpan="5" className="py-20 text-center">
                                     <div className="flex flex-col items-center gap-4 animate-pulse">
                                         <Loader2 className="animate-spin text-admin-primary" size={32} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Syncing data...</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-text-muted">Sinkronisasi Data...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -156,16 +156,20 @@ export default function FinanceTickets() {
                             </tr>
                         ) : filteredList.map((t, i) => (
                             <tr key={i} className="hover:bg-admin-bg/50 transition-colors">
-                                <td>
+                                <td className="px-6">
                                     <div className="flex items-center gap-2">
-                                        <Calendar size={14} className="text-admin-text-light" />
-                                        <span>{new Date(t.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        <Calendar size={14} className="text-admin-text-light opacity-50" />
+                                        <span className="text-[11px] font-semibold">{new Date(t.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                     </div>
                                 </td>
-                                <td className="font-bold text-admin-text-main">#{t.id}</td>
-                                <td>{t.item_name || t.items?.[0]?.item?.name || 'Tiket'}</td>
-                                <td className="font-black text-admin-primary">{t.total_qty} <span className="text-[10px] text-admin-text-muted">PAX</span></td>
-                                <td className="text-right font-bold text-admin-primary">{formatRupiah(t.total_price)}</td>
+                                <td className="px-6 font-bold text-admin-text-main">
+                                    {t.order_id || `#${t.id}`}
+                                </td>
+                                <td className="px-6 text-admin-text-muted">{t.item_name || t.items?.[0]?.item?.name || 'Tiket'}</td>
+                                <td className="px-6 font-black text-emerald-600">
+                                    {t.total_qty} <span className="text-[9px] text-admin-text-muted uppercase tracking-widest font-black ml-1">Pax</span>
+                                </td>
+                                <td className="px-6 !text-right font-black text-emerald-600">{formatRupiah(t.total_price)}</td>
                             </tr>
                         ))}
                     </tbody>

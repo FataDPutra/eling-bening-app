@@ -207,27 +207,27 @@ export default function FinanceRecap() {
                 </div>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem', marginBottom: '2.5rem' }}>
-                <div className="admin-card" style={{ borderLeft: '4px solid #10B981' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>Total Pemasukan Bruto</span>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#ECFDF5', borderRadius: '50%', color: '#10B981' }}><TrendingUp size={20} /></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div className="admin-card !border-l-4 !border-emerald-500 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-black uppercase tracking-widest text-admin-text-muted">Total Pemasukan</span>
+                        <div className="p-2 bg-emerald-50 rounded-full text-emerald-500"><TrendingUp size={18} /></div>
                     </div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#10B981' }}>{formatRupiah(income)}</h2>
+                    <h2 className="text-3xl font-black text-emerald-600 tracking-tight">{formatRupiah(income)}</h2>
                 </div>
-                <div className="admin-card" style={{ borderLeft: '4px solid #EF4444' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-muted)' }}>Total Pengeluaran</span>
-                        <div style={{ padding: '0.5rem', backgroundColor: '#FEF2F2', borderRadius: '50%', color: '#EF4444' }}><TrendingDown size={20} /></div>
+                <div className="admin-card !border-l-4 !border-rose-500 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-black uppercase tracking-widest text-admin-text-muted">Total Pengeluaran</span>
+                        <div className="p-2 bg-rose-50 rounded-full text-rose-500"><TrendingDown size={18} /></div>
                     </div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#EF4444' }}>{formatRupiah(expense)}</h2>
+                    <h2 className="text-3xl font-black text-rose-600 tracking-tight">{formatRupiah(expense)}</h2>
                 </div>
-                <div className="admin-card" style={{ borderLeft: '4px solid var(--primary)', backgroundColor: 'var(--primary-light)', color: 'var(--primary)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>Saldo Bersih (Periodik)</span>
-                        <div style={{ padding: '0.5rem', backgroundColor: 'white', borderRadius: '50%', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}><DollarSign size={20} /></div>
+                <div className="admin-card !border-l-4 !border-admin-primary bg-admin-primary/5 shadow-sm">
+                    <div className="flex justify-between items-center mb-4">
+                        <span className="text-xs font-black uppercase tracking-widest text-admin-primary">Laba / Rugi Bersih</span>
+                        <div className="p-2 bg-white rounded-full text-admin-primary shadow-sm"><DollarSign size={18} /></div>
                     </div>
-                    <h2 style={{ fontSize: '2rem', fontWeight: 800 }}>{formatRupiah(income - expense)}</h2>
+                    <h2 className="text-3xl font-black text-admin-text-main tracking-tight">{formatRupiah(income - expense)}</h2>
                 </div>
             </div>
 
@@ -239,40 +239,46 @@ export default function FinanceRecap() {
                     <table className="admin-table">
                         <thead>
                             <tr>
-                                <th>Tanggal</th>
-                                <th>Keterangan / Item</th>
-                                <th>Jenis</th>
-                                <th className="text-right">Jumlah</th>
-                                <th>Status</th>
+                                <th className="px-6 whitespace-nowrap">Tanggal</th>
+                                <th className="px-6 whitespace-nowrap">Keterangan / Item</th>
+                                <th className="px-6 whitespace-nowrap">Jenis</th>
+                                <th className="px-6 whitespace-nowrap !text-right">Jumlah</th>
+                                <th className="px-6 whitespace-nowrap">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {isLoading ? (
-                                <tr><td colSpan="5" className="py-20 text-center uppercase tracking-widest text-[10px] font-black text-admin-text-muted animate-pulse">Syncing audit logs...</td></tr>
+                                <tr><td colSpan="5" className="py-20 text-center uppercase tracking-[0.2em] text-[10px] font-black text-admin-text-muted animate-pulse">Sinkronisasi Data Audit...</td></tr>
                             ) : combined.length === 0 ? (
                                 <tr><td colSpan="5" className="py-20 text-center text-admin-text-muted font-bold">Tidak ada transaksi ditemukan pada periode ini.</td></tr>
                             ) : combined.map((tr, i) => (
                                 <tr key={i} className="hover:bg-admin-bg/50 transition-colors">
-                                    <td>{new Date(tr.date).toLocaleDateString('id-ID')}</td>
-                                    <td style={{ fontWeight: 600 }}>{tr.itemName}</td>
-                                    <td>
-                                        <span style={{
-                                            padding: '0.25rem 0.75rem',
-                                            borderRadius: '20px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 700,
-                                            backgroundColor: tr.type === 'income' ? '#ECFDF5' : '#FFF7ED',
-                                            color: tr.type === 'income' ? '#10B981' : '#F97316'
-                                        }}>
+                                    <td className="px-6">
+                                        <div className="flex items-center gap-2">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-admin-text-light opacity-30"></span>
+                                            <span className="text-[11px] font-bold text-admin-text-muted">{new Date(tr.date).toLocaleDateString('id-ID')}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 font-bold text-admin-text-main text-sm">{tr.itemName}</td>
+                                    <td className="px-6">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                            tr.type === 'income' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-rose-50 text-rose-600 border border-rose-100'
+                                        }`}>
                                             {tr.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                                         </span>
                                     </td>
-                                    <td className="text-right" style={{ fontWeight: 700, color: tr.type === 'income' ? '#10B981' : '#EF4444' }}>
+                                    <td className={`px-6 !text-right font-black ${tr.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                         {tr.type === 'income' ? '+' : '-'} {formatRupiah(tr.total)}
                                     </td>
-                                    <td><span className={`badge ${tr.status === 'success' || tr.status === 'paid' || tr.status === 'completed' ? 'active' : 'pending'}`}>
-                                        {tr.status === 'success' || tr.status === 'paid' || tr.status === 'completed' ? 'Completed' : tr.status}
-                                    </span></td>
+                                    <td className="px-6">
+                                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                                            tr.status === 'success' || tr.status === 'paid' || tr.status === 'completed' 
+                                            ? 'bg-emerald-500 text-white' 
+                                            : 'bg-amber-100 text-amber-600'
+                                        }`}>
+                                            {tr.status === 'success' || tr.status === 'paid' || tr.status === 'completed' ? 'Berhasil' : 'Menunggu'}
+                                        </span>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>

@@ -98,7 +98,6 @@ export default function GuestLayout() {
             <nav className={`fixed w-full z-50 transition-all duration-500 py-4 px-6 lg:px-12 flex justify-between items-center ${isHeroPage && !scrolled ? 'glass text-white' : 'bg-white/95 text-gray-900 shadow-xl backdrop-blur-md'}`}>
                 <Link to="/" className="flex items-center gap-2 group">
                     <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className={`h-10 transition-transform group-hover:scale-110 duration-500`} />
-                    <span className={`text-xl font-serif font-black tracking-wider ${isHeroPage && !scrolled ? 'text-white drop-shadow-sm' : 'text-eling-green'}`}>{content.layout.siteTitle || 'Eling Bening'}</span>
                 </Link>
 
                 <div className="hidden lg:flex gap-8 font-black tracking-[0.05em] uppercase text-[11px] items-center">
@@ -200,7 +199,6 @@ export default function GuestLayout() {
                     <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
                         <div className="flex items-center gap-2">
                             <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className="h-8" />
-                            <span className="text-lg font-serif font-black text-eling-green">{content.layout.siteTitle || 'Eling Bening'}</span>
                         </div>
                         <button onClick={() => setMobileMenuOpen(false)} className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all">
                             <X size={22} />

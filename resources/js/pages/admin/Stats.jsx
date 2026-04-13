@@ -45,8 +45,18 @@ export default function Stats() {
         { label: 'Tiket Terjual', key: 'tickets', icon: <TrendingUp size={20} /> },
         { label: 'Reservasi Kamar', key: 'reservations', icon: <Users size={20} /> },
         { label: 'Occupancy Rate', key: 'occupancy', icon: <BarIcon size={20} /> },
-        { label: 'Revenue/Month', key: 'revenue', icon: <Wallet size={20} />, highlight: true }
+        { label: 'Pendapatan/Bulan', key: 'revenue', icon: <Wallet size={20} />, highlight: true }
     ];
+
+    const labelMapper = (label) => {
+        const map = {
+            'Resort Booking': 'Reservasi Resort',
+            'Tiket Wisata': 'Tiket Wisata',
+            'Event / Konser': 'Acara / Konser',
+            'Event': 'Acara / Konser'
+        };
+        return map[label] || label;
+    };
 
     const dailyTickets = realStats?.daily_tickets || [];
     const maxTicket = dailyTickets.length > 0 ? Math.max(...dailyTickets.map(d => d.val)) : 100;
@@ -55,6 +65,7 @@ export default function Stats() {
 
     return (
         <div className="animate-fade-in space-y-8">
+            {/* ... (Header remains same) */}
             <div className="admin-page-header">
                 <div>
                     <h1>Statistik & Analytics</h1>
@@ -187,7 +198,7 @@ export default function Stats() {
                 {/* Composition Chart Column */}
                 <div className="admin-table-container !p-8 space-y-8">
                     <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-black text-admin-text-main">Market Share</h3>
+                        <h3 className="text-lg font-black text-admin-text-main">Pangsa Pasar</h3>
                         <div className="p-2 bg-admin-bg rounded-lg">
                             <BarIcon size={16} className="text-admin-text-muted" />
                         </div>
@@ -229,7 +240,7 @@ export default function Stats() {
                             <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-admin-bg/50 border border-admin-border hover:border-admin-primary/20 transition-all group">
                                 <div className="flex items-center gap-3">
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color }}></div>
-                                    <span className="text-xs font-bold text-admin-text-muted group-hover:text-admin-text-main transition-colors">{t.label}</span>
+                                    <span className="text-xs font-bold text-admin-text-muted group-hover:text-admin-text-main transition-colors">{labelMapper(t.label)}</span>
                                 </div>
                                 <span className="text-sm font-black text-admin-text-main">{t.val}%</span>
                             </div>

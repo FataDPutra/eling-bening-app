@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 export default function Tickets() {
     const [tickets, setTickets] = useState([]);
@@ -29,7 +30,26 @@ export default function Tickets() {
     }, []);
 
     const handleDelete = async (id) => {
-        if (confirm('Yakin ingin menghapus tiket ini?')) {
+        const result = await Swal.fire({
+            title: 'Hapus Tiket?',
+            text: "Data tiket ini akan dihapus secara permanen dari katalog!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48', // rose-600
+            cancelButtonColor: '#64748b', // slate-500
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            background: '#ffffff',
+            borderRadius: '1.5rem',
+            customClass: {
+                title: 'text-sm font-black uppercase tracking-widest text-admin-text-main',
+                htmlContainer: 'text-xs font-bold text-admin-text-muted',
+                confirmButton: 'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest',
+                cancelButton: 'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest'
+            }
+        });
+
+        if (result.isConfirmed) {
             try {
                 await axios.delete(`/api/tickets/${id}`);
                 setTickets(tickets.filter(t => t.id !== id));
@@ -68,10 +88,10 @@ export default function Tickets() {
                 </div>
                 <div className="flex gap-4">
                     <button className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm" onClick={() => navigate('/admin/tickets/orders')}>
-                        <ShoppingBag size={18} className="text-admin-primary" /> Order History
+                        <ShoppingBag size={18} className="text-admin-primary" /> Riwayat Pesanan
                     </button>
                     <button className="btn-primary py-3 px-6 shadow-xl shadow-admin-primary/20" onClick={() => navigate('/admin/tickets/add')}>
-                        <Plus size={20} /> Create Ticket
+                        <Plus size={20} /> Buat Tiket
                     </button>
                 </div>
             </div>
@@ -82,14 +102,14 @@ export default function Tickets() {
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Ticket size={18} />
                         </div>
-                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Pricing Categories</h3>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Kategori Harga</h3>
                     </div>
                     <div className="flex gap-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search ticket type..."
+                                placeholder="Cari jenis tiket..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
@@ -101,18 +121,18 @@ export default function Tickets() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Ticket Classification</th>
-                            <th>Active Validity</th>
-                            <th>Entry Rate</th>
-                            <th>System Status</th>
-                            <th className="text-right">Operations</th>
+                            <th>Klasifikasi Tiket</th>
+                            <th>Masa Berlaku</th>
+                            <th>Harga Masuk</th>
+                            <th>Status Sistem</th>
+                            <th className="px-6 whitespace-nowrap !text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             <tr>
                                 <td colSpan="5" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
-                                    Syncing ticket catalog...
+                                    Sinkronisasi katalog tiket...
                                 </td>
                             </tr>
                         ) : filteredTickets.map(ticket => (
@@ -146,7 +166,7 @@ export default function Tickets() {
                                             {ticket.validity_day === 'all_days' ? 'ALL' : ticket.validity_day === 'weekend' ? 'WND' : 'WKD'}
                                         </div>
                                         <span className="uppercase tracking-wider">
-                                            {ticket.validity_day.replace('_', ' ')}
+                                            {ticket.validity_day === 'all_days' ? 'Setiap Hari' : ticket.validity_day === 'weekend' ? 'Akhir Pekan' : 'Hari Kerja'}
                                         </span>
                                     </div>
                                 </td>
@@ -162,15 +182,15 @@ export default function Tickets() {
                                                 : 'bg-rose-50 text-rose-600 border-rose-200'
                                         }`}
                                     >
-                                        {ticket.is_active ? 'Active' : 'Inactive'}
+                                        {ticket.is_active ? 'Aktif' : 'Nonaktif'}
                                     </button>
                                 </td>
-                                <td className="text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm" onClick={() => navigate(`/admin/tickets/edit/${ticket.id}`)}>
+                                <td className="px-6 text-center">
+                                    <div className="flex justify-center items-center gap-3 w-full">
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm active:scale-90" onClick={() => navigate(`/admin/tickets/edit/${ticket.id}`)}>
                                             <Edit size={16} />
                                         </button>
-                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 transition-all shadow-sm" onClick={() => handleDelete(ticket.id)}>
+                                        <button className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-rose-500 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm active:scale-95" title="Hapus" onClick={() => handleDelete(ticket.id)}>
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
@@ -185,7 +205,7 @@ export default function Tickets() {
                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
                             <LayoutGrid size={40} />
                         </div>
-                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">No matching ticket types found</h4>
+                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">Jenis tiket tidak ditemukan</h4>
                     </div>
                 )}
             </div>

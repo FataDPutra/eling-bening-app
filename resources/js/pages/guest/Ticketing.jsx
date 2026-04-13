@@ -7,11 +7,13 @@ import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Loader2 } from 'lucide-react';
+import { useContent } from '../../context/ContentContext';
 import '../../styles/guest.css';
 
 export default function Ticketing() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { content } = useContent();
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -436,11 +438,11 @@ export default function Ticketing() {
                     <div className="min-h-full flex flex-col items-center p-6 sm:p-12">
                         <div className="max-w-4xl w-full my-auto py-10">
                         <div className="text-center text-white mb-6">
-                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce text-4xl shadow-xl">
-                                <i className="fas fa-check"></i>
+                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce text-4xl shadow-xl overflow-hidden">
+                                <img src={content.layout.logo || "/images/logo.png"} className="w-12 h-12 object-contain" alt="Success Logo" />
                             </div>
                             <h2 className="text-4xl md:text-5xl font-black mb-2 font-serif leading-tight">Berhasil Terpesan!</h2>
-                            <p className="text-green-100 font-bold text-xs uppercase tracking-[0.3em] opacity-80">Eling Bening Experience</p>
+                            <p className="text-green-100 font-bold text-xs uppercase tracking-[0.3em] opacity-80">Official Experience</p>
                         </div>
 
                         <div className="flex gap-6 overflow-x-auto pb-10 px-4 snap-x snap-mandatory no-scrollbar mb-8">
@@ -453,7 +455,7 @@ export default function Ticketing() {
                                             level="H"
                                             includeMargin={false}
                                             imageSettings={{
-                                                src: "/images/logo.png",
+                                                src: content.layout.logo || "/images/logo.png",
                                                 height: 40,
                                                 width: 40,
                                                 excavate: true,

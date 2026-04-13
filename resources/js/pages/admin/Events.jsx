@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Plus, Edit, Trash2, Calendar, Tag, Search, Info, ExternalLink, Filter, MoreHorizontal, LayoutGrid } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 export default function AdminEvents() {
     const [events, setEvents] = useState([]);
@@ -28,13 +29,32 @@ export default function AdminEvents() {
     }, []);
 
     const handleDelete = async (id) => {
-        if (confirm('Yakin ingin menghapus event ini?')) {
+        const result = await Swal.fire({
+            title: 'Hapus Agenda?',
+            text: "Data yang dihapus tidak dapat dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48', // rose-600
+            cancelButtonColor: '#64748b', // slate-500
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            background: '#ffffff',
+            borderRadius: '1.5rem',
+            customClass: {
+                title: 'text-sm font-black uppercase tracking-widest text-admin-text-main',
+                htmlContainer: 'text-xs font-bold text-admin-text-muted',
+                confirmButton: 'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest',
+                cancelButton: 'px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest'
+            }
+        });
+
+        if (result.isConfirmed) {
             try {
                 await axios.delete(`/api/events/${id}`);
                 setEvents(events.filter(e => e.id !== id));
-                toast.success('Event berhasil dihapus');
+                toast.success('Agenda berhasil dihapus');
             } catch (error) {
-                toast.error('Gagal menghapus event');
+                toast.error('Gagal menghapus agenda');
             }
         }
     };
@@ -73,14 +93,14 @@ export default function AdminEvents() {
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Calendar size={18} />
                         </div>
-                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Active Campaigns</h3>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Agenda Aktif</h3>
                     </div>
                     <div className="flex gap-4">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search event or category..."
+                                placeholder="Cari event atau kategori..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
@@ -95,12 +115,12 @@ export default function AdminEvents() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Preview</th>
-                            <th>Event Details</th>
-                            <th>Execution Date</th>
-                            <th>Price Point</th>
+                            <th>Foto</th>
+                            <th>Detail Event</th>
+                            <th>Waktu Pelaksanaan</th>
+                            <th>Harga</th>
                             <th>Status</th>
-                            <th className="text-right">Operations</th>
+                            <th className="text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -141,25 +161,27 @@ export default function AdminEvents() {
                                 </td>
                                 <td>
                                     <div className="flex flex-col">
+                                        <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest mb-1">Tarif</span>
                                         <span className="text-sm font-black text-admin-text-main">
                                             {event.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(event.price) : 'Gratis / Info'}
                                         </span>
-                                        <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Display Rate</span>
                                     </div>
                                 </td>
                                 <td>
                                     <button
                                         onClick={() => toggleStatus(event.id, event.is_active)}
-                                        className={`badge-status cursor-pointer transition-all hover:scale-105 ${event.is_active ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'}`}
+                                        className={`px-4 py-2 rounded-full border transition-all flex items-center gap-2 w-fit hover:scale-105 active:scale-95 ${event.is_active ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-orange-50 text-orange-600 border-orange-200'}`}
                                     >
-                                        <div className={`w-1.5 h-1.5 rounded-full mr-2 ${event.is_active ? 'bg-success' : 'bg-warning'}`} />
-                                        {event.is_active ? 'Live on Site' : 'Locked (Draft)'}
+                                        <div className={`w-2 h-2 rounded-full ${event.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-orange-400'}`} />
+                                        <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">{event.is_active ? 'Publish' : 'Draf'}</span>
                                     </button>
                                 </td>
                                 <td className="text-right">
                                     <div className="flex justify-end gap-2">
                                         <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/events/edit/${event.id}`)}><Edit size={16} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-danger flex items-center justify-center hover:bg-danger hover:text-white hover:border-danger transition-all shadow-sm" title="Archive" onClick={() => handleDelete(event.id)}><Trash2 size={16} /></button>
+                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm group/del active:scale-95" title="Hapus" onClick={() => handleDelete(event.id)}>
+                                            <Trash2 size={16} />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -172,7 +194,7 @@ export default function AdminEvents() {
                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20">
                             <LayoutGrid size={40} />
                         </div>
-                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">No matching events found</h4>
+                        <h4 className="text-sm font-black text-admin-text-muted uppercase tracking-widest">Agenda tidak ditemukan</h4>
                     </div>
                 )}
             </div>

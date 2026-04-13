@@ -120,7 +120,7 @@ export default function Finance() {
             icon: <TrendingDown size={24} />,
             link: '/admin/finance/expenses',
             color: '#EF4444',
-            tag: 'Cost'
+            tag: 'Beban'
         },
         {
             title: 'Pendapatan Tiket',
@@ -128,7 +128,7 @@ export default function Finance() {
             icon: <Ticket size={24} />,
             link: '/admin/finance/tickets',
             color: '#F59E0B',
-            tag: 'Revenue'
+            tag: 'Pendapatan'
         },
         {
             title: 'Pendapatan Resort',
@@ -136,7 +136,7 @@ export default function Finance() {
             icon: <Building size={24} />,
             link: '/admin/finance/resort',
             color: '#3B82F6',
-            tag: 'Revenue'
+            tag: 'Pendapatan'
         }
     ];
 
@@ -156,7 +156,7 @@ export default function Finance() {
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-text-muted mb-3 flex items-center gap-2">
-                                <Landmark size={12} className="text-admin-primary" /> Net Profit Margin (All Time)
+                                <Landmark size={12} className="text-admin-primary" /> Margin Laba Bersih (Total)
                             </p>
                             <h2 className="text-5xl font-black text-admin-text-main tracking-tight mb-6">
                                 {isLoading ? '...' : formatRupiah(stats.balance)}
@@ -164,13 +164,13 @@ export default function Finance() {
                             <div className="flex flex-wrap gap-4">
                                 <div className="px-5 py-3 rounded-2xl bg-success/5 border border-success/10">
                                     <p className="text-[9px] font-black text-success uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <ArrowUpRight size={10} /> Total Income
+                                        <ArrowUpRight size={10} /> Total Pendapatan
                                     </p>
                                     <p className="text-lg font-black text-admin-text-main">{isLoading ? '...' : formatRupiah(stats.income)}</p>
                                 </div>
                                 <div className="px-5 py-3 rounded-2xl bg-danger/5 border border-danger/10">
                                     <p className="text-[9px] font-black text-danger uppercase tracking-widest mb-1 flex items-center gap-1">
-                                        <ArrowDownRight size={10} /> Total Expense
+                                        <ArrowDownRight size={10} /> Total Pengeluaran
                                     </p>
                                     <p className="text-lg font-black text-admin-text-main">{isLoading ? '...' : formatRupiah(stats.expense)}</p>
                                 </div>
@@ -187,11 +187,11 @@ export default function Finance() {
                         <FileText size={32} className="text-admin-primary" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black mb-2">Audit Report</h3>
+                        <h3 className="text-xl font-black mb-2">Laporan Audit</h3>
                         <p className="text-xs text-white/60 font-medium leading-relaxed">Seluruh data finansial disinkronkan secara real-time dari database.</p>
                     </div>
                     <button className="btn-primary !bg-white !text-admin-text-main w-full py-3.5 justify-center shadow-xl shadow-white/5 hover:scale-105 transition-all" onClick={handleExport}>
-                        <PieChart size={18} /> Print Financial Report
+                        <PieChart size={18} /> Cetak Laporan Keuangan
                     </button>
                 </div>
             </div>
@@ -200,7 +200,7 @@ export default function Finance() {
             <div>
                 <div className="flex items-center gap-3 mb-8">
                     <div className="h-8 w-1.5 bg-admin-primary rounded-full" />
-                    <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Financial Modules</h3>
+                    <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Modul Keuangan</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -224,7 +224,7 @@ export default function Finance() {
                             <p className="text-xs text-admin-text-muted font-bold leading-relaxed mb-8 flex-1">{item.desc}</p>
                             <div className="w-full h-px bg-admin-border mb-6 group-hover:bg-admin-primary/20 transition-colors" />
                             <div className="flex items-center gap-3 font-black text-[10px] text-admin-primary uppercase tracking-widest group-hover:gap-5 transition-all">
-                                Open Module <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                                Buka Modul <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                             </div>
                         </div>
                     ))}

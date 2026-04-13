@@ -174,10 +174,10 @@ export default function Bookings() {
     };
 
     const stats = [
-        { label: 'Total Volume', value: filteredBookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
-        { label: 'Confirmed', value: filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
-        { label: 'Awaiting', value: filteredBookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
-        { label: 'Revenue', value: formatRupiah(filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
+        { label: 'Total Transaksi', value: filteredBookings.length, icon: ShoppingCart, color: 'text-admin-primary', bg: 'bg-admin-primary/10' },
+        { label: 'Dikonfirmasi', value: filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').length, icon: Check, color: 'text-success', bg: 'bg-success/10' },
+        { label: 'Menunggu', value: filteredBookings.filter(b => b.status === 'pending').length, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
+        { label: 'Pendapatan', value: formatRupiah(filteredBookings.filter(b => b.status === 'success' || b.status === 'paid').reduce((acc, curr) => acc + getGrandTotal(curr), 0)), icon: DollarSign, color: 'text-admin-primary', bg: 'bg-admin-primary/5' },
     ];
 
     return (
@@ -289,7 +289,7 @@ export default function Bookings() {
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Search by ID or customer..."
+                                placeholder="Cari berdasarkan ID atau pelanggan..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
@@ -765,8 +765,7 @@ export default function Bookings() {
                                     <div className="bg-admin-text-main p-8 rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000"></div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40 mb-1">Total Nilai Investasi</p>
-                                            <h5 className="text-[9px] font-black text-white/60 uppercase tracking-widest leading-none">Akumulasi Seluruh Tagihan Lunas</h5>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Total Tagihan</p>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-3xl font-black tracking-tighter">{formatRupiah(

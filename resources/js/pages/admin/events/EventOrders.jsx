@@ -167,7 +167,7 @@ export default function EventOrders() {
             <div className="admin-page-header">
                 <div>
                     <button onClick={() => navigate('/admin/events')} className="flex items-center text-admin-text-muted hover:text-admin-primary mb-3 transition-colors font-black text-[10px] uppercase tracking-[0.2em]">
-                        <ArrowLeft size={14} className="mr-2" /> Back to Event Management
+                        <ArrowLeft size={14} className="mr-2" /> Kembali ke Manajemen Event
                     </button>
                     <h1>Registry Pesanan Event</h1>
                     <p>Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
@@ -237,7 +237,7 @@ export default function EventOrders() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="admin-card group hover:scale-[1.02] transition-all">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-eling-red/10 text-eling-red flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-inner border border-rose-100">
                             <Ticket size={28} />
                         </div>
                         <div>
@@ -248,7 +248,7 @@ export default function EventOrders() {
                 </div>
                 <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-success">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center shadow-inner border border-emerald-100">
                             <DollarSign size={28} />
                         </div>
                         <div>
@@ -259,7 +259,7 @@ export default function EventOrders() {
                 </div>
                 <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-warning">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center shadow-inner border border-amber-100">
                             <Clock size={28} />
                         </div>
                         <div>

@@ -129,12 +129,11 @@ export default function AdminLayout() {
                     <div className="sidebar-logo flex-1">
                         <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 overflow-hidden">
                             <img 
-                                src={content?.layout?.favicon || content?.layout?.logo || "/favicon.ico"} 
+                                src={content?.layout?.logo || "/images/logo.png"} 
                                 alt="Brand Icon" 
                                 className="w-7 h-7 object-contain" 
                             />
                         </div>
-                        {!isSidebarCollapsed && <h2 className="ml-3 text-white font-black tracking-tight">{content?.layout?.siteTitle || "Eling Bening"}</h2>}
                     </div>
                     <button className="lg:hidden p-2 text-white/60 hover:text-white" onClick={() => setIsMobileMenuOpen(false)}>
                         <X size={20} />

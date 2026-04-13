@@ -7,10 +7,12 @@ import {
     ArrowLeft, Printer, CheckCircle2, 
     Clock, Mail, Phone, Info, LayoutGrid, Package, Star
 } from 'lucide-react';
+import { useContent } from '../../context/ContentContext';
 
 export default function BookingDetails() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { content } = useContent();
     const [transaction, setTransaction] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -95,7 +97,21 @@ export default function BookingDetails() {
     const baseAmount = roomSubtotal + initialAddOnTotal;
 
     return (
-        <main className="pt-32 pb-24 px-6 max-w-6xl mx-auto min-h-screen bg-gray-50 animate-fade-in print:pt-0">
+        <main className="pt-32 pb-24 px-6 max-w-6xl mx-auto min-h-screen bg-gray-50 animate-fade-in print:bg-white print:pt-0">
+            {/* 0. Print Header (Logo Only) */}
+            <div className="hidden print:flex items-center justify-between border-b-2 border-eling-green pb-8 mb-12">
+                <div className="flex items-center gap-4">
+                    <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className="h-20 w-auto object-contain" />
+                    <div>
+                        <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Official Transaction Proof</p>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Invoice ID</p>
+                    <p className="text-xl font-bold font-serif text-gray-800">#{transaction.id}</p>
+                </div>
+            </div>
+
             {/* Status Header */}
             <div className="mb-12 flex flex-col md:flex-row items-start md:items-end justify-between gap-6 print:hidden">
                 <div>

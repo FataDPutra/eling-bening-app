@@ -3,6 +3,7 @@ import { Plus, Trash2, Calendar, FileText, CircleDollarSign, Filter, Search, X, 
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 
 export default function Expenses() {
     const [allExpenses, setAllExpenses] = useState([]);
@@ -65,6 +66,35 @@ export default function Expenses() {
         } catch (error) {
             console.error("Failed to save expense", error);
             toast.error("Gagal menyimpan data");
+        }
+    };
+
+    const handleDelete = async (id) => {
+        const result = await Swal.fire({
+            title: 'Hapus Catatan?',
+            text: "Data pengeluaran ini akan dihapus permanen dari sistem.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E11D48',
+            cancelButtonColor: '#64748B',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            borderRadius: '1.5rem',
+            customClass: {
+                popup: 'rounded-[1.5rem] border-none shadow-2xl',
+                confirmButton: 'rounded-xl px-10 py-3 font-bold',
+                cancelButton: 'rounded-xl px-10 py-3 font-bold'
+            }
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await axios.delete(`/api/expenses/${id}`);
+                toast.success('Pengeluaran berhasil dihapus');
+                fetchExpenses();
+            } catch (error) {
+                toast.error('Gagal menghapus data');
+            }
         }
     };
 
@@ -214,15 +244,15 @@ export default function Expenses() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th>Tanggal</th>
-                            <th>Nama & Kategori</th>
-                            <th className="text-right">Nominal</th>
-                            <th className="w-20 text-center"></th>
+                            <th className="px-6 whitespace-nowrap">Tanggal</th>
+                            <th className="px-6 whitespace-nowrap">Keterangan & Kategori</th>
+                            <th className="px-6 whitespace-nowrap !text-right">Nominal</th>
+                            <th className="px-6 whitespace-nowrap !text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
-                            <tr><td colSpan="4" className="py-20 text-center text-admin-text-muted font-bold animate-pulse uppercase tracking-widest text-[10px]">Syncing records...</td></tr>
+                            <tr><td colSpan="4" className="py-20 text-center text-admin-text-muted font-bold animate-pulse uppercase tracking-[0.2em] text-[10px]">Sinkronisasi Data...</td></tr>
                         ) : filteredExpenses.length === 0 ? (
                             <tr><td colSpan="4" className="py-20 text-center text-admin-text-muted italic">Tidak ada catatan pengeluaran pada periode ini.</td></tr>
                         ) : filteredExpenses.map(e => (
@@ -235,10 +265,10 @@ export default function Expenses() {
                                     <div className="text-[10px] uppercase text-admin-text-muted tracking-widest">{e.category.replace('_', ' ')}</div>
                                 </td>
                                 <td className="text-right font-black text-red-600">{formatRupiah(e.amount)}</td>
-                                <td>
-                                    <div className="flex items-center justify-center gap-2">
-                                        <button onClick={() => { setFormData({ name: e.name, amount: e.amount, category: e.category, transaction_date: e.transaction_date, notes: e.notes || '' }); setIsEditing(true); setEditId(e.id); setShowForm(true); window.scrollTo({top:0, behavior:'smooth'}); }} className="p-2 text-admin-text-light hover:text-admin-primary hover:bg-admin-primary/10 rounded-lg transition-all"><Edit size={16} /></button>
-                                        <button onClick={() => { if(confirm('Hapus item ini?')){ axios.delete(`/api/expenses/${e.id}`).then(() => fetchExpenses()); } }} className="p-2 text-admin-text-light hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+                                <td className="px-6">
+                                    <div className="flex items-center justify-center gap-3 w-full">
+                                        <button onClick={() => { setFormData({ name: e.name, amount: e.amount, category: e.category, transaction_date: e.transaction_date, notes: e.notes || '' }); setIsEditing(true); setEditId(e.id); setShowForm(true); window.scrollTo({top:0, behavior:'smooth'}); }} className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:text-admin-primary hover:border-admin-primary transition-all shadow-sm active:scale-90"><Edit size={16} /></button>
+                                        <button onClick={() => handleDelete(e.id)} className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-rose-500 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm active:scale-95"><Trash2 size={16} /></button>
                                     </div>
                                 </td>
                             </tr>

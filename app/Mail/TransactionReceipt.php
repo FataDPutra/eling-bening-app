@@ -29,7 +29,11 @@ class TransactionReceipt extends Mailable
         // Load branding from CMS
         $logoPath = Content::getByKey('layout_logo');
         if ($logoPath) {
-            $this->logoUrl = str_starts_with($logoPath, 'http') ? $logoPath : asset('storage/' . $logoPath);
+            if (str_starts_with($logoPath, 'http') || str_starts_with($logoPath, 'data:')) {
+                $this->logoUrl = $logoPath;
+            } else {
+                $this->logoUrl = asset('storage/' . $logoPath);
+            }
         } else {
             $this->logoUrl = asset('images/logo.png');
         }

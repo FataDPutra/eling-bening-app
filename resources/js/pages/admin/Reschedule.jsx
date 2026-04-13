@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Clock, Eye, Calendar, User, Hash, ArrowRight, MessageSquare, AlertCircle, Save, BadgeDollarSign, AlertTriangle, Calculator, TrendingUp } from 'lucide-react';
+import { Check, X, Clock, Eye, Calendar, User, Hash, ArrowRight, MessageSquare, AlertCircle, Save, BadgeDollarSign, AlertTriangle, Calculator, TrendingUp, MoreVertical } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
 import toast from 'react-hot-toast';
@@ -16,6 +16,18 @@ export default function Reschedule() {
         reschedule_penalty: '0',
         reschedule_hold_hours: '2',
     });
+
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [showMonthPicker, setShowMonthPicker] = useState(false);
+    const [isAllTime, setIsAllTime] = useState(false);
+
+    const months = [
+        { name: 'Januari', value: 1 }, { name: 'Februari', value: 2 }, { name: 'Maret', value: 3 },
+        { name: 'April', value: 4 }, { name: 'Mei', value: 5 }, { name: 'Juni', value: 6 },
+        { name: 'Juli', value: 7 }, { name: 'Agustus', value: 8 }, { name: 'September', value: 9 },
+        { name: 'Oktober', value: 10 }, { name: 'November', value: 11 }, { name: 'Desember', value: 12 }
+    ];
 
     const fetchPolicy = async () => {
         try {
@@ -94,11 +106,23 @@ export default function Reschedule() {
 
     const getStatusBadge = (status) => {
         switch (status) {
-            case 'pending':  return <span className="badge-status bg-warning/5 text-warning border-warning/10"><Clock size={12} className="mr-1.5" /> Pending</span>;
-            case 'approved_awaiting_payment': return <span className="badge-status bg-blue-50 text-blue-600 border-blue-100 flex items-center animate-pulse"><BadgeDollarSign size={12} className="mr-1.5" /> Siap Bayar</span>;
-            case 'completed': return <span className="badge-status bg-success/5 text-success border-success/10"><Check size={12} className="mr-1.5" /> Terjadwal Ulang</span>;
-            case 'rejected': return <span className="badge-status bg-danger/5 text-danger border-danger/10"><X size={12} className="mr-1.5" /> Rejected</span>;
-            default:         return <span className="badge-status font-bold uppercase">{status}</span>;
+            case 'pending':  
+                return <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <Clock size={12} /> Pending
+                </span>;
+            case 'approved_awaiting_payment': 
+                return <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[10px] font-black uppercase tracking-widest shadow-sm animate-pulse">
+                    <BadgeDollarSign size={12} /> Siap Bayar
+                </span>;
+            case 'completed': 
+                return <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <Check size={12} /> Terjadwal Ulang
+                </span>;
+            case 'rejected': 
+                return <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 text-rose-600 border border-rose-200 text-[10px] font-black uppercase tracking-widest shadow-sm">
+                    <X size={12} /> Ditolak
+                </span>;
+            default: return <span className="badge-status">{status}</span>;
         }
     };
 
@@ -113,12 +137,74 @@ export default function Reschedule() {
     const penaltyNum  = Number(policy.reschedule_penalty)  || 0;
     const exampleFinal = examplePriceDiff + adminFeeNum + penaltyNum;
 
+    const filteredRequests = requests.filter(req => {
+        if (isAllTime) return true;
+        const date = new Date(req.created_at);
+        return (date.getMonth() + 1) === Number(selectedMonth) && date.getFullYear() === Number(selectedYear);
+    });
+
     return (
         <div className="animate-fade-in space-y-8">
             <div className="admin-page-header">
                 <div>
                     <h1>Kelola Reschedule</h1>
                     <p>Konfigurasi kebijakan biaya dan tinjau permintaan perubahan jadwal tamu.</p>
+                </div>
+                <div className="flex gap-3">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowMonthPicker(!showMonthPicker)}
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                        >
+                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                        </button>
+
+                        {showMonthPicker && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                    <button 
+                                        onClick={() => {
+                                            setIsAllTime(true);
+                                            setShowMonthPicker(false);
+                                        }}
+                                        className={`w-full py-3 mb-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                            isAllTime 
+                                            ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
+                                            : 'bg-admin-bg text-admin-text-muted hover:bg-admin-border'
+                                        }`}
+                                    >
+                                        Lihat Total Semua
+                                    </button>
+                                    
+                                    <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="rotate-90" /></button>
+                                        <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="-rotate-90" /></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {months.map(m => (
+                                            <button 
+                                                key={m.value}
+                                                onClick={() => {
+                                                    setSelectedMonth(m.value);
+                                                    setIsAllTime(false);
+                                                    setShowMonthPicker(false);
+                                                }}
+                                                className={`py-2 text-[10px] font-bold rounded-lg transition-all ${
+                                                    !isAllTime && selectedMonth === m.value 
+                                                    ? 'bg-admin-primary text-white' 
+                                                    : 'hover:bg-admin-bg text-admin-text-muted'
+                                                }`}
+                                            >
+                                                {m.name.substring(0, 3)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -332,7 +418,7 @@ export default function Reschedule() {
                     <tbody>
                         {isLoading ? (
                             <tr><td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">Memuat data...</td></tr>
-                        ) : requests.map(req => (
+                        ) : filteredRequests.map(req => (
                             <tr key={req.id}>
                                 <td>
                                     <span className="font-black text-admin-primary font-mono text-xs uppercase tracking-widest leading-none block">#{req.transaction_id}</span>
@@ -346,9 +432,19 @@ export default function Reschedule() {
                                     </div>
                                 </td>
                                 <td>
-                                    <div className="flex items-center gap-2 text-xs font-black text-admin-text-main">
-                                        <Calendar size={14} className="text-admin-primary" />
-                                        {new Date(req.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-admin-text-muted line-through">
+                                                {new Date(req.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                                            </span>
+                                            <div className="flex items-center gap-2 text-xs font-black text-admin-text-main">
+                                                <Calendar size={14} className="text-admin-primary" />
+                                                {new Date(req.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                            </div>
+                                        </div>
+                                        <div className="p-1.5 rounded-full bg-admin-bg text-admin-text-muted">
+                                            <ArrowRight size={12} />
+                                        </div>
                                     </div>
                                 </td>
                                 <td>
@@ -385,7 +481,7 @@ export default function Reschedule() {
                                 </td>
                             </tr>
                         ))}
-                        {!isLoading && requests.length === 0 && (
+                        {!isLoading && filteredRequests.length === 0 && (
                             <tr>
                                 <td colSpan="6" className="py-24 text-center">
                                     <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
@@ -420,55 +516,59 @@ export default function Reschedule() {
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-10 space-y-8">
-                            {/* Date comparison */}
-                            <div className="flex items-center justify-between p-8 rounded-[2.5rem] bg-admin-bg border border-admin-border relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-admin-primary/5 rounded-full translate-x-1/2 -translate-y-1/2" />
-                                <div className="flex-1 text-center space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Jadwal Lama</p>
-                                    <p className="text-lg font-black text-admin-text-light line-through decoration-danger/40 uppercase tracking-tighter">
-                                        {new Date(selectedReq.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                    </p>
-                                </div>
-                                <div className="px-6">
-                                    <div className="w-12 h-12 rounded-full border border-admin-primary flex items-center justify-center text-admin-primary bg-white shadow-xl shadow-admin-primary/10 group-hover:scale-110 transition-transform">
-                                        <ArrowRight size={20} />
+                        <div className="p-10 space-y-6">
+                            {/* Compact Horizontal Info Bar */}
+                            <div className="flex flex-col md:flex-row gap-4">
+                                {/* Date Switch Card */}
+                                <div className="flex-[2] flex items-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-200">
+                                    <div className="flex-1 text-center">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Lama</p>
+                                        <p className="text-xs font-black text-slate-400 line-through decoration-slate-300">
+                                            {new Date(selectedReq.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                                        </p>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-admin-primary shadow-sm">
+                                        <ArrowRight size={14} />
+                                    </div>
+                                    <div className="flex-1 text-center">
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-admin-primary mb-1">Baru</p>
+                                        <p className="text-sm font-black text-admin-text-main">
+                                            {new Date(selectedReq.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="flex-1 text-center space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-admin-primary">Jadwal Baru</p>
-                                    <p className="text-xl font-black text-admin-text-main uppercase tracking-tighter">
-                                        {new Date(selectedReq.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                    </p>
+
+                                {/* Summary Charge Card */}
+                                <div className="flex-1 p-5 rounded-2xl bg-orange-600 text-white flex flex-col justify-center relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-2 opacity-10">
+                                        <Calculator size={32} />
+                                    </div>
+                                    <p className="text-[8px] font-black uppercase tracking-widest text-orange-200 relative z-10">Total Biaya</p>
+                                    <p className="text-lg font-black tracking-tighter relative z-10">{formatRupiah(selectedReq.final_charge)}</p>
                                 </div>
                             </div>
 
-                            {/* Fee Breakdown */}
-                            {(selectedReq.final_charge > 0 || selectedReq.admin_fee > 0) && (
-                                <div className="p-6 rounded-3xl bg-orange-50 border border-orange-100 space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-orange-600 mb-4 flex items-center gap-1.5">
-                                        <Calculator size={12} /> Rincian Biaya Reschedule
-                                    </p>
-                                    <div className="space-y-2 text-xs">
-                                        {selectedReq.price_diff > 0 && (
-                                            <div className="flex justify-between text-gray-600">
-                                                <span>Selisih Harga (weekday → weekend)</span>
-                                                <span className="font-bold text-orange-600">{formatRupiah(selectedReq.price_diff)}</span>
-                                            </div>
-                                        )}
-                                        <div className="flex justify-between text-gray-600">
-                                            <span>Biaya Admin</span>
-                                            <span className="font-bold">{formatRupiah(selectedReq.admin_fee)}</span>
+                            {/* Fee Breakdown Detail (Compact) */}
+                            {(selectedReq.price_diff > 0 || selectedReq.admin_fee > 0 || selectedReq.penalty_fee > 0) && (
+                                <div className="px-6 py-4 rounded-2xl bg-admin-bg border border-admin-border flex flex-wrap gap-x-8 gap-y-2">
+                                    {selectedReq.price_diff > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
+                                            <span className="text-[10px] font-bold text-admin-text-muted">Selisih: <span className="text-admin-text-main">{formatRupiah(selectedReq.price_diff)}</span></span>
                                         </div>
-                                        <div className="flex justify-between text-gray-600">
-                                            <span>Penalty Reschedule</span>
-                                            <span className="font-bold">{formatRupiah(selectedReq.penalty_fee)}</span>
+                                    )}
+                                    {selectedReq.admin_fee > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
+                                            <span className="text-[10px] font-bold text-admin-text-muted">Admin: <span className="text-admin-text-main">{formatRupiah(selectedReq.admin_fee)}</span></span>
                                         </div>
-                                        <div className="flex justify-between font-black text-sm border-t border-orange-200 pt-2 mt-2">
-                                            <span className="text-gray-800">Total Final Charge</span>
-                                            <span className="text-orange-600">{formatRupiah(selectedReq.final_charge)}</span>
+                                    )}
+                                    {selectedReq.penalty_fee > 0 && (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
+                                            <span className="text-[10px] font-bold text-admin-text-muted">Denda: <span className="text-admin-text-main">{formatRupiah(selectedReq.penalty_fee)}</span></span>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
                             )}
 

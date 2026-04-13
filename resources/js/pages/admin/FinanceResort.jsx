@@ -155,12 +155,12 @@ export default function FinanceResort() {
                 <table className="admin-table">
                     <thead>
                         <tr>
-                            <th className="w-10 text-center"></th>
-                            <th className="w-32">Tanggal</th>
-                            <th>ID Transaksi</th>
-                            <th>Nama Customer</th>
-                            <th>Keterangan</th>
-                            <th className="text-right">Total</th>
+                            <th className="w-10 !text-center"></th>
+                            <th className="px-6 whitespace-nowrap">Tanggal</th>
+                            <th className="px-6 whitespace-nowrap">ID Transaksi</th>
+                            <th className="px-6 whitespace-nowrap">Nama Customer</th>
+                            <th className="px-6 whitespace-nowrap">Keterangan</th>
+                            <th className="px-6 whitespace-nowrap !text-right">Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,7 +169,7 @@ export default function FinanceResort() {
                                 <td colSpan="6" className="py-20 text-center">
                                     <div className="flex flex-col items-center gap-4 animate-pulse">
                                         <Loader2 className="animate-spin text-admin-primary" size={32} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted">Syncing data...</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-admin-text-muted">Sinkronisasi Data...</span>
                                     </div>
                                 </td>
                             </tr>
@@ -198,13 +198,13 @@ export default function FinanceResort() {
                                                 isExpanded ? <ChevronUp size={16} className="text-admin-primary mx-auto" /> : <ChevronDown size={16} className="text-admin-text-light mx-auto" />
                                             )}
                                         </td>
-                                        <td>
+                                        <td className="px-6">
                                             <span className="text-[11px] font-bold text-admin-text-muted">{new Date(t.created_at).toLocaleDateString('id-ID')}</span>
                                         </td>
-                                        <td className="font-bold text-admin-text-main uppercase tracking-tighter">#{t.id}</td>
-                                        <td>{t.booker_name || t.user?.name || 'Guest'}</td>
-                                        <td>{t.item_name || t.items?.[0]?.item?.name || 'Unit'}</td>
-                                        <td className="text-right font-black text-admin-primary">{formatRupiah(totalNett)}</td>
+                                        <td className="px-6 font-bold text-admin-text-main uppercase tracking-tighter">{t.order_id || `#${t.id}`}</td>
+                                        <td className="px-6 text-sm text-admin-text-main font-medium">{t.booker_name || t.user?.name || 'Guest'}</td>
+                                        <td className="px-6 text-admin-text-muted">{t.item_name || t.items?.[0]?.item?.name || 'Unit'}</td>
+                                        <td className="px-6 !text-right font-black text-emerald-600">{formatRupiah(totalNett)}</td>
                                     </tr>
 
                                     {isExpanded && (
@@ -217,7 +217,7 @@ export default function FinanceResort() {
                                                 <td className="font-bold text-admin-primary uppercase tracking-tighter">BASE BOOKING</td>
                                                 <td className="text-admin-text-light">{t.booker_name || t.user?.name || 'Guest'}</td>
                                                 <td className="italic text-admin-text-muted">Pemesanan Awal: {t.item_name || t.items?.[0]?.item?.name}</td>
-                                                <td className="text-right font-bold text-admin-primary">{formatRupiah(t.total_price)}</td>
+                                                <td className="px-6 text-right font-bold text-emerald-600/70">{formatRupiah(t.total_price)}</td>
                                             </tr>
 
                                             {paidAddons.map((addon) => (
@@ -229,7 +229,7 @@ export default function FinanceResort() {
                                                     <td className="font-bold text-success uppercase tracking-tighter">#{addon.id}</td>
                                                     <td className="text-admin-text-light">{addon.booker_name || addon.user?.name || 'Guest'}</td>
                                                     <td className="italic text-admin-text-muted">{addon.item_name || addon.items?.[0]?.item?.name || 'Add-on'}</td>
-                                                    <td className="text-right font-bold text-success">{formatRupiah(addon.total_price)}</td>
+                                                    <td className="px-6 text-right font-bold text-success">{formatRupiah(addon.total_price)}</td>
                                                 </tr>
                                             ))}
                                             
@@ -244,7 +244,7 @@ export default function FinanceResort() {
                                                     </td>
                                                     <td className="text-admin-text-light">{t.booker_name || t.user?.name}</td>
                                                     <td className="italic text-admin-text-muted">Biaya Pindah Jadwal</td>
-                                                    <td className="text-right font-bold text-warning">+{formatRupiah(resc.final_charge)}</td>
+                                                    <td className="px-6 text-right font-bold text-warning">+{formatRupiah(resc.final_charge)}</td>
                                                 </tr>
                                             ))}
                                         </>

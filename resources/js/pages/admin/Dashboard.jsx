@@ -7,9 +7,9 @@ import toast from 'react-hot-toast';
 
 export default function Dashboard() {
     const [stats, setStats] = useState({
-        activeTickets: 0,
-        totalRooms: 0,
-        availableRooms: 0,
+        totalVolume: 0,
+        confirmedCount: 0,
+        awaitingCount: 0,
         periodRevenue: 0,
         todayRevenue: 0
     });
@@ -77,9 +77,9 @@ export default function Dashboard() {
 
         setBookings(filtered);
         setStats({
-            activeTickets: tickets.filter(t => t.is_active).length,
-            totalRooms: rooms.length,
-            availableRooms: rooms.filter(r => r.stock > 0).length,
+            totalVolume: filtered.length,
+            confirmedCount: filtered.filter(b => b.status === 'success' || b.status === 'paid').length,
+            awaitingCount: filtered.filter(b => b.status === 'pending').length,
             periodRevenue: periodRev,
             todayRevenue: todayRev
         });
@@ -137,10 +137,10 @@ export default function Dashboard() {
     };
 
     const statCards = [
-        { title: isAllTime ? 'Total Revenue' : `Revenue ${months.find(m => m.value === selectedMonth).name}`, value: formatRupiah(stats.periodRevenue), icon: Wallet, color: '#C62828', sub: '+12.5%', trend: 'up' },
-        { title: 'Kamar Tersedia', value: `${stats.availableRooms}/${stats.totalRooms}`, icon: Building, color: '#2E7D32', sub: 'Optimal', trend: 'up' },
-        { title: 'Tiket Aktif', value: stats.activeTickets, icon: Ticket, color: '#F59E0B', sub: '-2.4%', trend: 'down' },
-        { title: 'Today Revenue', value: formatRupiah(stats.todayRevenue), icon: Activity, color: '#3B82F6', sub: 'Hari Ini', trend: 'up' }
+        { title: 'TOTAL TRANSAKSI', value: stats.totalVolume, icon: Wallet, color: '#C62828', sub: 'Volume', trend: 'up' },
+        { title: 'DIKONFIRMASI', value: stats.confirmedCount, icon: TrendingUp, color: '#2E7D32', sub: 'Sukses', trend: 'up' },
+        { title: 'MENUNGGU', value: stats.awaitingCount, icon: Activity, color: '#F59E0B', sub: 'Pending', trend: 'down' },
+        { title: 'TOTAL PENDAPATAN', value: formatRupiah(stats.periodRevenue), icon: TrendingUp, color: '#3B82F6', sub: isAllTime ? 'Total' : months.find(m => m.value === selectedMonth).name, trend: 'up' }
     ];
 
     const weeklyData = [
@@ -244,7 +244,7 @@ export default function Dashboard() {
                             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-admin-text-muted group-hover:text-admin-primary transition-colors">
                                 {card.title}
                             </p>
-                            <h3 className="text-4xl font-black text-admin-text-main tracking-tighter">
+                            <h3 className="text-3xl font-black text-admin-text-main tracking-tighter whitespace-nowrap">
                                 {card.value}
                             </h3>
                         </div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
                 <div className="lg:col-span-2 admin-table-container !p-10 space-y-10">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Traffic Visitors</h3>
+                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Trafik Pengunjung</h3>
                             <p className="text-xs text-admin-text-muted font-bold">Total pengunjung kawasan dalam 7 hari terakhir</p>
                         </div>
                         <div className="flex items-center gap-6">
@@ -336,7 +336,7 @@ export default function Dashboard() {
                             <div className="w-10 h-10 rounded-2xl bg-admin-primary/10 text-admin-primary flex items-center justify-center">
                                 <Activity size={20} />
                             </div>
-                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Feeds</h3>
+                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Hari Ini</h3>
                         </div>
                         <button className="p-2 hover:bg-admin-bg rounded-lg text-admin-text-muted">
                             <Bell size={18} />
@@ -356,7 +356,12 @@ export default function Dashboard() {
                                     </div>
                                 ))}
                             </div>
-                        ) : bookings.slice(0, showAllFeeds ? 20 : 4).map((b, i) => (
+                        ) : allTransactions.filter(b => b.created_at?.startsWith(new Date().toISOString().split('T')[0])).length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                                <Activity size={40} className="mb-2" />
+                                <p className="text-[10px] font-black uppercase">Belum ada aktivitas hari ini</p>
+                            </div>
+                        ) : allTransactions.filter(b => b.created_at?.startsWith(new Date().toISOString().split('T')[0])).slice(0, showAllFeeds ? 20 : 6).map((b, i) => (
                             <div key={i} className="flex gap-5 items-start animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                                 <div className="relative">
                                     <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs uppercase shadow-inner">

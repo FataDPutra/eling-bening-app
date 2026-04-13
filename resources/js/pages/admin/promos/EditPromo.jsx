@@ -229,11 +229,11 @@ export default function EditPromo() {
 
                         <div className="flex gap-4 pt-4">
                             <button type="button" onClick={() => navigate('/admin/promos')} className="flex-1 py-3 px-4 rounded-xl border border-admin-border text-admin-text-muted font-bold text-sm hover:bg-admin-bg transition-all uppercase tracking-widest text-[10px]">
-                                Batalkan Audit
+                                Batal
                             </button>
                             <button type="submit" disabled={isSaving} className="flex-[2] btn-primary py-3 justify-center shadow-lg shadow-admin-primary/20 disabled:opacity-50 uppercase tracking-[0.2em] text-[10px]">
                                 {isSaving ? <Loader2 className="animate-spin mr-2" size={18} /> : <Save size={18} />}
-                                {isSaving ? 'Menyimpan...' : 'Commit Perubahan'}
+                                {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
                             </button>
                         </div>
                     </form>
@@ -245,7 +245,7 @@ export default function EditPromo() {
                             <div className="p-2 rounded-lg bg-admin-primary text-white">
                                 <Tag size={18} />
                             </div>
-                            <h3 className="font-bold text-admin-text-main">Voucher Blueprint</h3>
+                            <h3 className="font-bold text-admin-text-main">Preview Voucher</h3>
                         </div>
                         <div className="relative p-8 rounded-[2.5rem] bg-white border border-admin-border shadow-xl shadow-admin-primary/5 overflow-hidden transition-all hover:shadow-2xl hover:scale-[1.02] group">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-admin-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-1000" />
@@ -289,7 +289,7 @@ export default function EditPromo() {
                             </div>
                         </div>
                         <p className="text-[10px] text-admin-text-muted mt-4 leading-relaxed italic">
-                            *Setiap perubahan data blueprint akan langsung berdampak pada validasi transaksi guest.
+                            *Setiap perubahan data preview akan langsung berdampak pada validasi transaksi pengunjung.
                         </p>
                     </div>
 
