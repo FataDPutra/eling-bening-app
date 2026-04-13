@@ -65,17 +65,17 @@ export default function Events() {
     return (
         <div className="animate-fade-in pb-20">
             {/* Hero Section */}
-            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
                 <img src={content.eventHeroImage || '/images/hero-bg.png'} alt="Events at Eling Bening" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
-                <div className="relative z-10 text-white max-w-4xl px-4">
-                    <span className="px-4 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-bold tracking-widest uppercase mb-6 inline-block">
+                <div className="relative z-10 text-white max-w-4xl px-6">
+                    <span className="px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-[10px] md:text-xs font-bold tracking-widest uppercase mb-6 inline-block">
                         Events & Wedding
                     </span>
-                    <h1 className="text-5xl md:text-7xl font-bold font-serif mb-6 leading-tight">
-                        Momen Berharga <br /> Dalam Keindahan Alam
+                    <h1 className="text-4xl md:text-7xl font-bold font-serif mb-6 leading-tight">
+                        Momen Berharga <br className="hidden md:block" /> Dalam Keindahan Alam
                     </h1>
-                    <p className="text-lg md:text-xl font-light max-w-2xl mx-auto opacity-90">
+                    <p className="text-base md:text-xl font-light max-w-2xl mx-auto opacity-90 leading-relaxed md:leading-normal">
                         Dari pernikahan romantis hingga gathering perusahaan, kami menyediakan venue terbaik dengan panorama Rawa Pening yang tak terlupakan.
                     </p>
                 </div>

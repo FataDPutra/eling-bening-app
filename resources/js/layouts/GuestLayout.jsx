@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Menu, X, UserCircle, MapPin, Phone, Mail, ChevronDown } from 'lucide-react';
+import { Menu, X, UserCircle, MapPin, Phone, Mail, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useContent } from '../context/ContentContext';
 import axios from 'axios';
@@ -170,14 +170,24 @@ export default function GuestLayout() {
                                 </>
                             )}
                             <div className="h-px bg-gray-100 my-2 mx-4"></div>
-                            {user && <Link to="/profile" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-xs font-black uppercase tracking-widest">Profil & Riwayat</Link>}
+                            {user && (
+                                <Link to="/profile" className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-gray-700">
+                                    <UserCircle size={18} className="opacity-70" />
+                                    Profil & Riwayat
+                                </Link>
+                            )}
                             {user?.role === 'admin' && (
-                                <Link to="/admin" className="block px-6 py-2 hover:bg-gray-50 hover:text-eling-green transition text-[11px] font-black uppercase tracking-widest text-eling-red">Panel Admin</Link>
+                                <Link to="/admin" className="flex items-center gap-2 px-6 py-2 hover:bg-eling-red/5 hover:text-eling-red transition text-[11px] font-black uppercase tracking-widest text-eling-red group/adm">
+                                    <i className="fas fa-user-shield opacity-70 group-hover/adm:opacity-100 transition-opacity"></i>
+                                    Panel Admin
+                                </Link>
                             )}
                             {user && (
                                 <>
-                                    <div className="h-px bg-gray-50 my-1 mx-4"></div>
-                                    <button onClick={handleLogout} className="w-full text-left px-6 py-2 hover:bg-gray-50 hover:text-eling-red transition text-xs font-black uppercase tracking-widest">Logout</button>
+                                    <button onClick={handleLogout} className="flex items-center gap-3 w-full text-left px-6 py-3 hover:bg-red-50 hover:text-eling-red transition text-[11px] font-black uppercase tracking-widest text-gray-600">
+                                        <LogOut size={18} className="opacity-70" />
+                                        Logout
+                                    </button>
                                 </>
                             )}
                         </div>
@@ -239,11 +249,19 @@ export default function GuestLayout() {
                     <div className="px-4 pb-10 pt-4 border-t border-gray-100 space-y-3">
                         {user ? (
                             <>
-                                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 w-full px-5 py-3.5 bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-eling-green/10 hover:text-eling-green transition-all">
-                                    <UserCircle size={16} /> Profil & Riwayat
+                                {user?.role === 'admin' && (
+                                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 w-full px-5 py-3.5 bg-eling-red/5 text-eling-red font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-eling-red/10 transition-all border border-eling-red/10">
+                                        <div className="w-5 h-5 flex items-center justify-center">
+                                            <i className="fas fa-user-shield text-sm"></i>
+                                        </div>
+                                        Panel Admin
+                                    </Link>
+                                )}
+                                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 w-full px-5 py-4 bg-gray-50 text-gray-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-eling-green/10 hover:text-eling-green transition-all">
+                                    <UserCircle size={20} /> Profil & Riwayat
                                 </Link>
-                                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="flex items-center gap-3 w-full px-5 py-3.5 bg-red-50 text-eling-red font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-red-100 transition-all">
-                                    <X size={16} /> Logout
+                                <button onClick={() => { setMobileMenuOpen(false); handleLogout(); }} className="flex items-center gap-3 w-full px-5 py-4 bg-red-50 text-eling-red font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-red-100 transition-all">
+                                    <LogOut size={20} /> Logout
                                 </button>
                             </>
                         ) : (

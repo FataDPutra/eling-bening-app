@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Utensils, BedDouble, Waves, MapPin, Phone, Mail, X, Loader2 } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
 import IconRenderer from '../../components/IconRenderer';
@@ -6,6 +7,16 @@ import IconRenderer from '../../components/IconRenderer';
 export default function Facilities() {
     const { content, isLoading } = useContent();
     const [showMap, setShowMap] = useState(false);
+
+    // Body Lock when modal open
+    useEffect(() => {
+        if (showMap) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [showMap]);
     const facilities = content.facilities || [];
 
     if (isLoading) return (
@@ -16,12 +27,12 @@ export default function Facilities() {
 
     return (
         <div className="animate-fade-in bg-gray-50 pb-24">
-            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
                 <img src={content.eventHeroImage || "/images/hero-bg.png"} alt="Facilities Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
-                <div className="relative z-10 text-white max-w-4xl px-4">
-                    <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Fasilitas Premium</h1>
-                    <p className="text-lg lg:text-xl font-light tracking-wide italic">
+                <div className="relative z-10 text-white max-w-4xl px-6">
+                    <h1 className="text-4xl md:text-7xl font-bold mb-6 font-serif">Fasilitas Premium</h1>
+                    <p className="text-base md:text-xl font-light tracking-wide italic opacity-90">
                         Kenyamanan dan kepuasan Anda adalah prioritas utama kami.
                     </p>
                 </div>
@@ -80,8 +91,8 @@ export default function Facilities() {
 
             {/* Map Modal */}
             {showMap && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 lg:p-10 bg-black/80 backdrop-blur-md animate-fade-in" onClick={() => setShowMap(false)}>
-                    <div className="bg-white rounded-3xl overflow-hidden w-full h-full max-w-6xl shadow-2xl relative flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 lg:p-10 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setShowMap(false)}>
+                    <div className="bg-white rounded-3xl overflow-hidden w-full h-full max-h-[90vh] max-w-6xl shadow-2xl relative flex flex-col animate-scale-up" onClick={e => e.stopPropagation()}>
                         <div className="p-4 bg-white flex justify-between items-center border-b border-gray-100 shrink-0">
                             <div>
                                 <h3 className="font-bold text-xl font-serif text-gray-900">Peta Area Eling Bening</h3>

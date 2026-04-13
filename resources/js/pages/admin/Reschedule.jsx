@@ -145,24 +145,28 @@ export default function Reschedule() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="admin-page-header">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6 mb-8">
                 <div>
-                    <h1>Kelola Reschedule</h1>
-                    <p>Konfigurasi kebijakan biaya dan tinjau permintaan perubahan jadwal tamu.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Kelola Reschedule</h1>
+                    <p className="text-sm text-admin-text-muted font-bold mt-1">Konfigurasi kebijakan biaya dan tinjau permintaan perubahan jadwal tamu.</p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3 md:justify-end shrink-0">
                     <div className="relative">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                            className="w-full lg:w-auto flex items-center justify-between gap-4 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[220px] h-[45px] group"
                         >
-                            <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
+                            <div className="flex items-center gap-3">
+                                <Calendar size={16} className="text-admin-primary" /> 
+                                <span>{isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}</span>
+                            </div>
+                            <MoreVertical size={14} className="text-admin-text-light group-hover:text-admin-primary transition-colors" />
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 top-full mt-2 w-full sm:w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -209,22 +213,22 @@ export default function Reschedule() {
             </div>
 
             {/* ── Policy Configuration Card ───────────────────────────────── */}
-            <div className="bg-white rounded-[2.5rem] border border-admin-border p-10 shadow-sm space-y-10">
+            <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] border border-admin-border p-6 md:p-10 shadow-sm space-y-8 md:space-y-10">
                 {/* Header */}
-                <div className="flex items-center gap-4 pb-6 border-b border-admin-border">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                        <Calculator size={28} />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pb-6 border-b border-admin-border">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-orange-500/10 text-orange-500 flex items-center justify-center shrink-0">
+                        <Calculator size={24} className="md:w-7 md:h-7" />
                     </div>
                     <div className="flex-1">
-                        <h3 className="text-lg font-black text-admin-text-main">Konfigurasi Kebijakan Reschedule</h3>
-                        <p className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest mt-1">Biaya akan dihitung otomatis saat tamu mengajukan reschedule</p>
+                        <h3 className="text-base md:text-lg font-black text-admin-text-main">Kebijakan Reschedule</h3>
+                        <p className="text-[9px] md:text-[10px] font-bold text-admin-text-muted uppercase tracking-widest mt-1">Biaya akan dihitung otomatis saat tamu mengajukan</p>
                     </div>
                     <button
                         onClick={handleSavePolicy}
                         disabled={isSavingPolicy}
-                        className="flex items-center gap-2 px-7 py-3.5 bg-admin-primary text-white text-[10px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-admin-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-60"
+                        className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 md:px-7 py-3 md:py-3.5 bg-admin-primary text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-[1rem] md:rounded-2xl shadow-lg shadow-admin-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-60"
                     >
-                        <Save size={15} /> Simpan Kebijakan
+                        <Save size={14} /> Simpan
                     </button>
                 </div>
 
@@ -404,103 +408,107 @@ export default function Reschedule() {
                     </div>
                 </div>
 
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>ID Booking</th>
-                            <th>Data Pengunjung</th>
-                            <th>Jadwal Baru</th>
-                            <th>Biaya Tambahan</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
-                            <tr><td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">Memuat data...</td></tr>
-                        ) : filteredRequests.map(req => (
-                            <tr key={req.id}>
-                                <td>
-                                    <span className="font-black text-admin-primary font-mono text-xs uppercase tracking-widest leading-none block">#{req.transaction_id}</span>
-                                </td>
-                                <td>
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{req.transaction?.user?.name || 'Guest'}</span>
-                                        <span className="text-[10px] font-bold text-admin-text-muted flex items-center gap-1 uppercase">
-                                            <User size={10} /> {req.transaction?.user?.email || 'Customer'}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex items-center gap-3">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-admin-text-muted line-through">
-                                                {new Date(req.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID Booking</th>
+                                <th>Data Pengunjung</th>
+                                <th>Jadwal Baru</th>
+                                <th>Biaya Tambahan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
+                                <tr><td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">Memuat data...</td></tr>
+                            ) : filteredRequests.map(req => (
+                                <tr key={req.id}>
+                                    <td>
+                                        <span className="font-black text-admin-primary font-mono text-xs uppercase tracking-widest leading-none block">#{req.transaction_id}</span>
+                                    </td>
+                                    <td>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="font-black text-admin-text-main text-sm uppercase tracking-tight">{req.transaction?.user?.name || 'Guest'}</span>
+                                            <span className="text-[10px] font-bold text-admin-text-muted flex items-center gap-1 uppercase">
+                                                <User size={10} /> {req.transaction?.user?.email || 'Customer'}
                                             </span>
-                                            <div className="flex items-center gap-2 text-xs font-black text-admin-text-main">
-                                                <Calendar size={14} className="text-admin-primary" />
-                                                {new Date(req.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] font-bold text-admin-text-muted line-through">
+                                                    {new Date(req.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                                                </span>
+                                                <div className="flex items-center gap-2 text-xs font-black text-admin-text-main">
+                                                    <Calendar size={14} className="text-admin-primary" />
+                                                    {new Date(req.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </div>
+                                            </div>
+                                            <div className="p-1.5 rounded-full bg-admin-bg text-admin-text-muted">
+                                                <ArrowRight size={12} />
                                             </div>
                                         </div>
-                                        <div className="p-1.5 rounded-full bg-admin-bg text-admin-text-muted">
-                                            <ArrowRight size={12} />
+                                    </td>
+                                    <td>
+                                        {req.final_charge > 0 ? (
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-black text-orange-600">{formatRupiah(req.final_charge)}</span>
+                                                <span className="text-[9px] font-bold text-admin-text-muted uppercase tracking-widest mt-0.5">Final Charge</span>
+                                            </div>
+                                        ) : (
+                                            <span className="badge-status bg-success/5 text-success border-success/10">Gratis</span>
+                                        )}
+                                    </td>
+                                    <td>{getStatusBadge(req.status)}</td>
+                                    <td>
+                                        <div className="flex bg-admin-bg p-1 rounded-xl border border-admin-border w-fit">
+                                            <button className="btn-icon" title="View Detail" onClick={() => setSelectedReq(req)}>
+                                                <Eye size={18} />
+                                            </button>
+                                            <button
+                                                className={`p-2 rounded-lg transition-all ${req.status === 'approved_awaiting_payment' ? 'bg-white shadow-sm text-blue-600' : 'text-admin-text-light hover:text-admin-text-main'}`}
+                                                onClick={() => handleAction(req.id, 'approved_awaiting_payment')}
+                                                disabled={req.status !== 'pending'}
+                                            >
+                                                <Check size={16} />
+                                            </button>
+                                            <button
+                                                className={`p-2 rounded-lg transition-all ${req.status === 'rejected' ? 'bg-white shadow-sm text-danger' : 'text-admin-text-light hover:text-admin-text-main'}`}
+                                                onClick={() => handleAction(req.id, 'rejected')}
+                                                disabled={req.status !== 'pending'}
+                                            >
+                                                <X size={16} />
+                                            </button>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    {req.final_charge > 0 ? (
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-black text-orange-600">{formatRupiah(req.final_charge)}</span>
-                                            <span className="text-[9px] font-bold text-admin-text-muted uppercase tracking-widest mt-0.5">Final Charge</span>
+                                    </td>
+                                </tr>
+                            ))}
+                            {!isLoading && filteredRequests.length === 0 && (
+                                <tr>
+                                    <td colSpan="6" className="py-24 text-center">
+                                        <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
+                                            <Clock size={40} />
                                         </div>
-                                    ) : (
-                                        <span className="badge-status bg-success/5 text-success border-success/10">Gratis</span>
-                                    )}
-                                </td>
-                                <td>{getStatusBadge(req.status)}</td>
-                                <td>
-                                    <div className="flex bg-admin-bg p-1 rounded-xl border border-admin-border w-fit">
-                                        <button className="btn-icon" title="View Detail" onClick={() => setSelectedReq(req)}>
-                                            <Eye size={18} />
-                                        </button>
-                                        <button
-                                            className={`p-2 rounded-lg transition-all ${req.status === 'approved_awaiting_payment' ? 'bg-white shadow-sm text-blue-600' : 'text-admin-text-light hover:text-admin-text-main'}`}
-                                            onClick={() => handleAction(req.id, 'approved_awaiting_payment')}
-                                            disabled={req.status !== 'pending'}
-                                        >
-                                            <Check size={16} />
-                                        </button>
-                                        <button
-                                            className={`p-2 rounded-lg transition-all ${req.status === 'rejected' ? 'bg-white shadow-sm text-danger' : 'text-admin-text-light hover:text-admin-text-main'}`}
-                                            onClick={() => handleAction(req.id, 'rejected')}
-                                            disabled={req.status !== 'pending'}
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {!isLoading && filteredRequests.length === 0 && (
-                            <tr>
-                                <td colSpan="6" className="py-24 text-center">
-                                    <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
-                                        <Clock size={40} />
-                                    </div>
-                                    <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Belum ada permintaan reschedule</p>
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                                        <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Belum ada permintaan reschedule</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* ── Detail Modal ──────────────────────────────────────────────── */}
             {selectedReq && (
-                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md animate-fade-in">
-                    <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-up border border-white/20">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in">
+                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
+                        <div className="fixed inset-0" onClick={() => setSelectedReq(null)} />
+                        <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] w-full max-w-2xl relative z-[10002] animate-scale-up border border-white/20">
                         {/* Modal Header */}
-                        <div className="relative p-10 pb-0 flex justify-between items-start">
+                        <div className="relative p-6 md:p-10 pb-0 flex justify-between items-start">
                             <div className="flex items-center gap-4">
                                 <div className="p-4 rounded-[1.5rem] bg-admin-primary/10 text-admin-primary">
                                     <Calendar size={32} />
@@ -516,9 +524,9 @@ export default function Reschedule() {
                         </div>
 
                         {/* Modal Content */}
-                        <div className="p-10 space-y-6">
+                        <div className="p-6 md:p-10 space-y-6">
                             {/* Compact Horizontal Info Bar */}
-                            <div className="flex flex-col md:flex-row gap-4">
+                            <div className="flex flex-col sm:flex-row gap-4">
                                 {/* Date Switch Card */}
                                 <div className="flex-[2] flex items-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-200">
                                     <div className="flex-1 text-center">
@@ -644,6 +652,7 @@ export default function Reschedule() {
                         </div>
                     </div>
                 </div>
+            </div>
             )}
         </div>
     );

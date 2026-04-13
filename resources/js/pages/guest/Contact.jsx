@@ -20,12 +20,12 @@ export default function Contact() {
 
     return (
         <div className="animate-fade-in bg-white pb-24">
-            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
                 <img src={content.contact.heroImage || "/images/hero-bg.png"} alt="Contact Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
-                <div className="relative z-10 text-white max-w-4xl px-4">
-                    <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">{content.contact.title}</h1>
-                    <p className="text-lg lg:text-xl font-light tracking-wide italic">
+                <div className="relative z-10 text-white max-w-4xl px-6">
+                    <h1 className="text-4xl md:text-7xl font-bold mb-6 font-serif">{content.contact.title}</h1>
+                    <p className="text-base md:text-xl font-light tracking-wide italic opacity-90">
                         {content.contact.subtitle}
                     </p>
                 </div>

@@ -121,6 +121,7 @@ export default function Promos() {
                     </div>
                 </div>
 
+            <div className="admin-table-wrapper">
                 <table className="admin-table w-full">
                     <thead>
                         <tr>
@@ -227,6 +228,7 @@ export default function Promos() {
                         ))}
                     </tbody>
                 </table>
+            </div>
 
                 {filteredPromos.length === 0 && !isLoading && (
                     <div className="py-24 text-center">
@@ -240,8 +242,9 @@ export default function Promos() {
 
             {/* Campaign Stats Modal */}
             {showStatsModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setShowStatsModal(false)}>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-2xl animate-scale-up overflow-hidden border border-white" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in" onClick={() => setShowStatsModal(false)}>
+                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
+                        <div className="bg-white rounded-[2.5rem] w-full max-w-2xl shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up relative z-[10002] border border-white" onClick={e => e.stopPropagation()}>
                         <div className="bg-admin-bg p-8 border-b border-admin-border flex justify-between items-center bg-gradient-to-br from-admin-bg to-white">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-admin-primary text-white rounded-2xl shadow-lg shadow-admin-primary/20">
@@ -306,6 +309,7 @@ export default function Promos() {
                         </div>
                     </div>
                 </div>
+            </div>
             )}
 
             <div className="p-8 bg-white/50 border border-admin-border rounded-[2.5rem] flex items-start gap-6">

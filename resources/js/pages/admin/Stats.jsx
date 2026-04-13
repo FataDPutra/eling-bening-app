@@ -66,24 +66,24 @@ export default function Stats() {
     return (
         <div className="animate-fade-in space-y-8">
             {/* ... (Header remains same) */}
-            <div className="admin-page-header">
-                <div>
-                    <h1>Statistik & Analytics</h1>
-                    <p>Pantau performa bisnis dan tren operasional secara real-time.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Statistik & Analytics</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Pantau performa bisnis dan tren operasional secara real-time.</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -126,7 +126,7 @@ export default function Stats() {
                             </>
                         )}
                     </div>
-                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20">
+                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto">
                         <Download size={18} /> Export Laporan
                     </button>
                 </div>

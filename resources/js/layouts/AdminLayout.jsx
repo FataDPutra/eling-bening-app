@@ -142,11 +142,11 @@ export default function AdminLayout() {
 
                 <nav className="sidebar-nav">
                     <ul>
-                        {!isSidebarCollapsed && <div className="nav-section-title">Main Menu</div>}
+                        {!isSidebarCollapsed && <div className="nav-section-title">Menu Utama</div>}
                         <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" end />
                         <NavItem to="/admin/stats" icon={BarChart3} label="Statistik" />
 
-                        {!isSidebarCollapsed && <div className="nav-section-title">Operational</div>}
+                        {!isSidebarCollapsed && <div className="nav-section-title">Operasional</div>}
                         <li>
                             <button onClick={() => toggleMenu('booking')} className="nav-group-btn" title={isSidebarCollapsed ? 'Booking Resort' : ''}>
                                 <div className="btn-content">
@@ -202,17 +202,17 @@ export default function AdminLayout() {
                         <NavItem to="/admin/promos" icon={Megaphone} label="Promo & Banner" />
                         <NavItem to="/admin/content" icon={Layout} label="Konten CMS" />
 
-                        {!isSidebarCollapsed && <div className="nav-section-title">Financial Reports</div>}
+                        {!isSidebarCollapsed && <div className="nav-section-title">Laporan Keuangan</div>}
                         <NavItem to="/admin/finance" icon={PieChart} label="Dashboard Finance" end />
                         <NavItem to="/admin/finance/expenses" icon={TrendingDown} label="Pengeluaran" />
                         <NavItem to="/admin/finance/tickets" icon={Ticket} label="Pendapatan Tiket" />
                         <NavItem to="/admin/finance/resort" icon={Building} label="Pendapatan Resort" />
                         <NavItem to="/admin/finance/recap" icon={CircleDollarSign} label="Rekapitulasi" />
 
-                        {!isSidebarCollapsed && <div className="nav-section-title">Settings</div>}
+                        {!isSidebarCollapsed && <div className="nav-section-title">Konfigurasi</div>}
                         <NavItem to="/admin/seo" icon={Search} label="SEO & Meta" />
                         <NavItem to="/admin/profile" icon={User} label="Profil Saya" />
-                        <NavItem to="/admin/settings" icon={Settings} label="System Settings" />
+                        <NavItem to="/admin/settings" icon={Settings} label="Pengaturan Sistem" />
                     </ul>
                 </nav>
                 <div className="sidebar-footer">
@@ -222,7 +222,7 @@ export default function AdminLayout() {
                     </Link>
                     <button onClick={handleLogout} className="logout-btn flex items-center gap-2 p-3 text-red-500 hover:bg-red-50 rounded-xl transition-all w-full mt-2">
                         <LogOut size={18} />
-                        {!isSidebarCollapsed && <span className="font-bold">Logout</span>}
+                        {!isSidebarCollapsed && <span className="font-bold">Keluar</span>}
                     </button>
                 </div>
             </aside>
@@ -230,27 +230,36 @@ export default function AdminLayout() {
             {/* Main Wrapper */}
             <div className="admin-main-wrapper">
                 <header className="admin-topbar">
-                    <div className="topbar-left flex items-center gap-4">
+                    <div className="topbar-left flex items-center gap-2 lg:gap-4">
+                        {/* Mobile Toggle */}
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-admin-primary transition-all shadow-sm"
+                        >
+                            <Menu size={20} />
+                        </button>
+
+                        {/* Desktop Toggle */}
                         <button 
                             onClick={toggleSidebar}
-                            className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-admin-primary hover:border-admin-primary/30 transition-all shadow-sm group"
+                            className="hidden lg:flex p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-admin-primary hover:border-admin-primary/30 transition-all shadow-sm group"
                             title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
                         >
                             {isSidebarCollapsed ? <PanelLeftOpen size={20} className="group-hover:scale-110 transition-transform" /> : <PanelLeftClose size={20} className="group-hover:scale-110 transition-transform" />}
                         </button>
 
-                        <div className="topbar-search relative group">
+                        <div className="topbar-search relative group max-w-[150px] sm:max-w-xs transition-all duration-300">
                             <Search className="search-icon" size={18} />
                             <input 
                                 type="text" 
-                                placeholder="Cari fitur atau halaman..." 
+                                placeholder="Cari..." 
                                 value={searchTerm}
                                 onChange={handleSearch}
-                                className="w-full bg-gray-50 border border-gray-100 rounded-xl px-10 py-2.5 focus:ring-2 focus:ring-admin-primary/20 transition-all"
+                                className="w-full bg-gray-50 border border-gray-100 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-admin-primary/20 transition-all"
                             />
                             
                             {searchResults.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[1100] animate-fade-in">
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-[1100] animate-fade-in w-[250px] sm:w-full">
                                     <div className="p-2">
                                         {searchResults.map((res, i) => (
                                             <Link 
@@ -271,16 +280,15 @@ export default function AdminLayout() {
                         </div>
                     </div>
 
-                    <div className="topbar-right">
-                        <div className="topbar-actions hidden sm:flex">
-                        </div>
-
-                        <Link to="/admin/profile" className="admin-profile hover:bg-gray-50 transition-colors p-1 rounded-xl cursor-pointer">
+                    <div className="topbar-right flex items-center gap-4">
+                        <Link to="/admin/profile" className="flex items-center gap-3 hover:bg-gray-50 transition-colors p-1 pr-3 rounded-xl cursor-pointer">
                             <div className="profile-info hidden sm:block text-right">
-                                <span className="profile-name">Administrator</span>
-                                <span className="profile-role">Super Admin</span>
+                                <span className="profile-name block text-sm font-black text-admin-text-main leading-none mb-1">Administrator</span>
+                                <span className="profile-role block text-[10px] font-bold text-admin-text-muted uppercase tracking-widest leading-none">Super Admin</span>
                             </div>
-                            <div className="profile-avatar">A</div>
+                            <div className="w-10 h-10 rounded-full bg-admin-primary/10 border border-admin-primary/20 flex items-center justify-center text-admin-primary font-black text-sm shadow-inner group-hover:scale-105 transition-transform">
+                                A
+                            </div>
                         </Link>
                     </div>
                 </header>
@@ -291,22 +299,51 @@ export default function AdminLayout() {
             </div>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-admin-border px-6 py-4 flex items-center justify-between lg:hidden z-[900]">
-                <NavLink to="/admin" end className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-admin-primary' : 'text-admin-text-light'}`}>
-                    <LayoutDashboard size={22} className={location.pathname === '/admin' ? 'animate-bounce-short' : ''} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Dash</span>
+            <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-admin-border px-2 py-3 pb-8 flex items-end justify-around lg:hidden z-[900] shadow-[0_-8px_20px_rgba(0,0,0,0.05)]">
+                <NavLink to="/admin" end className={({ isActive }) => `flex-1 flex flex-col items-center gap-1.5 py-2 rounded-2xl transition-all hover:bg-admin-primary/5 ${isActive ? 'text-admin-primary' : 'text-admin-text-muted opacity-60'}`}>
+                    {({ isActive }) => (
+                        <>
+                            <LayoutDashboard size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            <span className="text-[7px] font-black uppercase tracking-widest text-center">Dash</span>
+                        </>
+                    )}
                 </NavLink>
-                <NavLink to="/admin/rooms" className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-admin-primary' : 'text-admin-text-light'}`}>
-                    <BedDouble size={22} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Rooms</span>
+
+                <NavLink to="/admin/bookings" className={({ isActive }) => `flex-1 flex flex-col items-center gap-1.5 py-2 rounded-2xl transition-all hover:bg-admin-primary/5 ${isActive ? 'text-admin-primary' : 'text-admin-text-muted opacity-60'}`}>
+                    {({ isActive }) => (
+                        <>
+                            <Hotel size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            <span className="text-[7px] font-black uppercase tracking-widest text-center">Resort</span>
+                        </>
+                    )}
                 </NavLink>
-                <NavLink to="/admin/tickets" className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-admin-primary' : 'text-admin-text-light'}`}>
-                    <Ticket size={22} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Tickets</span>
+                
+                {/* Prominent Scan Button */}
+                <NavLink to="/admin/scanner" className="flex-1 -mt-12 group">
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="w-16 h-16 bg-admin-primary text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(13,148,136,0.4)] border-4 border-white group-hover:scale-110 group-active:scale-95 transition-all duration-300">
+                            <QrCode size={28} strokeWidth={2.5} />
+                        </div>
+                        <span className="text-[7px] font-black uppercase tracking-widest text-admin-primary">Scan</span>
+                    </div>
                 </NavLink>
-                <NavLink to="/admin/settings" className={({ isActive }) => `flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-admin-primary' : 'text-admin-text-light'}`}>
-                    <Settings size={22} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Sets</span>
+
+                <NavLink to="/admin/tickets/orders" className={({ isActive }) => `flex-1 flex flex-col items-center gap-1.5 py-2 rounded-2xl transition-all hover:bg-admin-primary/5 ${isActive ? 'text-admin-primary' : 'text-admin-text-muted opacity-60'}`}>
+                    {({ isActive }) => (
+                        <>
+                            <Ticket size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            <span className="text-[7px] font-black uppercase tracking-widest text-center">Tiket</span>
+                        </>
+                    )}
+                </NavLink>
+
+                <NavLink to="/admin/events/orders" className={({ isActive }) => `flex-1 flex flex-col items-center gap-1.5 py-2 rounded-2xl transition-all hover:bg-admin-primary/5 ${isActive ? 'text-admin-primary' : 'text-admin-text-muted opacity-60'}`}>
+                    {({ isActive }) => (
+                        <>
+                            <Calendar size={20} strokeWidth={isActive ? 2.5 : 2} />
+                            <span className="text-[7px] font-black uppercase tracking-widest text-center">Event</span>
+                        </>
+                    )}
                 </NavLink>
             </nav>
         </div>

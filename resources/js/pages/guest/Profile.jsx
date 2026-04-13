@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus, Star } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus, Star, LogOut, Package } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
@@ -375,6 +375,15 @@ export default function Profile() {
                                 <p className="text-sm text-gray-500">{user?.email}</p>
                             </div>
 
+                            {user?.role === 'admin' && (
+                                <Link 
+                                    to="/admin"
+                                    className="w-full py-3 mb-3 text-eling-red font-black rounded-xl bg-eling-red/5 hover:bg-eling-red/10 transition flex items-center justify-center gap-2 border border-eling-red/10 uppercase tracking-widest text-[10px]"
+                                >
+                                    <ShieldCheck size={16} /> Panel Admin
+                                </Link>
+                            )}
+
                             <button 
                                 onClick={() => {
                                     setEditForm({ name: user?.name, email: user?.email });
@@ -385,8 +394,11 @@ export default function Profile() {
                                 <User size={16} /> Edit Profil
                             </button>
 
-                            <button onClick={handleLogout} className="w-full py-3 text-eling-red font-bold rounded-xl bg-red-50 hover:bg-red-100 transition">
-                                Keluar Akun
+                            <button 
+                                onClick={handleLogout} 
+                                className="w-full py-4 text-eling-red font-bold rounded-xl bg-red-50 hover:bg-red-100 transition flex items-center justify-center gap-2"
+                            >
+                                <LogOut size={18} /> Keluar Akun
                             </button>
                         </div>
                     </div>
@@ -418,15 +430,15 @@ export default function Profile() {
                             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
                                 <button
                                     onClick={() => setActiveTab('tickets')}
-                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
-                                    Tiket & Resort
+                                    <Ticket size={14} /> Tiket & Resort
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('addons')}
-                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative flex items-center justify-center gap-2 ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
-                                    Fasilitas Tambahan
+                                    <Package size={14} /> Fasilitas Tambahan
                                     {bookings.filter(b => b.parent_id && b.status === 'pending').length > 0 && (
                                         <span className="absolute -top-1 right-0 sm:-top-2 sm:-right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce-slow">
                                             {bookings.filter(b => b.parent_id && b.status === 'pending').length}

@@ -97,24 +97,22 @@ export default function Tickets() {
             </div>
 
             <div className="admin-table-container">
-                <div className="table-header-actions mb-6">
+                <div className="table-header-actions mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Ticket size={18} />
                         </div>
                         <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Kategori Harga</h3>
                     </div>
-                    <div className="flex gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Cari jenis tiket..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
-                            />
-                        </div>
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari jenis tiket..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all shadow-sm"
+                        />
                     </div>
                 </div>
 

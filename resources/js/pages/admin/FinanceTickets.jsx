@@ -52,24 +52,24 @@ export default function FinanceTickets() {
 
     return (
         <div className="animate-fade-in">
-            <header className="admin-page-header">
-                <div>
-                    <h1>Pemasukan Tiket</h1>
-                    <p className="text-muted mt-1">Detail rincian pendapatan dari penjualan tiket masuk.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight uppercase">Pemasukan Tiket</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Detail rincian pendapatan dari penjualan tiket masuk.</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-wrap items-center justify-start md:justify-end gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -85,9 +85,9 @@ export default function FinanceTickets() {
                                     </button>
                                     
                                     <div className="flex justify-between items-center mb-4 pb-2 border-b border-admin-border">
-                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="rotate-90" /></button>
+                                        <button onClick={() => { setSelectedYear(y => y - 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} className="rotate-180" /></button>
                                         <span className="font-black text-admin-text-main text-xs">{selectedYear}</span>
-                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><MoreVertical size={14} className="-rotate-90" /></button>
+                                        <button onClick={() => { setSelectedYear(y => y + 1); setIsAllTime(false); }} className="p-1.5 hover:bg-admin-bg rounded-lg text-admin-text-muted transition-colors"><ChevronRight size={14} /></button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         {months.map(m => (
@@ -98,9 +98,9 @@ export default function FinanceTickets() {
                                                     setIsAllTime(false);
                                                     setShowMonthPicker(false);
                                                 }}
-                                                className={`py-2 text-[10px] font-bold rounded-lg transition-all ${
+                                                className={`py-2 rounded-xl text-[10px] font-black uppercase transition-all ${
                                                     !isAllTime && selectedMonth === m.value 
-                                                    ? 'bg-admin-primary text-white' 
+                                                    ? 'bg-admin-primary text-white shadow-lg shadow-admin-primary/20' 
                                                     : 'hover:bg-admin-bg text-admin-text-muted'
                                                 }`}
                                             >
@@ -113,7 +113,7 @@ export default function FinanceTickets() {
                         )}
                     </div>
                 </div>
-            </header>
+            </div>
 
             <div className="admin-card mb-8">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>

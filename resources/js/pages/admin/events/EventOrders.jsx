@@ -164,27 +164,27 @@ export default function EventOrders() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="admin-page-header">
-                <div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
                     <button onClick={() => navigate('/admin/events')} className="flex items-center text-admin-text-muted hover:text-admin-primary mb-3 transition-colors font-black text-[10px] uppercase tracking-[0.2em]">
                         <ArrowLeft size={14} className="mr-2" /> Kembali ke Manajemen Event
                     </button>
-                    <h1>Registry Pesanan Event</h1>
-                    <p>Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Registry Pesanan Event</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-admin-border text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -227,8 +227,8 @@ export default function EventOrders() {
                             </>
                         )}
                     </div>
-                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
-                        <Download size={18} className="text-admin-primary" /> Export Data
+                    <button onClick={handleExport} className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto">
+                        <Download size={18} /> Export Data
                     </button>
                 </div>
             </div>
@@ -410,9 +410,9 @@ export default function EventOrders() {
 
             {/* Modal Detail Pesanan Event (High-Fidelity) */}
             {selectedOrder && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+                <div className="fixed inset-0 z-[1000] overflow-y-auto p-4 sm:p-6 md:p-12 flex justify-center items-start md:items-center animate-fade-in">
                     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedOrder(null)}></div>
-                    <div className="bg-white w-full max-w-5xl rounded-[2.5rem] overflow-hidden flex flex-col lg:flex-row relative z-[1001] shadow-2xl animate-scale-up border border-white/20 max-h-[90vh]">
+                    <div className="bg-white w-full max-w-5xl rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden flex flex-col lg:flex-row relative z-[1001] shadow-2xl animate-scale-up border border-white/20 my-auto">
                         
                         {/* Status Sidebar */}
                         <div className="lg:w-[32%] bg-admin-bg p-8 lg:p-12 border-r border-admin-border flex flex-col">
@@ -474,13 +474,18 @@ export default function EventOrders() {
                         </div>
 
                         {/* Order Details Content */}
-                        <div className="lg:w-[68%] p-8 lg:p-14 overflow-y-auto bg-white custom-scrollbar">
-                            <button 
-                                onClick={() => setSelectedOrder(null)} 
-                                className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
-                            >
-                                <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                            </button>
+                        {/* Main Content Area */}
+                        <div className="lg:w-[68%] p-8 lg:p-12">
+                            
+                            <div className="flex justify-between items-center mb-8">
+                                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-admin-primary">Audit Logistik Pesanan</span>
+                                <button
+                                    onClick={() => setSelectedOrder(null)}
+                                    className="p-2.5 rounded-xl bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-eling-red hover:text-white transition-all shadow-sm active:scale-95 group"
+                                >
+                                    <X size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+                                </button>
+                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
                                 <div>

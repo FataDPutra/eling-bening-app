@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Calendar, Loader2, Download, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useContent } from '../../context/ContentContext';
@@ -6,6 +7,16 @@ import { useContent } from '../../context/ContentContext';
 export default function Gallery() {
     const { content, isLoading } = useContent();
     const [selectedImage, setSelectedImage] = useState(null);
+
+    // Body Lock when modal open
+    useEffect(() => {
+        if (selectedImage) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => { document.body.style.overflow = 'unset'; };
+    }, [selectedImage]);
 
     const handleDownload = async (src, filename) => {
         try {
@@ -69,12 +80,12 @@ export default function Gallery() {
 
     return (
         <div className="animate-fade-in bg-white pb-24">
-            <section className="relative h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-20">
+            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
                 <img src={content.galleryHeroImage || "/images/hero-bg.png"} alt="Gallery Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
-                <div className="relative z-10 text-white max-w-4xl px-4">
-                    <h1 className="text-5xl lg:text-7xl font-bold mb-6 font-serif">Galeri Foto</h1>
-                    <p className="text-lg lg:text-xl font-light tracking-wide italic">
+                <div className="relative z-10 text-white max-w-4xl px-6">
+                    <h1 className="text-4xl md:text-7xl font-bold mb-6 font-serif">Galeri Foto</h1>
+                    <p className="text-base md:text-xl font-light tracking-wide italic opacity-90">
                         Abadikan momen terbaik Anda di Eling Bening Ambarawa.
                     </p>
                 </div>
@@ -102,10 +113,14 @@ export default function Gallery() {
                 </div>
             </div>
 
-            {/* Modal */}
-            {selectedImage && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedImage(null)}>
-                    <div className="bg-white rounded-3xl overflow-hidden max-w-4xl w-full flex flex-col md:flex-row shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            {/* Modal via Portal */}
+            {selectedImage && createPortal(
+                <div 
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" 
+                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh' }}
+                    onClick={() => setSelectedImage(null)}
+                >
+                    <div className="bg-white rounded-3xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col md:flex-row shadow-2xl relative animate-scale-up" onClick={e => e.stopPropagation()}>
                         <button onClick={() => setSelectedImage(null)} className="absolute top-4 right-4 z-10 w-10 h-10 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center transition backdrop-blur-md">
                             <X size={20} />
                         </button>
@@ -121,7 +136,7 @@ export default function Gallery() {
                                 <Calendar size={16} />
                                 <span>{selectedImage.date}</span>
                             </div>
-                            <p className="text-gray-600 leading-relaxed text-lg flex-1">
+                            <p className="text-gray-600 leading-relaxed text-lg flex-1 line-clamp-6">
                                 {selectedImage.desc}
                             </p>
 
@@ -130,7 +145,7 @@ export default function Gallery() {
                                     onClick={() => handleDownload(selectedImage.src, selectedImage.title + '.jpg')}
                                     className="flex-1 bg-eling-green text-white font-bold py-3 rounded-xl hover:bg-green-800 transition flex items-center justify-center gap-2"
                                 >
-                                    <Download size={18} /> Simpan Foto
+                                    <Download size={18} /> Simpan
                                 </button>
                                 <button 
                                     onClick={() => handleShare(selectedImage)}
@@ -141,7 +156,8 @@ export default function Gallery() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

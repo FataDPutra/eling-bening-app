@@ -79,122 +79,122 @@ export default function Rooms() {
             </div>
 
             <div className="admin-table-container">
-                <div className="table-header-actions mb-6">
+                <div className="table-header-actions mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <Building size={18} />
                         </div>
                         <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Daftar Inventori</h3>
                     </div>
-                    <div className="flex gap-4">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Cari tipe kamar..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
-                            />
-                        </div>
+                    <div className="relative w-full sm:w-80">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
+                        <input
+                            type="text"
+                            placeholder="Cari tipe kamar..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all shadow-sm"
+                        />
                     </div>
                 </div>
 
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Pratinjau</th>
-                            <th>Tipe & Spesifikasi</th>
-                            <th>Kapasitas</th>
-                            <th>Ketersediaan</th>
-                            <th>Harga / Malam</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredRooms.map(room => (
-                            <tr key={room.id} className="group">
-                                <td className="w-28">
-                                    <div 
-                                        onClick={() => {
-                                            setSelectedRoom(room);
-                                            setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
-                                        }}
-                                        className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm cursor-pointer"
-                                    >
-                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity z-10">
-                                            <Eye size={16} />
-                                        </div>
-                                        <img
-                                            src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png'}
-                                            alt={room.name}
-                                            className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
-                                        />
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{room.name}</div>
-                                    <div className="flex gap-4 mt-1.5">
-                                        <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
-                                            <BedDouble size={12} className="text-admin-primary/60" /> {room.bed_type}
-                                        </span>
-                                        <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
-                                            <Maximize size={12} className="text-admin-primary/60" /> {room.room_size} m²
-                                        </span>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-main">
-                                            <Users size={14} />
-                                        </div>
-                                        <span className="text-xs font-black text-admin-text-main">{room.capacity} Tamu</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    {room.stock > 0 ? (
-                                        <div className="flex flex-col gap-1.5">
-                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 w-fit">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest">Tersedia</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-admin-text-muted pl-1.5">{room.stock} Unit Tersisa</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-200 w-fit">
-                                            <X size={10} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest">Habis</span>
-                                        </div>
-                                    )}
-                                </td>
-                                <td>
-                                    <div className="flex flex-col gap-2">
-                                        <div className="flex flex-col">
-                                            <p className="text-[8px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-0.5 leading-none">Weekday</p>
-                                            <span className="text-sm font-black text-admin-primary tracking-tight">{formatRupiah(room.price)}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <p className="text-[8px] font-black text-orange-400 uppercase tracking-[0.2em] mb-0.5 leading-none">Weekend</p>
-                                            <span className="text-sm font-black text-orange-600 tracking-tight">{formatRupiah(room.price_weekend)}</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex justify-start gap-2">
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="View Deep Analysis" onClick={() => {
-                                            setSelectedRoom(room);
-                                            setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
-                                        }}><Eye size={18} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/rooms/edit/${room.id}`)}><Edit size={18} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm" title="Hapus Kamar" onClick={() => handleDelete(room.id)}>
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
+                <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Pratinjau</th>
+                                <th>Tipe & Spesifikasi</th>
+                                <th>Kapasitas</th>
+                                <th>Ketersediaan</th>
+                                <th>Harga / Malam</th>
+                                <th>Aksi</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredRooms.map(room => (
+                                <tr key={room.id} className="group">
+                                    <td className="w-28">
+                                        <div 
+                                            onClick={() => {
+                                                setSelectedRoom(room);
+                                                setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
+                                            }}
+                                            className="relative w-20 h-14 rounded-2xl overflow-hidden border-2 border-admin-border group-hover:border-admin-primary transition-all shadow-sm cursor-pointer"
+                                        >
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity z-10">
+                                                <Eye size={16} />
+                                            </div>
+                                            <img
+                                                src={(Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png'}
+                                                alt={room.name}
+                                                className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{room.name}</div>
+                                        <div className="flex gap-4 mt-1.5">
+                                            <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
+                                                <BedDouble size={12} className="text-admin-primary/60" /> {room.bed_type}
+                                            </span>
+                                            <span className="flex items-center gap-1.5 text-[10px] font-black text-admin-text-muted uppercase tracking-widest">
+                                                <Maximize size={12} className="text-admin-primary/60" /> {room.room_size} m²
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-main">
+                                                <Users size={14} />
+                                            </div>
+                                            <span className="text-xs font-black text-admin-text-main">{room.capacity} Tamu</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {room.stock > 0 ? (
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 w-fit">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Tersedia</span>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-admin-text-muted pl-1.5">{room.stock} Unit Tersisa</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-200 w-fit">
+                                                <X size={10} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Habis</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td>
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex flex-col">
+                                                <p className="text-[8px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-0.5 leading-none">Weekday</p>
+                                                <span className="text-sm font-black text-admin-primary tracking-tight">{formatRupiah(room.price)}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <p className="text-[8px] font-black text-orange-400 uppercase tracking-[0.2em] mb-0.5 leading-none">Weekend</p>
+                                                <span className="text-sm font-black text-orange-600 tracking-tight">{formatRupiah(room.price_weekend)}</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex justify-start gap-2">
+                                            <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="View Deep Analysis" onClick={() => {
+                                                setSelectedRoom(room);
+                                                setActiveMedia((Array.isArray(room.gallery) && room.gallery.length > 0 ? room.gallery[0] : room.image) || '/images/resort-room.png');
+                                            }}><Eye size={18} /></button>
+                                            <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Modify" onClick={() => navigate(`/admin/rooms/edit/${room.id}`)}><Edit size={18} /></button>
+                                            <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-rose-500 flex items-center justify-center hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all shadow-sm" title="Hapus Kamar" onClick={() => handleDelete(room.id)}>
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
                 {filteredRooms.length === 0 && (
                     <div className="py-24 text-center">
@@ -208,9 +208,10 @@ export default function Rooms() {
 
             {/* Room Detail Modal */}
             {selectedRoom && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedRoom(null)}></div>
-                    <div className="bg-white w-full max-w-5xl rounded-[3rem] overflow-hidden flex flex-col lg:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-up border border-white/20">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in">
+                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
+                        <div className="fixed inset-0" onClick={() => setSelectedRoom(null)}></div>
+                        <div className="bg-white w-full max-w-5xl rounded-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col lg:flex-row relative z-[10002] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20">
                         <button
                             onClick={() => setSelectedRoom(null)}
                             className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-slate-900/10 text-slate-900 hover:bg-rose-500 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all shadow-sm border border-black/5"
@@ -348,6 +349,7 @@ export default function Rooms() {
                         </div>
                     </div>
                 </div>
+            </div>
             )}
         </div>
     );

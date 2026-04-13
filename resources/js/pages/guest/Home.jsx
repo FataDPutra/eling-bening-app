@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { useContent } from '../../context/ContentContext';
@@ -23,15 +24,32 @@ const ReviewCard = ({ item, setSelectedImage }) => {
                             className="flex h-full transition-transform duration-500 ease-out"
                             style={{ transform: `translateX(-${activeIndex * 100}%)` }}
                         >
-                            {media.map((url, idx) => (
-                                <img 
-                                    key={idx}
-                                    src={url} 
-                                    className="w-full h-full object-cover flex-shrink-0 cursor-pointer" 
-                                    alt={`Review gallery ${idx}`} 
-                                    onClick={() => setSelectedImage(url)}
-                                />
-                            ))}
+                            {media.map((url, idx) => {
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/);
+                                return (
+                                    <div key={idx} className="w-full h-full flex-shrink-0 relative cursor-pointer" onClick={() => setSelectedImage(url)}>
+                                        {isVideo ? (
+                                            <div className="w-full h-full relative">
+                                                <video 
+                                                    src={url} 
+                                                    className="w-full h-full object-cover" 
+                                                />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                                                    <div className="w-12 h-12 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center text-white border border-white/40">
+                                                        <i className="fas fa-play ml-1"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <img 
+                                                src={url} 
+                                                className="w-full h-full object-cover" 
+                                                alt={`Review gallery ${idx}`} 
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                         
                         {/* Dots Pagination */}
@@ -132,6 +150,21 @@ export default function Home() {
     const [startX, setStartX] = useState(0);
     const [scrollLeft, setScrollLeft] = useState(0);
     const sliderRef = useRef(null);
+
+    // Body Lock when modal open
+    useEffect(() => {
+        if (selectedImage) {
+            document.body.style.overflow = 'hidden';
+            document.documentElement.style.overflow = 'hidden'; // Extra safety
+        } else {
+            document.body.style.overflow = 'unset';
+            document.documentElement.style.overflow = 'unset';
+        }
+        return () => { 
+            document.body.style.overflow = 'unset';
+            document.documentElement.style.overflow = 'unset';
+        };
+    }, [selectedImage]);
 
     // Triple the reviews for infinite loop effect
     const infiniteReviews = [...reviews, ...reviews, ...reviews];
@@ -247,6 +280,20 @@ export default function Home() {
                 }
                 .animate-slide-up {
                     animation: slide-up 0.8s ease-out forwards;
+                }
+                @keyframes fade-in {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                .animate-fade-in {
+                    animation: fade-in 0.4s ease-out forwards;
+                }
+                @keyframes scale-up {
+                    from { opacity: 0; transform: scale(0.95); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+                .animate-scale-up {
+                    animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
                 }
                 .scrollbar-hide::-webkit-scrollbar {
                     display: none;
@@ -514,7 +561,7 @@ export default function Home() {
 
                     <div 
                         ref={sliderRef}
-                        className={`overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing select-none scroll-smooth flex snap-x snap-mandatory`}
+                        className={`overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing select-none scroll-smooth flex snap-x snap-mandatory py-10 -my-10`}
                         onMouseDown={handleMouseDown}
                         onMouseLeave={handleMouseLeave}
                         onMouseUp={handleMouseUp}
@@ -523,13 +570,13 @@ export default function Home() {
                         <div className="flex w-fit">
                             {reviews.length > 0 ? (
                                 infiniteReviews.map((item, i) => (
-                                    <div key={i} className="w-[85vw] md:w-[28vw] flex-shrink-0 px-3 snap-center">
+                                    <div key={i} className="w-[85vw] md:w-[45vw] lg:w-[28vw] flex-shrink-0 px-3 snap-center">
                                         <ReviewCard item={item} setSelectedImage={setSelectedImage} />
                                     </div>
                                 ))
                             ) : (
                                 (content.home.testimonials || []).map((item, i) => (
-                                    <div key={i} className="w-[85vw] md:w-[28vw] flex-shrink-0 px-3 snap-center">
+                                    <div key={i} className="w-[85vw] md:w-[45vw] lg:w-[28vw] flex-shrink-0 px-3 snap-center">
                                         {/* Fallback card content remains same */}
                                         <div className="group bg-white rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 relative overflow-hidden h-full">
                                             <div className="relative h-72 overflow-hidden bg-gray-100">
@@ -671,35 +718,44 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Lightbox Modal */}
-            {selectedImage && (
+            {/* Lightbox Modal rendered via Portal */}
+            {selectedImage && createPortal(
                 <div 
-                    className="fixed inset-0 z-[1000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 md:p-20 animate-fade-in"
+                    className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-10"
+                    style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh' }}
                     onClick={() => setSelectedImage(null)}
                 >
                     <button 
-                        className="absolute top-10 right-10 text-white/50 hover:text-white transition group flex flex-col items-center gap-2"
+                        className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all duration-300 z-[10000] group"
                         onClick={() => setSelectedImage(null)}
                     >
-                        <div className="w-12 h-12 rounded-full border border-white/20 flex items-center justify-center group-hover:bg-white/10 transition">
-                            <X size={24} />
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Close</span>
+                        <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                     </button>
                     
-                    <div className="relative max-w-7xl w-full h-full flex items-center justify-center">
-                        <img 
-                            src={selectedImage} 
-                            className="max-w-full max-h-full object-contain rounded-2xl shadow-[0_0_100px_rgba(46,125,50,0.2)] animate-slide-up" 
-                            alt="Gallery Preview" 
-                            onClick={(e) => e.stopPropagation()}
-                        />
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                        {selectedImage.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) ? (
+                            <video 
+                                src={selectedImage} 
+                                className="max-w-full max-h-[80vh] md:max-h-[85vh] rounded-2xl shadow-2xl animate-scale-up" 
+                                controls 
+                                autoPlay
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        ) : (
+                            <img 
+                                src={selectedImage} 
+                                className="max-w-full max-h-[80vh] md:max-h-[85vh] object-contain rounded-2xl shadow-2xl animate-scale-up border-4 border-white/5" 
+                                alt="Gallery Preview" 
+                                onClick={(e) => e.stopPropagation()}
+                            />
+                        )}
                         
-                        <div className="absolute bottom-[-60px] left-1/2 -translate-x-1/2 text-white/40 text-xs font-medium italic tracking-wide">
-                           Eling Bening Official Gallery Preview
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/5 backdrop-blur-md px-6 py-2 rounded-full border border-white/10 opacity-0 md:opacity-100">
+                           <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">Eling Bening Preview</p>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

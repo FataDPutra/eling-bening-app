@@ -142,10 +142,10 @@ export default function Finance() {
 
     return (
         <div className="animate-fade-in space-y-10">
-            <div className="admin-page-header">
-                <div>
-                    <h1>Pusat Keuangan</h1>
-                    <p>Sistem informasi akuntansi, pelaporan laba rugi, dan rekonsiliasi kas.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight uppercase">Pusat Keuangan</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Sistem informasi akuntansi, pelaporan laba rugi, dan rekonsiliasi kas.</p>
                 </div>
             </div>
 

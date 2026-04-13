@@ -177,13 +177,13 @@ export default function TicketOrders() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="admin-page-header">
-                <div>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
                     <button onClick={() => navigate('/admin/tickets')} className="flex items-center text-admin-text-muted hover:text-admin-primary mb-3 transition-colors font-black text-[10px] uppercase tracking-[0.2em]">
                         <ArrowLeft size={14} className="mr-2" /> Kembali ke Aset Tiket
                     </button>
-                    <h1>Registry Pesanan Tiket</h1>
-                    <p>Audit rincian transaksi tiket wisata (Tiket Kolam Renang / Masuk) secara eksklusif.</p>
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Registry Pesanan Tiket</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Audit rincian transaksi tiket wisata secara eksklusif.</p>
                     <div className="mt-4 flex items-center gap-3">
                         <div className="px-3 py-1 bg-admin-primary/10 rounded-full border border-admin-primary/20 flex items-center gap-2">
                             <User size={12} className="text-admin-primary" />
@@ -191,19 +191,19 @@ export default function TicketOrders() {
                         </div>
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-admin-border text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -246,8 +246,8 @@ export default function TicketOrders() {
                             </>
                         )}
                     </div>
-                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
-                        <Download size={18} className="text-admin-primary" /> Ekspor Data
+                    <button onClick={handleExport} className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto">
+                        <Download size={18} /> Ekspor Data
                     </button>
                 </div>
             </div>
@@ -335,7 +335,7 @@ export default function TicketOrders() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto -mx-8 px-8">
+                <div className="admin-table-wrapper">
                     <table className="admin-table">
                         <thead>
                             <tr>
@@ -425,7 +425,7 @@ export default function TicketOrders() {
                                 )})}
                             {!isLoading && filteredOrders.length === 0 && (
                                 <tr>
-                                    <td colSpan="6" className="py-24 text-center">
+                                    <td colSpan="7" className="py-24 text-center">
                                         <div className="w-20 h-20 bg-admin-bg rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-admin-text-light/20 shadow-inner">
                                             <Ticket size={40} />
                                         </div>
@@ -441,33 +441,33 @@ export default function TicketOrders() {
 
             {/* Order Detail Modal */}
             {selectedOrder && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+                <div className="fixed inset-0 z-[1000] overflow-y-auto p-4 sm:p-6 md:p-12 flex justify-center items-start md:items-center animate-fade-in">
                     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl" onClick={() => setSelectedOrder(null)}></div>
-                    <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20">
+                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20 my-auto">
                         <button
                             onClick={() => setSelectedOrder(null)}
-                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
+                            className="absolute top-4 right-4 md:top-8 md:right-8 z-30 w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
                         >
-                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <X size={20} className="md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
                         </button>
 
-                        <div className="md:w-[35%] bg-admin-bg p-12 border-r border-admin-border flex flex-col">
-                            <div className="w-20 h-20 rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-10 shadow-inner">
-                                <Ticket size={40} />
+                        <div className="md:w-[35%] bg-admin-bg p-8 md:p-12 border-r border-admin-border flex flex-col">
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-6 md:mb-10 shadow-inner">
+                                <Ticket size={32} />
                             </div>
-                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.4em] mb-3">Kode Pesanan</span>
-                            <h2 className="text-4xl font-black text-admin-text-main tracking-tighter mb-10 leading-none tabular-nums italic">{selectedOrder.id}</h2>
+                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.4em] mb-2 md:mb-3">Kode Pesanan</span>
+                            <h2 className="text-3xl md:text-4xl font-black text-admin-text-main tracking-tighter mb-6 md:mb-10 leading-none tabular-nums italic">#{selectedOrder.id}</h2>
 
-                            <div className={`mt-auto p-8 rounded-[2.5rem] border-2 border-dashed ${getStatusStyles(selectedOrder.status)}`}>
-                                <div className="flex items-center gap-4 mb-4">
-                                    <ShieldCheck size={20} />
+                            <div className={`mt-auto p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-dashed ${getStatusStyles(selectedOrder.status)}`}>
+                                <div className="flex items-center gap-3 mb-3 md:mb-4">
+                                    <ShieldCheck size={18} />
                                     <span className="text-[10px] font-black uppercase tracking-widest">Keamanan Data</span>
                                 </div>
-                                <div className="text-lg font-black uppercase tracking-tight">{selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'Terverifikasi' : 'Audit Tertunda'}</div>
+                                <div className="text-base md:text-lg font-black uppercase tracking-tight">{selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'Terverifikasi' : 'Audit Tertunda'}</div>
                             </div>
                         </div>
 
-                        <div className="md:w-[65%] p-14 overflow-y-auto max-h-[90vh]">
+                        <div className="md:w-[65%] p-8 md:p-14 overflow-y-auto max-h-[90vh] no-scrollbar">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-1 h-12 bg-admin-primary rounded-full" />
                                 <div>

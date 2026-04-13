@@ -182,24 +182,24 @@ export default function Bookings() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="admin-page-header">
-                <div>
-                    <h1>Registry Transaksi & Reservasi</h1>
-                    <p>Monitoring arus kas masuk, verifikasi status pemesanan, dan audit log transaksi pelanggan secara real-time.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Registry Transaksi & Reservasi</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Monitoring arus kas masuk, verifikasi status pemesanan, dan audit log transaksi pelanggan secara real-time.</p>
                 </div>
-                <div className="flex gap-4">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-full"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -242,8 +242,8 @@ export default function Bookings() {
                             </>
                         )}
                     </div>
-                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm">
-                        <Download size={18} className="text-admin-primary" /> Export Data
+                    <button onClick={handleExport} className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto">
+                        <Download size={18} /> Export Data
                     </button>
                 </div>
             </div>
@@ -265,19 +265,19 @@ export default function Bookings() {
             </div>
 
             <div className="admin-table-container">
-                <div className="table-header-actions mb-6">
+                <div className="table-header-actions mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="flex items-center gap-3">
                         <div className="p-2.5 rounded-xl bg-admin-primary/10 text-admin-primary">
                             <ShoppingCart size={18} />
                         </div>
-                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Transaction Records</h3>
+                        <h3 className="text-sm font-black text-admin-text-main uppercase tracking-widest">Riwayat Transaksi</h3>
                     </div>
-                    <div className="flex gap-4">
-                        <div className="flex-1 max-w-[200px]">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                        <div className="w-full sm:w-auto sm:min-w-[180px]">
                             <select 
                                 value={resortFilter}
                                 onChange={(e) => setResortFilter(e.target.value)}
-                                className="w-full h-full bg-admin-bg border border-admin-border rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-widest text-admin-text-main focus:outline-none focus:border-admin-primary shadow-sm"
+                                className="w-full bg-admin-bg border border-admin-border rounded-2xl px-5 py-2.5 text-xs font-black uppercase tracking-widest text-admin-text-main focus:outline-none focus:border-admin-primary shadow-sm"
                             >
                                 <option value="all">Semua Resort</option>
                                 {uniqueResortNames.map(name => (
@@ -285,125 +285,129 @@ export default function Bookings() {
                                 ))}
                             </select>
                         </div>
-                        <div className="relative">
+                        <div className="relative w-full sm:w-80">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-admin-text-light" size={16} />
                             <input
                                 type="text"
-                                placeholder="Cari berdasarkan ID atau pelanggan..."
+                                placeholder="Cari ID atau pelanggan..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all w-72"
+                                className="w-full pl-12 pr-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all shadow-sm"
                             />
                         </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all cursor-pointer"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="success">Confirmed</option>
-                            <option value="paid">Paid</option>
-                            <option value="pending">Pending</option>
-                            <option value="failed">Failed/Cancelled</option>
-                        </select>
+                        <div className="w-full sm:w-auto">
+                            <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full px-6 py-2.5 bg-admin-bg border border-admin-border rounded-2xl text-xs font-bold text-admin-text-main focus:outline-none focus:border-admin-primary transition-all cursor-pointer shadow-sm uppercase"
+                            >
+                                <option value="all">Semua Status</option>
+                                <option value="success">Berhasil</option>
+                                <option value="paid">Dibayar</option>
+                                <option value="pending">Menunggu</option>
+                                <option value="failed">Gagal/Batal</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 
-                <table className="admin-table">
-                    <thead>
-                        <tr>
-                            <th>ID Transaksi</th>
-                            <th>Pelanggan Utama</th>
-                            <th>Tanggal Inap</th>
-                            <th>Total Bersih</th>
-                            <th>Info Kedatangan</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {isLoading ? (
+                <div className="admin-table-wrapper">
+                    <table className="admin-table">
+                        <thead>
                             <tr>
-                                <td colSpan="6" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
-                                    Auditing registry records...
-                                </td>
+                                <th>ID Transaksi</th>
+                                <th>Pelanggan Utama</th>
+                                <th>Tanggal Inap</th>
+                                <th>Total Bersih</th>
+                                <th>Info Kedatangan</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
                             </tr>
-                        ) : filteredBookings.map(booking => (
-                            <tr key={booking.id} className="group">
-                                <td>
-                                    <div className="font-black text-admin-primary text-[10px] uppercase tracking-widest">#{booking.id}</div>
-                                </td>
-                                <td>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-muted">
-                                            <User size={16} />
+                        </thead>
+                        <tbody>
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan="7" className="py-20 text-center text-admin-text-muted font-bold animate-pulse">
+                                        Auditing registry records...
+                                    </td>
+                                </tr>
+                            ) : filteredBookings.map(booking => (
+                                <tr key={booking.id} className="group">
+                                    <td>
+                                        <div className="font-black text-admin-primary text-[10px] uppercase tracking-widest">#{booking.id}</div>
+                                    </td>
+                                    <td>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-muted">
+                                                <User size={16} />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.booker_name || booking.user?.name || 'Guest User'}</div>
+                                                <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.booker_email || booking.user?.email || 'No Email'}</span>
+                                            </div>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
+                                            <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
+                                                <Calendar size={14} />
+                                            </div>
+                                            <div>
+                                                <div className="leading-none">{new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                                {booking.booking_type === 'RESORT' && booking.check_out_date && (
+                                                    <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter">s/d {new Date(booking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
+                                                )}
+                                                {booking.booking_type !== 'RESORT' && (
+                                                    <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter whitespace-nowrap">{booking.booking_type} PASS</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
                                         <div className="flex flex-col">
-                                            <div className="font-black text-admin-text-main text-sm uppercase tracking-tight">{booking.booker_name || booking.user?.name || 'Guest User'}</div>
-                                            <span className="text-[10px] text-admin-text-muted font-bold tracking-wider">{booking.booker_email || booking.user?.email || 'No Email'}</span>
+                                            <span className="text-sm font-black text-admin-text-main">{formatRupiah(getGrandTotal(booking))}</span>
+                                            <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Payment Final</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex items-center gap-2.5 text-xs font-bold text-admin-text-muted">
-                                        <div className="w-8 h-8 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary">
-                                            <Calendar size={14} />
-                                        </div>
-                                        <div>
-                                            <div className="leading-none">{new Date(booking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
-                                            {booking.booking_type === 'RESORT' && booking.check_out_date && (
-                                                <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter">s/d {new Date(booking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</div>
-                                            )}
-                                            {booking.booking_type !== 'RESORT' && (
-                                                <div className="text-[9px] opacity-50 font-black mt-1 uppercase tracking-tighter whitespace-nowrap">{booking.booking_type} PASS</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-black text-admin-text-main">{formatRupiah(getGrandTotal(booking))}</span>
-                                        <span className="text-[9px] font-bold text-admin-text-light uppercase tracking-widest mt-0.5">Payment Final</span>
-                                    </div>
-                                </td>
-                                <td>
-                                    {booking.stay_status === 'checked_in' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 text-blue-600 rounded-xl border border-blue-100 animate-pulse-slow">
-                                            <DoorOpen size={14} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Sudah Check-in</span>
-                                        </div>
-                                    ) : booking.stay_status === 'checked_out' ? (
-                                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl border border-slate-200">
-                                            <Check size={14} />
-                                            <span className="text-[10px] font-black uppercase tracking-widest leading-none">Selesai</span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest italic opacity-30">Belum Datang</span>
-                                    )}
-                                </td>
-                                <td>
-                                    <div className="flex flex-col gap-1">
-                                        <span className={`badge-status ${getStatusStyles(booking.status)}`}>
-                                            <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusStyles(booking.status).includes('success') ? 'bg-success' : 'bg-warning'}`} />
-                                            <span className="uppercase">{booking.status}</span>
-                                        </span>
-                                        {booking.stay_status && booking.stay_status !== 'pending' && (
-                                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border self-start uppercase tracking-widest ${booking.stay_status === 'checked_in' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
-                                                {booking.stay_status === 'checked_in' ? 'Resident' : 'Checked Out'}
-                                            </span>
+                                    </td>
+                                    <td>
+                                        {booking.stay_status === 'checked_in' ? (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 text-blue-600 rounded-xl border border-blue-100 animate-pulse-slow">
+                                                <DoorOpen size={14} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Sudah Check-in</span>
+                                            </div>
+                                        ) : booking.stay_status === 'checked_out' ? (
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-500 rounded-xl border border-slate-200">
+                                                <Check size={14} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest leading-none">Selesai</span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-widest italic opacity-30">Belum Datang</span>
                                         )}
-                                    </div>
-                                </td>
-                                <td>
-                                    <div className="flex justify-start gap-2">
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Inspect Order" onClick={() => setSelectedBooking(booking)}><Eye size={16} /></button>
-                                        <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Download Invoice"><Download size={16} /></button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td>
+                                        <div className="flex flex-col gap-1">
+                                            <span className={`badge-status ${getStatusStyles(booking.status)}`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full mr-2 ${getStatusStyles(booking.status).includes('success') ? 'bg-success' : 'bg-warning'}`} />
+                                                <span className="uppercase">{booking.status}</span>
+                                            </span>
+                                            {booking.stay_status && booking.stay_status !== 'pending' && (
+                                                <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border self-start uppercase tracking-widest ${booking.stay_status === 'checked_in' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-slate-50 text-slate-500 border-slate-200'}`}>
+                                                    {booking.stay_status === 'checked_in' ? 'Resident' : 'Checked Out'}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div className="flex justify-start gap-2">
+                                            <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Inspect Order" onClick={() => setSelectedBooking(booking)}><Eye size={16} /></button>
+                                            <button className="w-10 h-10 rounded-xl bg-admin-bg border border-admin-border text-admin-text-main flex items-center justify-center hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm" title="Download Invoice"><Download size={16} /></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
 
                 {filteredBookings.length === 0 && (
                     <div className="py-24 text-center">
@@ -417,102 +421,102 @@ export default function Bookings() {
 
             {/* Booking Detail Modal */}
             {selectedBooking && (
-                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-6 animate-fade-in">
+                <div className="fixed inset-0 z-[1000] overflow-y-auto p-4 sm:p-6 md:p-12 flex justify-center items-start md:items-center animate-fade-in">
                     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedBooking(null)}></div>
-                    <div className="bg-white w-full max-w-4xl rounded-[3rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-up border border-white/20">
+                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.3)] animate-scale-up border border-white/20 my-auto">
                         <button
                             onClick={() => setSelectedBooking(null)}
-                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
+                            className="absolute top-4 right-4 md:top-8 md:right-8 z-30 w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
                         >
-                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                            <X size={20} className="md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
                         </button>
 
-                        <div className="md:w-1/3 bg-admin-bg p-12 border-r border-admin-border flex flex-col">
-                            <div className="w-20 h-20 rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-8 shadow-inner">
-                                <ShoppingCart size={32} />
+                        <div className="md:w-1/3 bg-admin-bg p-8 md:p-12 border-b md:border-b-0 md:border-r border-admin-border flex flex-col">
+                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-6 md:mb-8 shadow-inner">
+                                <ShoppingCart size={28} className="md:w-8 md:h-8" />
                             </div>
-                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] mb-2">ID Transaksi</span>
-                            <h2 className="text-3xl font-black text-admin-text-main tracking-tighter mb-8 leading-none">{selectedBooking.id}</h2>
+                            <span className="text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] mb-2">ID Transaksi</span>
+                            <h2 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tighter mb-6 md:mb-8 leading-none">{selectedBooking.id}</h2>
 
-                            <div className={`mt-auto p-6 rounded-3xl border ${getStatusStyles(selectedBooking.status)}`}>
+                            <div className={`p-5 md:p-6 rounded-2xl md:rounded-3xl border ${getStatusStyles(selectedBooking.status)}`}>
                                 <div className="flex items-center gap-3 mb-2">
-                                    <Clock size={16} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Progres Pesanan</span>
+                                    <Clock size={14} className="md:w-4 md:h-4" />
+                                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">Progres Pesanan</span>
                                 </div>
-                                <div className="text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? 'Terkonfirmasi' : 'Antrean Audit'}</div>
+                                <div className="text-xs md:text-sm font-black uppercase tracking-tight">{selectedBooking.status === 'success' || selectedBooking.status === 'paid' ? 'Terkonfirmasi' : 'Antrean Audit'}</div>
                             </div>
                         </div>
 
-                        <div className="md:w-2/3 p-12 overflow-y-auto max-h-[85vh]">
-                            <div className="flex items-center gap-3 mb-8">
+                        <div className="md:w-2/3 p-8 md:p-12">
+                            <div className="flex items-center gap-3 mb-6 md:mb-8">
                                 <div className="p-2 rounded-lg bg-admin-primary/10 text-admin-primary">
-                                    <Info size={16} />
+                                    <Info size={14} className="md:w-4 md:h-4" />
                                 </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Laporan Data Pesanan</span>
+                                <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary">Laporan Data Pesanan</span>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-8 mb-12">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 mb-10 md:mb-12">
                                 <div className="space-y-6">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Informasi Pemesan</h4>
-                                        <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
-                                            <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
-                                                <User size={18} />
+                                        <h4 className="text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Informasi Pemesan</h4>
+                                        <div className="flex items-center gap-4 p-4 md:p-5 rounded-[1.25rem] md:rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
+                                            <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm shrink-0">
+                                                <User size={16} className="md:w-[18px] md:h-[18px]" />
                                             </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">{selectedBooking.booker_name || selectedBooking.user?.name || 'Guest User'}</span>
+                                            <div className="flex flex-col min-w-0">
+                                                <span className="text-[13px] md:text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1 truncate">{selectedBooking.booker_name || selectedBooking.user?.name || 'Guest User'}</span>
                                                 <div className="flex flex-col gap-1">
-                                                    <span className="text-[10px] text-admin-text-muted font-bold tracking-tight">{selectedBooking.booker_email || selectedBooking.user?.email || 'No email provided'}</span>
-                                                    {selectedBooking.booker_phone && <span className="text-[10px] text-admin-primary font-black tracking-widest">{selectedBooking.booker_phone}</span>}
+                                                    <span className="text-[9px] md:text-[10px] text-admin-text-muted font-bold tracking-tight truncate">{selectedBooking.booker_email || selectedBooking.user?.email || 'No email provided'}</span>
+                                                    {selectedBooking.booker_phone && <span className="text-[9px] md:text-[10px] text-admin-primary font-black tracking-widest">{selectedBooking.booker_phone}</span>}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Waktu & Lokasi Kunjungan</h4>
-                                        <div className="flex items-center gap-4 p-5 rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
-                                            <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm">
-                                                <Calendar size={18} />
+                                        <h4 className="text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Waktu & Lokasi Kunjungan</h4>
+                                        <div className="flex items-center gap-4 p-4 md:p-5 rounded-[1.25rem] md:rounded-[1.5rem] bg-admin-bg border border-admin-border shadow-sm group hover:bg-white transition-all">
+                                            <div className="w-10 h-10 rounded-full bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-sm shrink-0">
+                                                <Calendar size={16} className="md:w-[18px] md:h-[18px]" />
                                             </div>
                                             <div className="flex flex-col">
-                                                <span className="text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">
+                                                <span className="text-[13px] md:text-sm font-black text-admin-text-main uppercase tracking-tight leading-none mb-1">
                                                     {new Date(selectedBooking.check_in_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     {selectedBooking.check_out_date && (
-                                                        <span className="text-admin-text-muted"> - Check-out {new Date(selectedBooking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                                        <span className="text-admin-text-muted block sm:inline mt-1 sm:mt-0"> - Check-out {new Date(selectedBooking.check_out_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
                                                     )}
                                                 </span>
-                                                <span className="text-[10px] text-admin-text-muted font-bold tracking-widest uppercase mt-1">
+                                                <span className="text-[9px] md:text-[10px] text-admin-text-muted font-bold tracking-widest uppercase mt-1">
                                                     {selectedBooking.booking_type === 'RESORT' 
-                                                        ? `Rencana Tiba: ${selectedBooking.arrival_time && selectedBooking.arrival_time !== 'Pilih waktu kedatangan' ? selectedBooking.arrival_time : '-'}` 
-                                                        : `TIPE PESANAN: ${selectedBooking.booking_type}`}
+                                                        ? `Tiba: ${selectedBooking.arrival_time && selectedBooking.arrival_time !== 'Pilih waktu kedatangan' ? selectedBooking.arrival_time : '-'}` 
+                                                        : `TIPE: ${selectedBooking.booking_type}`}
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                     {/* ADMIN ADDON BUTTON */}
                                     {selectedBooking.booking_type === 'RESORT' && selectedBooking.stay_status !== 'checked_out' && (
-                                        <div className="pt-4">
+                                        <div className="pt-2 md:pt-4">
                                             <button 
                                                 onClick={() => {
                                                     fetchAddonFacilities();
                                                     setIsAddingAddon(true);
                                                 }}
-                                                className="w-full py-3 bg-admin-primary/10 text-admin-primary rounded-xl border border-admin-primary/20 text-[10px] font-black uppercase tracking-widest hover:bg-admin-primary hover:text-white transition-all flex items-center justify-center gap-2"
+                                                className="w-full py-3 bg-admin-primary/10 text-admin-primary rounded-xl border border-admin-primary/20 text-[9px] md:text-[10px] font-black uppercase tracking-widest hover:bg-admin-primary hover:text-white transition-all flex items-center justify-center gap-2"
                                             >
-                                                <Plus size={14} /> Admin: Tambah Fasilitas
+                                                <Plus size={12} className="md:w-3.5 md:h-3.5" /> Admin: Tambah Fasilitas
                                             </button>
                                         </div>
                                     )}
                                 </div>
                                 <div className="space-y-6">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Total Pembayaran</h4>
-                                        <div className="flex items-center gap-5 p-8 rounded-[2rem] bg-admin-primary text-white shadow-xl shadow-admin-primary/30 relative overflow-hidden group">
-                                            <div className="absolute top-[-20%] right-[-10%] w-32 h-32 bg-white/10 rounded-full -z-0 group-hover:scale-110 transition-transform duration-1000" />
-                                            <DollarSign size={32} className="relative z-10" />
+                                        <h4 className="text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4">Total Pembayaran</h4>
+                                        <div className="flex items-center gap-5 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-admin-primary text-white shadow-xl shadow-admin-primary/30 relative overflow-hidden group">
+                                            <div className="absolute top-[-20%] right-[-10%] w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full -z-0 group-hover:scale-110 transition-transform duration-1000" />
+                                            <DollarSign size={28} className="md:w-8 md:h-8 relative z-10 shrink-0" />
                                             <div className="flex flex-col relative z-10">
-                                                <span className="text-2xl font-black leading-none tracking-tighter">{formatRupiah(selectedBooking.total_price)}</span>
-                                                <span className="text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] mt-2">Valuasi Bersih</span>
+                                                <span className="text-xl md:text-2xl font-black leading-none tracking-tighter">{formatRupiah(selectedBooking.total_price)}</span>
+                                                <span className="text-[9px] md:text-[10px] font-bold opacity-70 uppercase tracking-[0.2em] mt-2">Valuasi Bersih</span>
                                             </div>
                                         </div>
                                     </div>
@@ -526,54 +530,54 @@ export default function Bookings() {
                                 </h4>
                                 <div className="space-y-4">
                                     {(selectedBooking.items || []).map((tItem, idx) => (
-                                        <div key={idx} className="bg-admin-bg border border-admin-border rounded-2xl p-6 flex flex-col gap-4 group hover:bg-white transition-all">
+                                        <div key={idx} className="bg-admin-bg border border-admin-border rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-col gap-4 group hover:bg-white transition-all">
                                             <div 
-                                                className={`flex items-center justify-between ${selectedBooking.booking_type === 'RESORT' ? 'cursor-pointer hover:opacity-80' : ''}`}
+                                                className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${selectedBooking.booking_type === 'RESORT' ? 'cursor-pointer hover:opacity-80' : ''}`}
                                                 onClick={() => {
                                                     if (selectedBooking.booking_type === 'RESORT' && tItem.item?.id) {
                                                         window.location.href = `/rooms/${tItem.item.id}`;
                                                     }
                                                 }}
                                             >
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-16 h-12 rounded-xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm overflow-hidden shrink-0">
+                                                <div className="flex items-center gap-4 w-full">
+                                                    <div className="w-14 h-11 md:w-16 md:h-12 rounded-xl bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm overflow-hidden shrink-0">
                                                         {selectedBooking.booking_type === 'RESORT' && tItem.item?.gallery?.[0] ? (
                                                             <img src={tItem.item.gallery[0]} className="w-full h-full object-cover" alt="" />
                                                         ) : (
-                                                            <ShoppingCart size={18} />
+                                                            <ShoppingCart size={16} />
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <span className="text-xs font-black text-admin-text-main uppercase">{tItem.item?.name || 'Unknown Item'}</span>
+                                                    <div className="min-w-0">
+                                                        <span className="text-[11px] md:text-xs font-black text-admin-text-main uppercase truncate block">{tItem.item?.name || 'Unknown Item'}</span>
                                                         
                                                         {selectedBooking.booking_type === 'RESORT' && tItem.item && (
-                                                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 opacity-70">
+                                                            <div className="flex flex-wrap gap-x-2 gap-y-1 mt-1 opacity-70">
                                                                 {tItem.item.bed_type && (
-                                                                    <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide italic">
+                                                                    <span className="text-[8px] text-admin-text-muted font-bold whitespace-nowrap">
                                                                         {tItem.item.bed_type}
                                                                     </span>
                                                                 )}
-                                                                <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                <span className="text-[8px] text-admin-text-muted font-bold whitespace-nowrap">
                                                                     • {tItem.item.capacity || 2} Tamu
                                                                 </span>
                                                                 {tItem.item.room_size && (
-                                                                    <span className="text-[8px] text-admin-text-muted font-bold flex items-center gap-1.5 uppercase tracking-wide">
+                                                                    <span className="text-[8px] text-admin-text-muted font-bold whitespace-nowrap">
                                                                         • {tItem.item.room_size} m&sup2;
                                                                     </span>
                                                                 )}
                                                             </div>
                                                         )}
 
-                                                        <div className="text-[9px] font-bold text-admin-text-muted uppercase tracking-widest flex items-center gap-2 mt-1">
-                                                            <span>{tItem.item_type.split('\\').pop()}</span>
+                                                        <div className="text-[8px] md:text-[9px] font-bold text-admin-text-muted uppercase tracking-widest flex items-center gap-2 mt-1">
+                                                            <span className="truncate">{tItem.item_type.split('\\').pop()}</span>
                                                             <span className="w-1 h-1 bg-admin-border rounded-full" />
                                                             <span>{formatRupiah(tItem.price)}</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-sm font-black text-admin-text-main">x{tItem.quantity}</div>
-                                                    <div className="text-[10px] font-bold text-admin-text-muted">{formatRupiah(tItem.subtotal)}</div>
+                                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-admin-border/50">
+                                                    <div className="text-[13px] md:text-sm font-black text-admin-text-main">x{tItem.quantity}</div>
+                                                    <div className="text-[9px] md:text-[10px] font-bold text-admin-text-muted">{formatRupiah(tItem.subtotal)}</div>
                                                 </div>
                                             </div>
 
@@ -670,40 +674,40 @@ export default function Bookings() {
                                 </section>
                             )}
 
-                            {/* Final Financial Summary Breakdown - Admin Side standardized to Guest View */}
+                            {/* Final Financial Summary Breakdown */}
                             <section className="mb-10">
-                                <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
+                                <h4 className="text-[9px] md:text-[10px] font-black text-admin-text-main uppercase tracking-widest mb-6 flex justify-between items-center">
                                     Laporan Rekapitulasi Keuangan
-                                    <span className="w-12 h-px bg-admin-border" />
+                                    <span className="w-8 md:w-12 h-px bg-admin-border" />
                                 </h4>
                                 
-                                <div className="space-y-8">
+                                <div className="space-y-6 md:space-y-8">
                                     {/* 1. PEMBAYARAN UTAMA */}
-                                    <div className="p-6 bg-admin-bg rounded-3xl border border-admin-border group hover:bg-white transition-all">
+                                    <div className="p-5 md:p-6 bg-admin-bg rounded-2xl md:rounded-3xl border border-admin-border group hover:bg-white transition-all">
                                         <div className="flex items-center gap-3 mb-4">
                                             <div className="w-1 h-4 bg-admin-primary rounded-full"></div>
                                             <span className="text-[10px] font-black uppercase tracking-widest text-admin-text-main">1. Reservasi Utama (Awal)</span>
                                         </div>
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between text-xs font-bold text-admin-text-muted">
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between text-[11px] md:text-xs font-bold text-admin-text-muted">
                                                 <span>Subtotal Unit/Item</span>
                                                 <span>{formatRupiah(selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
                                             </div>
                                             {selectedBooking.additional_facilities?.length > 0 && (
-                                                <div className="flex justify-between text-xs font-bold text-admin-text-muted">
+                                                <div className="flex justify-between text-[11px] md:text-xs font-bold text-admin-text-muted">
                                                     <span>Fasilitas Pre-Checkin</span>
                                                     <span>{formatRupiah(selectedBooking.additional_facilities.reduce((acc, curr) => acc + (typeof curr === 'object' ? Number(curr.price) : 0), 0))}</span>
                                                 </div>
                                             )}
                                             {selectedBooking.discount_amount > 0 && (
-                                                <div className="flex justify-between text-xs font-bold text-danger">
+                                                <div className="flex justify-between text-[11px] md:text-xs font-bold text-danger">
                                                     <span>Potongan Promo</span>
                                                     <span>-{formatRupiah(selectedBooking.discount_amount)}</span>
                                                 </div>
                                             )}
-                                            <div className="flex justify-between pt-2 border-t border-admin-border/50 font-black text-admin-text-main">
-                                                <span>Total Lunas (Awal)</span>
-                                                <span className="text-admin-primary">{formatRupiah(selectedBooking.total_price)}</span>
+                                            <div className="flex justify-between pt-3 border-t border-admin-border/50 font-black text-admin-text-main">
+                                                <span className="text-[11px] md:text-xs">Total Lunas (Awal)</span>
+                                                <span className="text-admin-primary text-[13px] md:text-sm">{formatRupiah(selectedBooking.total_price)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -762,13 +766,13 @@ export default function Bookings() {
                                     )}
 
                                     {/* GRAND TOTAL COMPONENT */}
-                                    <div className="bg-admin-text-main p-8 rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000"></div>
+                                    <div className="bg-admin-text-main p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] text-white shadow-2xl flex justify-between items-center relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-white/5 rounded-full -mr-12 -mt-12 md:-mr-16 md:-mt-16 group-hover:scale-110 transition-transform duration-1000"></div>
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Total Tagihan</p>
+                                            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-white/40">Total Tagihan</p>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="text-3xl font-black tracking-tighter">{formatRupiah(
+                                        <div className="text-right relative z-10">
+                                            <span className="text-xl md:text-3xl font-black tracking-tighter">{formatRupiah(
                                                 Number(selectedBooking.total_price || 0) +
                                                 (selectedBooking.addons?.filter(a => ['paid', 'success'].includes(a.status)).reduce((acc, curr) => acc + Number(curr.total_price || 0), 0) || 0) +
                                                 (selectedBooking.reschedules?.filter(r => r.status === 'completed').reduce((acc, curr) => acc + Number(curr.final_charge || 0), 0) || 0)
@@ -846,9 +850,10 @@ export default function Bookings() {
 
             {/* Admin Addon Order Modal */}
             {isAddingAddon && (
-                <div className="fixed inset-0 z-[1100] flex items-center justify-center p-6 animate-fade-in">
-                    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsAddingAddon(false)}></div>
-                    <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-10 relative z-[1101] shadow-2xl animate-scale-up flex flex-col max-h-[85vh]">
+                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in">
+                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
+                        <div className="fixed inset-0" onClick={() => setIsAddingAddon(false)}></div>
+                        <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-6 md:p-10 relative z-[10002] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col border border-white/20 animate-scale-up">
                         <button onClick={() => setIsAddingAddon(false)} className="absolute top-8 right-8 text-admin-text-muted hover:text-admin-text-main transition-colors"><X size={20} /></button>
 
                         <div className="mb-8">
@@ -902,6 +907,7 @@ export default function Bookings() {
                         </div>
                     </div>
                 </div>
+            </div>
             )}
         </div>
     );

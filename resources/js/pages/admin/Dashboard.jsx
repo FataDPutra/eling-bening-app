@@ -154,24 +154,24 @@ export default function Dashboard() {
 
     return (
         <div className="animate-fade-in space-y-10">
-            <div className="admin-page-header">
-                <div>
-                    <h1>Dashboard Overview</h1>
-                    <p>Selamat datang kembali, Administrator. Berikut ringkasan operasional berdasarkan periode.</p>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                <div className="flex-1">
+                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Ringkasan Dashboard</h1>
+                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Selamat datang kembali, Administrator. Berikut ringkasan operasional berdasarkan periode.</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
+                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+                    <div className="relative w-full sm:w-auto">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px] h-[45px]"
+                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
+                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -214,7 +214,7 @@ export default function Dashboard() {
                             </>
                         )}
                     </div>
-                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px]" onClick={downloadReport}>
+                    <button className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto" onClick={downloadReport}>
                         <Download size={18} /> Export Data
                     </button>
                 </div>
@@ -223,11 +223,11 @@ export default function Dashboard() {
             {/* Stat Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statCards.map((card, idx) => (
-                    <div key={idx} className="bg-white p-8 rounded-[2rem] border border-admin-border hover:shadow-2xl hover:shadow-admin-primary/5 hover:border-admin-primary/20 transition-all duration-500 group relative overflow-hidden">
+                    <div key={idx} className="bg-white p-6 md:p-8 rounded-[2rem] border border-admin-border hover:shadow-2xl hover:shadow-admin-primary/5 hover:border-admin-primary/20 transition-all duration-500 group relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-admin-primary/5 rounded-full translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
                         
-                        <div className="flex justify-between items-start mb-10 relative z-10">
-                            <div className="w-14 h-14 rounded-2xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-main group-hover:bg-admin-primary group-hover:text-white group-hover:border-admin-primary transition-all duration-500 shadow-sm">
+                        <div className="flex justify-between items-start mb-6 md:mb-10 relative z-10">
+                            <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-admin-bg border border-admin-border flex items-center justify-center text-admin-text-main group-hover:bg-admin-primary group-hover:text-white group-hover:border-admin-primary transition-all duration-500 shadow-sm">
                                 <card.icon size={24} strokeWidth={2} />
                             </div>
                             <div className={`flex items-center gap-1.5 text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm transition-transform group-hover:scale-105 ${
@@ -244,7 +244,7 @@ export default function Dashboard() {
                             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-admin-text-muted group-hover:text-admin-primary transition-colors">
                                 {card.title}
                             </p>
-                            <h3 className="text-3xl font-black text-admin-text-main tracking-tighter whitespace-nowrap">
+                            <h3 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tighter whitespace-nowrap">
                                 {card.value}
                             </h3>
                         </div>
@@ -254,11 +254,11 @@ export default function Dashboard() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Main Analytics Chart */}
-                <div className="lg:col-span-2 admin-table-container !p-10 space-y-10">
-                    <div className="flex justify-between items-center">
+                <div className="lg:col-span-2 admin-table-container p-6 md:p-10 space-y-8 md:space-y-10">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Trafik Pengunjung</h3>
-                            <p className="text-xs text-admin-text-muted font-bold">Total pengunjung kawasan dalam 7 hari terakhir</p>
+                            <h3 className="text-lg md:text-xl font-black text-admin-text-main uppercase tracking-widest">Trafik Pengunjung</h3>
+                            <p className="text-[10px] md:text-xs text-admin-text-muted font-bold">Total pengunjung kawasan dalam 7 hari terakhir</p>
                         </div>
                         <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="relative h-64 w-full translate-x-[-10px]">
+                    <div className="relative h-48 md:h-64 w-full translate-x-[-10px]">
                         <svg viewBox={`0 0 ${chartWidth} ${chartHeight + 20}`} className="w-full h-full overflow-visible">
                             <defs>
                                 <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
@@ -330,20 +330,20 @@ export default function Dashboard() {
                 </div>
 
                 {/* Refined Activity Feed */}
-                <div className="admin-table-container !p-8 flex flex-col">
-                    <div className="flex justify-between items-center mb-10">
+                <div className="admin-table-container p-6 md:p-8 flex flex-col">
+                    <div className="flex justify-between items-center mb-8 md:mb-10">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-admin-primary/10 text-admin-primary flex items-center justify-center">
                                 <Activity size={20} />
                             </div>
-                            <h3 className="text-xl font-black text-admin-text-main uppercase tracking-widest">Hari Ini</h3>
+                            <h3 className="text-lg md:text-xl font-black text-admin-text-main uppercase tracking-widest">Hari Ini</h3>
                         </div>
                         <button className="p-2 hover:bg-admin-bg rounded-lg text-admin-text-muted">
                             <Bell size={18} />
                         </button>
                     </div>
                     
-                    <div className="flex-1 space-y-8 overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="flex-1 space-y-6 md:space-y-8 overflow-y-auto pr-2 custom-scrollbar">
                         {isLoading ? (
                             <div className="flex flex-col gap-6">
                                 {[1, 2, 3, 4].map(i => (
@@ -358,28 +358,28 @@ export default function Dashboard() {
                             </div>
                         ) : allTransactions.filter(b => b.created_at?.startsWith(new Date().toISOString().split('T')[0])).length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-10 opacity-40">
-                                <Activity size={40} className="mb-2" />
-                                <p className="text-[10px] font-black uppercase">Belum ada aktivitas hari ini</p>
+                                <Activity size={32} className="mb-2" />
+                                <p className="text-[10px] font-black uppercase text-center">Belum ada aktivitas hari ini</p>
                             </div>
                         ) : allTransactions.filter(b => b.created_at?.startsWith(new Date().toISOString().split('T')[0])).slice(0, showAllFeeds ? 20 : 6).map((b, i) => (
-                            <div key={i} className="flex gap-5 items-start animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
-                                <div className="relative">
-                                    <div className="w-12 h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs uppercase shadow-inner">
+                            <div key={i} className="flex gap-4 md:gap-5 items-start animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-[1.25rem] bg-admin-bg border border-admin-border flex items-center justify-center text-admin-primary/40 font-black text-xs uppercase shadow-inner">
                                         {b.user?.name?.charAt(0) || '?'}
                                     </div>
-                                    <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${b.status === 'success' || b.status === 'paid' ? 'bg-success' : 'bg-warning'}`} />
+                                    <div className={`absolute -bottom-1 -right-1 w-3 h-3 md:w-4 md:h-4 rounded-full border-2 border-white ${b.status === 'success' || b.status === 'paid' ? 'bg-success' : 'bg-warning'}`} />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <h4 className="text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.booker_name || b.user?.name || 'Guest User'}</h4>
-                                    <p className="text-[11px] text-admin-text-muted font-bold leading-tight truncate">
+                                    <h4 className="text-xs md:text-sm font-black text-admin-text-main uppercase tracking-tight truncate">{b.booker_name || b.user?.name || 'Guest User'}</h4>
+                                    <p className="text-[10px] md:text-[11px] text-admin-text-muted font-bold leading-tight truncate">
                                         Pesan <span className="text-admin-text-main">{b.items?.[0]?.item?.name || 'Item'}</span>
                                     </p>
                                     <p className="text-[9px] text-admin-text-light font-black uppercase tracking-widest mt-1">
                                         {new Date(b.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} • {b.booking_type || 'TRANSACTION'}
                                     </p>
                                 </div>
-                                <div className="text-right">
-                                    <p className="text-sm font-black text-admin-primary">+{formatRupiah(b.total_price / 1000)}k</p>
+                                <div className="text-right flex-shrink-0">
+                                    <p className="text-xs md:text-sm font-black text-admin-primary">+{formatRupiah(b.total_price / 1000)}k</p>
                                 </div>
                             </div>
                         ))}
@@ -387,9 +387,9 @@ export default function Dashboard() {
                     
                     <button 
                         onClick={() => setShowAllFeeds(!showAllFeeds)}
-                        className="mt-10 py-4 w-full rounded-2xl bg-admin-bg text-admin-text-main font-black text-[10px] uppercase tracking-[0.2em] border border-admin-border hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all text-center"
+                        className="mt-8 md:mt-10 py-3 md:py-4 w-full rounded-2xl bg-admin-bg text-admin-text-main font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] border border-admin-border hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all text-center"
                     >
-                        {showAllFeeds ? 'Sembunyikan' : `Lihat ${bookings.length > 4 ? bookings.length - 4 : ''} Aktivitas Lainnya`}
+                        {showAllFeeds ? 'Sembunyikan' : `Lihat Aktivitas Lainnya`}
                     </button>
                 </div>
             </div>
