@@ -10,6 +10,7 @@ use App\Models\SystemSetting;
 use App\Models\TransactionTicket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -22,8 +23,8 @@ class TransactionController extends Controller
         $month = $request->query('month');
         $year = $request->query('year');
 
-        // Lighter eager loading for list view — addons.items.item only needed in show()
-        $query = Transaction::with(['items.item', 'promo', 'addons', 'reschedules', 'user', 'tickets'])
+        // Load full relations including addon items so they are available in the frontend detail modal
+        $query = Transaction::with(['items.item', 'promo', 'addons.items.item', 'reschedules', 'user', 'tickets'])
             ->orderBy('created_at', 'desc');
 
         if ($user && $user->role !== 'admin' || $isMine) {
@@ -167,7 +168,8 @@ class TransactionController extends Controller
                 }
             }
 
-            $status = $validated['total_price'] > 0 ? 'pending' : 'success';
+            // RE-ENABLED MIDTRANS FLOW
+            $status = 'pending';
 
             $transaction = Transaction::create([
                 'id' => $validated['id'],
@@ -179,6 +181,8 @@ class TransactionController extends Controller
                 'payment_method' => $validated['payment_method'],
                 'promo_id' => $validated['promo_id'] ?? null,
                 'total_price' => $validated['total_price'],
+                'net_total' => $validated['booking_type'] === 'RESORT' ? ($validated['total_price'] - round($validated['total_price'] * (10 / 110))) : $validated['total_price'],
+                'tax_total' => $validated['booking_type'] === 'RESORT' ? round($validated['total_price'] * (10 / 110)) : 0,
                 'total_qty' => $validated['total_qty'] ?? 1,
                 'discount_amount' => $validated['discount_amount'] ?? 0,
                 'special_requests' => $validated['special_requests'] ?? null,
@@ -224,6 +228,12 @@ class TransactionController extends Controller
             }
 
             return response()->json($transaction->load(['items', 'tickets']), 201);
+
+            if ($transaction->promo_id) {
+                $transaction->promo()->increment('used_count');
+            }
+
+            return response()->json($transaction->load(['items', 'tickets']), 201);
         });
     }
 
@@ -237,11 +247,41 @@ class TransactionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $transaction = Transaction::with(['user', 'items.item', 'promo', 'reschedules', 'addons.items.item', 'tickets'])->findOrFail($id);
+        $transaction = Transaction::with([
+            'user', 
+            'items.item', 
+            'promo', 
+            'reschedules', 
+            'addons' => function($query) {
+                $query->with(['items' => function($q) {
+                    $q->with('item');
+                }]);
+            }, 
+            'tickets'
+        ])->findOrFail($id);
         
         $user = $request->user();
         if ($user->role !== 'admin' && $user->id !== $transaction->user_id) {
             return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Forcefully ensure addon items are loaded with details
+        if ($transaction->addons) {
+            foreach ($transaction->addons as $addon) {
+                $items = \App\Models\TransactionItem::with('item')->where('transaction_id', $addon->id)->get();
+                if ($items->isEmpty() && !empty($addon->additional_facilities)) {
+                    $items = collect($addon->additional_facilities)->map(function($f) {
+                        $facility = \App\Models\Facility::find($f['item_id'] ?? ($f['id'] ?? null));
+                        return (object)[
+                            'item' => $facility,
+                            'quantity' => $f['quantity'] ?? 1,
+                            'price' => $f['price'] ?? ($facility ? $facility->price : 0),
+                            'subtotal' => ($f['quantity'] ?? 1) * ($f['price'] ?? ($facility ? $facility->price : 0))
+                        ];
+                    });
+                }
+                $addon->setRelation('items', $items);
+            }
         }
 
         return response()->json($transaction);
@@ -637,57 +677,56 @@ class TransactionController extends Controller
         return response()->json(\App\Models\Facility::where('is_addon', true)->where('is_active', true)->get());
     }
 
-    public function storeAddon(Request $request, $parentId)
+    public function storeAddon(Request $request, $id)
     {
-        $parentRecord = Transaction::findOrFail($parentId);
-        
-        // IMPORTANT: Addon parent MUST always be the root resort transaction (no parent_id)
-        $rootParent = $parentRecord->parent_id ? Transaction::findOrFail($parentRecord->parent_id) : $parentRecord;
-        
-        $user = $request->user();
+        $rootParent = Transaction::findOrFail($id);
+        $user = Auth::user();
 
-        // Security
+        // Security: Only the owner or an admin can add addons
         if ($rootParent->user_id !== $user->id && $user->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        if ($rootParent->stay_status !== 'checked_in') {
-            $msg = $rootParent->stay_status === 'checked_out' ? 'Tamu sudah checkout.' : 'Tamu belum melakukan check-in.';
-            return response()->json(['message' => 'Layanan tambahan hanya tersedia setelah tamu check-in. ' . $msg], 403);
+        // Rule: Cannot add addons after checkout
+        if ($rootParent->stay_status === 'checked_out') {
+            return response()->json(['message' => 'Tidak dapat menambah fasilitas setelah tamu melakukan check-out.'], 403);
         }
 
         $validated = $request->validate([
             'items'            => 'required|array|min:1',
-            'items.*.item_id'  => 'required|integer|exists:facilities,id',
-            'items.*.quantity' => 'required|integer|min:1|max:10',
-            'payment_method'   => 'nullable|in:Manual/Transfer,Cash,QRIS,automated',
+            'items.*.item_id'  => 'required|exists:facilities,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'payment_method'   => 'nullable|in:Manual/Transfer,Cash,QRIS,automated,Manual/Admin,Midtrans,Midtrans/Automated',
         ]);
 
         return DB::transaction(function() use ($validated, $rootParent, $user) {
-            // lockForUpdate() prevents race condition if two requests arrive simultaneously
+            // Check for existing pending addon session for this parent
             $addonOrder = Transaction::where('parent_id', $rootParent->id)
                 ->where('status', 'pending')
                 ->lockForUpdate()
                 ->first();
+            
+            // Always start as pending so the user can pay via Midtrans from their profile
+            $status = 'pending';
 
             if (!$addonOrder) {
-                $addonId = 'ADD-' . strtoupper(Str::random(8));
                 $addonOrder = Transaction::create([
-                    'id'             => $addonId,
+                    'id'             => 'ADD-' . strtoupper(Str::random(8)),
                     'parent_id'      => $rootParent->id,
-                    'user_id'        => $user->id,
+                    'user_id'        => $rootParent->user_id,
                     'booker_name'    => $rootParent->booker_name,
                     'booker_email'   => $rootParent->booker_email,
                     'booker_phone'   => $rootParent->booker_phone,
                     'booking_type'   => 'RESORT',
-                    'status'         => 'pending',
+                    'status'         => $status,
                     'check_in_date'  => $rootParent->check_in_date,
-                    'payment_method' => $validated['payment_method'] ?? 'Manual/Transfer',
+                    'payment_method' => $validated['payment_method'] ?? 'Midtrans',
                     'total_price'    => 0,
+                    'net_total'      => 0,
+                    'tax_total'      => 0,
                 ]);
             }
 
-            // Reload from DB to ensure we have the freshest item list (not a stale in-memory collection)
             $addonOrder->load('items');
             $currentItems = $addonOrder->items;
 
@@ -712,12 +751,39 @@ class TransactionController extends Controller
                 }
             }
 
-            $addonOrder->update(['total_price' => $addonOrder->items()->sum('subtotal')]);
+            $total = (float)$addonOrder->items()->sum('subtotal');
+            $addonOrder->update([
+                'total_price' => $total,
+                'net_total'   => $total, // Addons are net for now or simple
+                'tax_total'   => 0
+            ]);
+
+            // GENERATE SNAP TOKEN FOR ADDON SO GUEST CAN PAY
+            if ($addonOrder->payment_method === 'Midtrans' || $addonOrder->payment_method === 'automated' || $addonOrder->payment_method === 'Midtrans/Automated') {
+                try {
+                    $this->configureMidtrans();
+                    $params = [
+                        'transaction_details' => [
+                            'order_id' => $addonOrder->id,
+                            'gross_amount' => (int) $addonOrder->total_price,
+                        ],
+                        'customer_details' => [
+                            'first_name' => $addonOrder->booker_name,
+                            'email' => $addonOrder->booker_email,
+                            'phone' => $addonOrder->booker_phone,
+                        ],
+                    ];
+                    $snapToken = \Midtrans\Snap::getSnapToken($params);
+                    $addonOrder->update(['snap_token' => $snapToken]);
+                } catch (\Exception $e) {
+                    \Log::error("Midtrans Addon Error: " . $e->getMessage());
+                }
+            }
 
             return response()->json([
-                'message' => 'Pesanan tambahan berhasil diperbarui.',
-                'transaction' => $addonOrder->load('items.item')
-            ], 201);
+                'message' => 'Pesanan tambahan berhasil diproses.',
+                'transaction' => $addonOrder->load('items')
+            ]);
         });
     }
 }

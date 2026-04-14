@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useAuth } from '../../utils/AuthContext';
-import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus, Star, LogOut, Package } from 'lucide-react';
+import { Search, MapPin, Calendar, Clock, ArrowRight, User, Mail, ShieldCheck, Ticket, QrCode, X, Download, BedDouble, AlertCircle, Camera, Phone, CreditCard, Sparkles, Check, Plus, Minus, Star } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import toast from 'react-hot-toast';
@@ -299,61 +298,16 @@ export default function Profile() {
         try {
             await axios.post(`/api/transactions/${selectedOrderDetail.id}/addons`, {
                 items: orderItems,
-                payment_method: 'Midtrans'
+                payment_method: 'automated'
             });
-            
-            toast.success('Pesanan fasilitas telah dicatat. Silakan cek tab "Fasilitas Tambahan" untuk melakukan pembayaran.');
+            toast.success('Pesanan fasilitas berhasil dibuat. Silakan selesaikan pembayaran.');
             setIsOrderingAddon(false);
-            
-            // Refresh data
+            // Refresh detail with fresh data from server
             const res = await axios.get(`/api/transactions/${selectedOrderDetail.id}`);
             setSelectedOrderDetail(res.data);
             fetchBookings();
-            
-            // Switch to addons tab to show the pending bill
-            setActiveTab('addons');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Gagal membuat pesanan.');
-        } finally {
-            setIsSubmittingAddon(false);
-        }
-    };
-
-    // PAY ADDON VIA MIDTRANS
-    const handlePayAddon = async (addon) => {
-        setIsSubmittingAddon(true);
-        try {
-            // Get fresh token if needed
-            const response = await axios.post(`/api/transactions/${addon.id}/pay-token`);
-            const snapToken = response.data.snap_token;
-
-            if (snapToken) {
-                window.snap.pay(snapToken, {
-                    onSuccess: function() {
-                        toast.success('Pembayaran addon berhasil!');
-                        setSelectedAddonPayment(null);
-                        if (selectedOrderDetail) {
-                            axios.get(`/api/transactions/${selectedOrderDetail.id}`).then(res => {
-                                setSelectedOrderDetail(res.data);
-                            });
-                        }
-                        fetchBookings();
-                    },
-                    onPending: function() {
-                        toast.info('Menunggu pembayaran addon.');
-                    },
-                    onError: function() {
-                        toast.error('Pembayaran addon gagal.');
-                    },
-                    onClose: function() {
-                        toast.warning('Anda menutup pembayaran.');
-                    }
-                });
-            } else {
-                toast.error('Gagal mendapatkan token pembayaran.');
-            }
-        } catch (err) {
-            toast.error(err.response?.data?.message || 'Gagal memproses pembayaran.');
         } finally {
             setIsSubmittingAddon(false);
         }
@@ -421,15 +375,6 @@ export default function Profile() {
                                 <p className="text-sm text-gray-500">{user?.email}</p>
                             </div>
 
-                            {user?.role === 'admin' && (
-                                <Link 
-                                    to="/admin"
-                                    className="w-full py-3 mb-3 text-eling-red font-black rounded-xl bg-eling-red/5 hover:bg-eling-red/10 transition flex items-center justify-center gap-2 border border-eling-red/10 uppercase tracking-widest text-[10px]"
-                                >
-                                    <ShieldCheck size={16} /> Panel Admin
-                                </Link>
-                            )}
-
                             <button 
                                 onClick={() => {
                                     setEditForm({ name: user?.name, email: user?.email });
@@ -440,11 +385,8 @@ export default function Profile() {
                                 <User size={16} /> Edit Profil
                             </button>
 
-                            <button 
-                                onClick={handleLogout} 
-                                className="w-full py-4 text-eling-red font-bold rounded-xl bg-red-50 hover:bg-red-100 transition flex items-center justify-center gap-2"
-                            >
-                                <LogOut size={18} /> Keluar Akun
+                            <button onClick={handleLogout} className="w-full py-3 text-eling-red font-bold rounded-xl bg-red-50 hover:bg-red-100 transition">
+                                Keluar Akun
                             </button>
                         </div>
                     </div>
@@ -476,15 +418,15 @@ export default function Profile() {
                             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-8">
                                 <button
                                     onClick={() => setActiveTab('tickets')}
-                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'tickets' ? 'bg-gray-900 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
-                                    <Ticket size={14} /> Tiket & Resort
+                                    Tiket & Resort
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('addons')}
-                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative flex items-center justify-center gap-2 ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                                    className={`w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'addons' ? 'bg-eling-green text-white shadow-lg shadow-green-900/10' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
                                 >
-                                    <Package size={14} /> Fasilitas Tambahan
+                                    Fasilitas Tambahan
                                     {bookings.filter(b => b.parent_id && b.status === 'pending').length > 0 && (
                                         <span className="absolute -top-1 right-0 sm:-top-2 sm:-right-2 w-5 h-5 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center shadow-lg border-2 border-white animate-bounce-slow">
                                             {bookings.filter(b => b.parent_id && b.status === 'pending').length}
@@ -597,8 +539,8 @@ export default function Profile() {
             </div>
 
             {/* Reschedule Modal */}
-            {rescheduleData && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in">
+            {rescheduleData && (
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-scale-up">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold font-serif">Reschedule Room</h3>
@@ -679,13 +621,12 @@ export default function Profile() {
                             </button>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             {/* Ticket Modal */}
-            {selectedTicket && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedTicket(null)}>
+            {selectedTicket && (
+                <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md animate-fade-in" onClick={() => setSelectedTicket(null)}>
                     <div className="w-full max-w-sm sm:max-w-md relative" onClick={e => e.stopPropagation()}>
                         <div className="relative flex justify-center items-center mb-6 px-2">
                             <h3 className="text-white text-xl sm:text-2xl font-black font-serif uppercase tracking-tight text-center">Access Passes</h3>
@@ -761,13 +702,12 @@ export default function Profile() {
                             )}
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             {/* Review Modal */}
-            {selectedReview && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedReview(null)}>
+            {selectedReview && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-[2rem] p-6 sm:p-8 max-w-md w-full shadow-2xl animate-scale-up" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-2xl font-bold font-serif">Berikan Ulasan</h3>
@@ -852,12 +792,11 @@ export default function Profile() {
                             </button>
                         </form>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
             {/* Order Detail Modal */}
-            {selectedOrderDetail && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedOrderDetail(null)}>
+            {selectedOrderDetail && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedOrderDetail(null)}>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                         <div className="px-6 sm:px-8 py-4 sm:py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
                             <div className="flex items-center gap-3 sm:gap-4">
@@ -935,18 +874,16 @@ export default function Profile() {
                                             <p className="text-xs font-bold text-gray-900 mt-0.5">{selectedOrderDetail.items[0]?.item?.capacity || '-'} Orang</p>
                                         </div>
                                         
-                                        {/* ORDER ADDON BUTTON (BEFORE CHECKOUT) */}
-                                        {selectedOrderDetail.booking_type === 'RESORT' && 
-                                         selectedOrderDetail.stay_status !== 'checked_out' && 
-                                         (selectedOrderDetail.status === 'success' || selectedOrderDetail.status === 'paid') && (
-                                             <button 
+                                        {/* ORDER ADDON BUTTON (ONLY IF CHECKED IN) */}
+                                        {selectedOrderDetail.booking_type === 'RESORT' && selectedOrderDetail.stay_status === 'checked_in' && (
+                                            <button 
                                                 onClick={() => {
                                                     fetchAddonFacilities();
                                                     setIsOrderingAddon(true);
                                                 }}
-                                                className="col-span-2 py-4 bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl border border-eling-green/20 hover:bg-eling-green hover:!text-white transition-all duration-300 flex items-center justify-center gap-3 group shadow-sm hover:shadow-lg hover:shadow-green-900/20 active:scale-95"
+                                                className="col-span-2 py-3 bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-widest rounded-xl border border-eling-green/20 hover:bg-eling-green hover:text-white transition-all flex items-center justify-center gap-2"
                                             >
-                                                <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" /> Pesan Fasilitas Tambahan
+                                                <Plus size={14} /> Pesan Fasilitas Tambahan
                                             </button>
                                         )}
                                     </div>
@@ -1098,175 +1035,36 @@ export default function Profile() {
 
                             {/* Financial Summary Breakdown - Refactored for Categorized View */}
                             <div className="pt-8 border-t border-dashed border-gray-200 space-y-8 pb-12">
-                            {/* 1. RESERVASI UTAMA (AWAL) - Matching Admin Look */}
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-1.5 h-6 bg-eling-green rounded-full"></div>
-                                    <h4 className="text-[10px] font-black text-gray-950 uppercase tracking-[0.2em]">1. Reservasi Utama (Awal)</h4>
-                                </div>
-                                <div className="space-y-4 px-2">
-                                    {(() => {
-                                        const nights = Math.ceil(Math.abs(new Date(selectedOrderDetail.check_out_date) - new Date(selectedOrderDetail.check_in_date)) / (1000 * 60 * 60 * 24)) || 1;
-                                        const isResort = selectedOrderDetail.booking_type === 'RESORT';
-                                        
-                                        const itemsList = (selectedOrderDetail.items || []).map((tItem, idx) => {
-                                            const visualSubtotal = isResort && tItem.item_type?.includes('Resort') 
-                                                ? Number(tItem.subtotal) * nights 
-                                                : Number(tItem.subtotal);
-                                            
-                                            return (
-                                                <div key={idx} className="flex justify-between items-start border-b border-gray-100 pb-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-gray-900 uppercase tracking-tight">
-                                                            {tItem.item?.name || 'Item Pesanan'} x{tItem.quantity}
-                                                        </span>
-                                                        {isResort && tItem.item_type?.includes('Resort') && (
-                                                            <span className="text-[10px] text-gray-400 font-bold mt-1 italic flex items-center gap-1.5 uppercase tracking-wide">
-                                                                <Clock size={12} /> {nights} Malam (Stay) • {formatRupiah(tItem.subtotal)} / malam
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <span className="text-sm font-black text-gray-900">{formatRupiah(visualSubtotal)}</span>
-                                                </div>
-                                            );
-                                        });
-
-                                        let facilitiesRaw = selectedOrderDetail.additional_facilities || selectedOrderDetail.facilities || [];
-                                        if (typeof facilitiesRaw === 'string') {
-                                            try { facilitiesRaw = JSON.parse(facilitiesRaw); } catch(e) { facilitiesRaw = []; }
-                                        }
-                                        
-                                        const facilitiesList = (Array.isArray(facilitiesRaw) ? facilitiesRaw : []).map((fac, i) => {
-                                            const facPrice = Number(fac.price || fac.amount || 0);
-                                            const totalFacPrice = (isResort) ? facPrice * nights : facPrice;
-
-                                            return (
-                                                <div key={`fac-${i}`} className="flex justify-between items-start border-b border-gray-100 pb-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-black text-gray-900 uppercase tracking-tight">• {fac.name || fac.label || 'Fasilitas Tambahan'}</span>
-                                                        {isResort && (
-                                                            <span className="text-[10px] text-gray-400 font-bold mt-1 italic flex items-center gap-1.5 uppercase tracking-wide">
-                                                                {nights} Malam • {formatRupiah(facPrice)} / malam
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <span className="text-sm font-black text-gray-900">{formatRupiah(totalFacPrice)}</span>
-                                                </div>
-                                            );
-                                        });
-
-                                        return <>{itemsList}{facilitiesList}</>;
-                                    })()}
-                                </div>
-
-                                <div className="mt-8 bg-gray-50/50 p-6 rounded-[2rem] border border-gray-200">
-                                    <div className="flex justify-between text-[10px] font-black text-gray-400 mb-4 border-b border-gray-200/50 pb-3">
-                                        <span className="uppercase tracking-widest opacity-60">Audit Keseimbangan Nilai</span>
-                                        <span className="uppercase tracking-widest opacity-60">Nilai</span>
+                                {/* SECTION 1: PEMBAYARAN UTAMA (AWAL) */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-1.5 h-6 bg-eling-green rounded-full shadow-[0_0_8px_rgba(46,125,50,0.4)]"></div>
+                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">1. Rincian Pembayaran Utama (Awal)</h4>
                                     </div>
-
-                                    {(() => {
-                                        const totalPrice = Number(selectedOrderDetail.total_price || 0);
-                                        const discountAmount = Number(selectedOrderDetail.discount_amount || 0);
-                                        const nights = Math.ceil(Math.abs(new Date(selectedOrderDetail.check_out_date) - new Date(selectedOrderDetail.check_in_date)) / (1000 * 60 * 60 * 24)) || 1;
-                                        const isResort = selectedOrderDetail.booking_type === 'RESORT';
-
-                                        // Calculate explicit sums
-                                        const resortPriceSum = (selectedOrderDetail.items?.reduce((acc, curr) => acc + ( (isResort && curr.item_type?.includes('Resort')) ? Number(curr.subtotal) * nights : Number(curr.subtotal) ), 0) || 0);
-                                        
-                                        let f = selectedOrderDetail.additional_facilities || selectedOrderDetail.facilities || [];
-                                        if (typeof f === 'string') try { f = JSON.parse(f); } catch(e) { f = []; }
-                                        const facilitiesSum = (Array.isArray(f) ? f : []).reduce((acc, curr) => acc + ( (isResort) ? Number(curr.price || curr.amount || 0) * nights : Number(curr.price || curr.amount || 0) ), 0);
-
-                                        // The rest is Tax (Total - (Resort + Fac - Discount))
-                                        const netBeforeTax = resortPriceSum + facilitiesSum - discountAmount;
-                                        const taxAmount = totalPrice - netBeforeTax;
-
-                                        return (
-                                            <>
-                                                <div className="flex justify-between text-xs font-bold text-gray-600 mb-2">
-                                                    <span className="opacity-70 font-medium tracking-tight">Harga Unit Resort ({nights} Malam)</span>
-                                                    <span className="text-gray-900">{formatRupiah(resortPriceSum)}</span>
-                                                </div>
-
-                                                {facilitiesSum > 0 && (
-                                                    <div className="flex justify-between text-xs font-bold text-gray-600 mb-2">
-                                                        <span className="opacity-70 font-medium tracking-tight">Layanan & Fasilitas Tambahan</span>
-                                                        <span className="text-gray-900">{formatRupiah(facilitiesSum)}</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex justify-between text-xs font-bold text-gray-600 pt-3 border-t border-gray-100 mb-2">
-                                                    <span className="opacity-70 font-medium">Pajak Pemerintah & Layanan (10%)</span>
-                                                    <span className="text-gray-900">{formatRupiah(taxAmount)}</span>
-                                                </div>
-
-                                                {discountAmount > 0 && (
-                                                    <div className="flex justify-between text-[11px] font-black text-emerald-600 bg-emerald-50/50 p-3 rounded-2xl border border-emerald-100/50 mt-4 mb-4">
-                                                        <span className="uppercase tracking-widest text-[9px]">Potongan Promo / Diskon</span>
-                                                        <span className="tabular-nums">- {formatRupiah(discountAmount)}</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex justify-between pt-6 border-t border-gray-200 mt-2">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[11px] font-black text-gray-950 uppercase tracking-widest">Total Akhir Tagihan</span>
-                                                        <span className="text-[9px] opacity-40 font-bold uppercase tracking-[0.2em] mt-1">METODE: {selectedOrderDetail.payment_method || 'MIDTRANS'}</span>
-                                                    </div>
-                                                    <span className="text-eling-green text-3xl font-black font-serif tracking-tight">{formatRupiah(totalPrice)}</span>
-                                                </div>
-                                            </>
-                                        );
-                                    })()}
-                                </div>
-                            </div>
-
-                                 {/* SECTION 2: LAYANAN MENUNGGU PEMBAYARAN (PENDING ADDONS) */}
-                                {selectedOrderDetail.addons?.some(a => a.status === 'pending') && (
-                                    <div className="space-y-4 bg-amber-50/30 p-6 rounded-[2rem] border border-amber-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-1.5 h-6 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.4)]"></div>
-                                            <h4 className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em]">2. Tagihan Layanan Menunggu Pembayaran</h4>
+                                    <div className="space-y-3 p-6 bg-gray-50/50 rounded-3xl border border-gray-100">
+                                        <div className="flex justify-between text-xs font-bold text-gray-400">
+                                            <span className="uppercase tracking-widest">Subtotal Pesanan Utama</span>
+                                            <span className="text-gray-900">{formatRupiah(selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0)}</span>
                                         </div>
-                                        <div className="space-y-4 mt-4">
-                                            {selectedOrderDetail.addons
-                                                .filter(a => a.status === 'pending')
-                                                .map(addon => (
-                                                    <div key={addon.id} className="bg-white p-4 rounded-2xl border border-amber-200 shadow-sm relative overflow-hidden group">
-                                                        <div className="absolute top-0 right-0 py-1 px-3 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest">Awaiting Payment</div>
-                                                        <div className="flex justify-between items-center mb-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Order ID: {addon.id}</span>
-                                                                <span className="text-lg font-black text-gray-900">{formatRupiah(addon.total_price)}</span>
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => handlePayAddon(addon)}
-                                                                className="px-6 py-2.5 bg-eling-green text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-lg shadow-green-900/10 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-                                                            >
-                                                                <CreditCard size={12} /> Bayar Sekarang
-                                                            </button>
-                                                        </div>
-                                                        <div className="pl-3 space-y-1 opacity-70">
-                                                            {addon.items?.map(it => (
-                                                                <div key={it.id} className="flex justify-between text-[10px] font-bold text-gray-500">
-                                                                    <span>• {it.item?.name} x{it.quantity}</span>
-                                                                    <span>{formatRupiah(it.subtotal)}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            }
+                                        {selectedOrderDetail.discount_amount > 0 && (
+                                            <div className="flex justify-between text-xs font-bold text-emerald-600 bg-emerald-50/50 p-2 rounded-lg">
+                                                <span className="uppercase tracking-widest flex items-center gap-2"><Sparkles size={10}/> Potongan Promo</span>
+                                                <span className="font-black">- {formatRupiah(selectedOrderDetail.discount_amount)}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex justify-between pt-3 border-t border-gray-200/50">
+                                            <span className="text-[11px] font-black text-gray-900 uppercase tracking-widest">Total Bayar Pertama (Lunas)</span>
+                                            <span className="text-sm font-black text-eling-green">{formatRupiah(selectedOrderDetail.total_price || 0)}</span>
                                         </div>
                                     </div>
-                                )}
+                                </div>
 
-                                {/* SECTION 3: LAYANAN SUDAH TERBAYAR (PAID ADDONS) */}
+                                {/* SECTION 2: LAYANAN SAAT MENGINAP (ADDONS) */}
                                 {selectedOrderDetail.addons?.some(a => ['paid', 'success'].includes(a.status)) && (
                                     <div className="space-y-4 bg-blue-50/20 p-6 rounded-[2rem] border border-blue-50">
                                         <div className="flex items-center gap-3">
                                             <div className="w-1.5 h-6 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.4)]"></div>
-                                            <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">3. Layanan Terbayar & Lunas</h4>
+                                            <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">2. Layanan Saat Menginap (Extra Bill)</h4>
                                         </div>
                                         <div className="space-y-4 mt-4">
                                             {selectedOrderDetail.addons
@@ -1362,13 +1160,12 @@ export default function Profile() {
                             </div>
                         )}
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             {/* Edit Profile Modal */}
-            {isEditingProfile && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setIsEditingProfile(false)}>
+            {isEditingProfile && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setIsEditingProfile(false)}>
                     <div className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl animate-scale-up flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
                         <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center sticky top-0 bg-white z-10">
                             <div>
@@ -1513,13 +1310,12 @@ export default function Profile() {
                             </section>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
             {/* Reschedule Payment Modal */}
-            {selectedReschedulePayment && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedReschedulePayment(null)}>
-                    <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden" onClick={e => e.stopPropagation()}>
+            {selectedReschedulePayment && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-8">
                             <button onClick={() => setSelectedReschedulePayment(null)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
                         </div>
@@ -1591,14 +1387,13 @@ export default function Profile() {
                             </div>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             {/* Addon Order Modal */}
-            {isOrderingAddon && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setIsOrderingAddon(false)}>
-                    <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 max-w-lg w-full shadow-2xl relative flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+            {isOrderingAddon && (
+                <div className="fixed inset-0 z-[130] flex items-center justify-center p-6 bg-slate-900/80 backdrop-blur-md animate-fade-in">
+                    <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] p-6 sm:p-10 max-w-lg w-full shadow-2xl relative flex flex-col max-h-[85vh]">
                         <div className="absolute top-0 right-0 p-6 sm:p-8">
                             <button onClick={() => setIsOrderingAddon(false)} className="text-gray-400 hover:text-gray-900 transition-colors"><X size={20} /></button>
                         </div>
@@ -1654,13 +1449,12 @@ export default function Profile() {
                             </button>
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
 
             {/* Addon Payment Modal */}
-            {selectedAddonPayment && createPortal(
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-xl animate-fade-in" onClick={() => setSelectedAddonPayment(null)}>
+            {selectedAddonPayment && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-fade-in" onClick={() => setSelectedAddonPayment(null)}>
                     <div className="bg-white rounded-[2.5rem] sm:rounded-[3rem] w-full max-w-lg overflow-hidden shadow-2xl animate-scale-up p-6 sm:p-10 flex flex-col relative" onClick={e => e.stopPropagation()}>
                         <button onClick={() => setSelectedAddonPayment(null)} className="absolute top-6 sm:top-8 right-6 sm:right-8 text-gray-400 hover:text-gray-900 transition-colors"><X size={20}/></button>
                         
@@ -1689,15 +1483,48 @@ export default function Profile() {
                         </div>
 
                         <button 
-                            onClick={() => handlePayAddon(selectedAddonPayment)}
+                            onClick={async () => {
+                                setIsSubmittingAddon(true);
+                                try {
+                                    const res = await axios.post(`/api/transactions/${selectedAddonPayment.id}/pay-token`);
+                                    const snapToken = res.data.snap_token;
+
+                                    if (snapToken) {
+                                        window.snap.pay(snapToken, {
+                                            onSuccess: function() {
+                                                toast.success("Pembayaran berhasil diselesaikan!");
+                                                setSelectedAddonPayment(null);
+                                                setSelectedOrderDetail(null);
+                                                fetchBookings();
+                                            },
+                                            onPending: function() {
+                                                toast.info("Pembayaran tertunda. Selesaikan segera.");
+                                                setSelectedAddonPayment(null);
+                                            },
+                                            onError: function() {
+                                                toast.error("Pembayaran gagal.");
+                                            },
+                                            onClose: function() {
+                                                toast.error("Popup ditutup tanpa menyelesaikan pembayaran.");
+                                            }
+                                        });
+                                    } else {
+                                        toast.info("Transaksi ini tidak memerlukan pembayaran gateway.");
+                                        setSelectedAddonPayment(null);
+                                    }
+                                } catch (error) {
+                                    toast.error(error.response?.data?.message || "Gagal memproses pembayaran. Silakan coba lagi.");
+                                } finally {
+                                    setIsSubmittingAddon(false);
+                                }
+                            }}
                             disabled={isSubmittingAddon}
                             className="w-full py-5 bg-eling-green text-white font-black rounded-2xl hover:bg-green-700 transition-all shadow-xl shadow-green-900/20 disabled:opacity-50 flex items-center justify-center gap-3 group"
                         >
                             {isSubmittingAddon ? 'Memproses...' : 'Lakukan Pembayaran Secepatnya'}
                         </button>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
         </div>
     );

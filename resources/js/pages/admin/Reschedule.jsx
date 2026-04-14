@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X, Clock, Eye, Calendar, User, Hash, ArrowRight, MessageSquare, AlertCircle, Save, BadgeDollarSign, AlertTriangle, Calculator, TrendingUp, MoreVertical } from 'lucide-react';
 import axios from 'axios';
 import { formatRupiah } from '../../utils/data';
@@ -266,7 +267,7 @@ export default function Reschedule() {
                             />
                             <div className="input-suffix">Hari</div>
                         </div>
-                        <p className="text-[10px] text-admin-text-muted italic">Minimal jarak tanggal baru dari hari permohonan</p>
+                        <p className="text-[10px] text-admin-text-muted">Minimal jarak tanggal baru dari hari permohonan</p>
                     </div>
 
                     {/* Admin Fee */}
@@ -320,7 +321,7 @@ export default function Reschedule() {
                             />
                             <div className="input-suffix">Jam</div>
                         </div>
-                        <p className="text-[10px] text-admin-text-muted italic">Stok akan dilepas otomatis jika tidak dibayar dalam waktu ini.</p>
+                        <p className="text-[10px] text-admin-text-muted">Stok akan dilepas otomatis jika tidak dibayar dalam waktu ini.</p>
                     </div>
                 </div>
 
@@ -392,7 +393,7 @@ export default function Reschedule() {
                                 <span className="text-eling-green">{formatRupiah(exampleFinal)}</span>
                             </div>
                         </div>
-                        <p className="text-[10px] text-orange-500 italic">*Contoh: tamu pindah dari weekday ke weekend, 2 malam, dengan biaya konfigurasi di atas.</p>
+                        <p className="text-[10px] text-orange-500">*Contoh: tamu pindah dari weekday ke weekend, 2 malam, dengan biaya konfigurasi di atas.</p>
                     </div>
                 </div>
             </div>
@@ -492,8 +493,7 @@ export default function Reschedule() {
                                         <div className="mx-auto w-20 h-20 rounded-full bg-admin-bg flex items-center justify-center mb-6 text-admin-text-light opacity-30">
                                             <Clock size={40} />
                                         </div>
-                                        <p className="text-admin-text-muted font-black uppercase tracking-[0.2em] text-xs">Belum ada permintaan reschedule</p>
-                                    </td>
+                                           </td>
                                 </tr>
                             )}
                         </tbody>
@@ -501,158 +501,168 @@ export default function Reschedule() {
                 </div>
             </div>
 
-            {/* ── Detail Modal ──────────────────────────────────────────────── */}
-            {selectedReq && (
-                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in">
-                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
-                        <div className="fixed inset-0" onClick={() => setSelectedReq(null)} />
-                        <div className="bg-white rounded-[2rem] md:rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] w-full max-w-2xl relative z-[10002] animate-scale-up border border-white/20">
+            {/* Standardized Detail Modal via Portal */}
+            {selectedReq && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 md:p-8">
+                    {/* Dark & Blurred Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500"
+                        style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                        onClick={() => setSelectedReq(null)}
+                    ></div>
+
+                    {/* Modal Card */}
+                    <div className="bg-white w-full max-w-2xl rounded-[2.5rem] md:rounded-[3rem] relative z-10 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col border border-white/20 animate-scale-up max-h-[90vh] overflow-hidden">
+                        
+                        {/* Close Button */}
+                        <button 
+                            onClick={() => setSelectedReq(null)} 
+                            className="absolute top-6 right-6 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/90 backdrop-blur-sm border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 hover:rotate-90 transition-all duration-500 flex items-center justify-center shadow-lg active:scale-90 group"
+                        >
+                            <X size={20} className="group-hover:scale-110 transition-transform" />
+                        </button>
+
                         {/* Modal Header */}
-                        <div className="relative p-6 md:p-10 pb-0 flex justify-between items-start">
-                            <div className="flex items-center gap-4">
-                                <div className="p-4 rounded-[1.5rem] bg-admin-primary/10 text-admin-primary">
-                                    <Calendar size={32} />
+                        <div className="p-8 md:p-10 border-b border-admin-border bg-admin-bg/50 flex-shrink-0">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.2rem] md:rounded-[1.5rem] bg-admin-primary text-white flex items-center justify-center shadow-2xl shadow-admin-primary/30 ring-4 ring-admin-primary/10">
+                                    <Calendar size={28} className="md:w-9 md:h-9" />
                                 </div>
-                                <div>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-admin-primary mb-1">Request Details</p>
-                                    <h2 className="text-3xl font-black text-admin-text-main tracking-tight">Review Case</h2>
+                                <div className="text-left">
+                                    <h3 className="text-sm md:text-xl font-black text-admin-text-main uppercase tracking-tight leading-tight">
+                                        Detail Permintaan Reschedule
+                                    </h3>
+                                    <p className="text-[9px] md:text-[10px] font-bold text-admin-text-light uppercase tracking-[0.3em] mt-1 opacity-60">Review & Validasi Pengajuan Tamu</p>
                                 </div>
                             </div>
-                            <button onClick={() => setSelectedReq(null)} className="p-3 rounded-2xl bg-admin-bg text-admin-text-muted hover:bg-admin-primary hover:text-white transition-all shadow-sm">
-                                <X size={20} />
-                            </button>
                         </div>
 
-                        {/* Modal Content */}
-                        <div className="p-6 md:p-10 space-y-6">
-                            {/* Compact Horizontal Info Bar */}
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                {/* Date Switch Card */}
-                                <div className="flex-[2] flex items-center gap-3 p-5 rounded-2xl bg-slate-50 border border-slate-200">
-                                    <div className="flex-1 text-center">
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Lama</p>
-                                        <p className="text-xs font-black text-slate-400 line-through decoration-slate-300">
-                                            {new Date(selectedReq.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
-                                        </p>
+                        {/* Modal Body (Scrollable) */}
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            <div className="p-8 md:p-10 space-y-8 text-left">
+                                {/* Date Navigation Card */}
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <div className="flex-[2] flex items-center gap-4 p-6 rounded-3xl bg-admin-bg border border-admin-border">
+                                        <div className="flex-1 text-center">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Tanggal Lama</p>
+                                            <p className="text-sm font-black text-slate-400 line-through decoration-slate-300">
+                                                {new Date(selectedReq.old_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                            </p>
+                                        </div>
+                                        <div className="w-10 h-10 rounded-full bg-white border border-admin-border flex items-center justify-center text-admin-primary shadow-sm">
+                                            <ArrowRight size={16} />
+                                        </div>
+                                        <div className="flex-1 text-center">
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-admin-primary mb-2">Tanggal Baru</p>
+                                            <p className="text-sm font-black text-admin-text-main">
+                                                {new Date(selectedReq.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="w-8 h-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-admin-primary shadow-sm">
-                                        <ArrowRight size={14} />
-                                    </div>
-                                    <div className="flex-1 text-center">
-                                        <p className="text-[8px] font-black uppercase tracking-widest text-admin-primary mb-1">Baru</p>
-                                        <p className="text-sm font-black text-admin-text-main">
-                                            {new Date(selectedReq.new_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                        </p>
+
+                                    <div className="flex-1 p-6 rounded-3xl bg-admin-primary text-white flex flex-col justify-center relative overflow-hidden group shadow-xl shadow-admin-primary/20">
+                                        <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full translate-x-8 -translate-y-8" />
+                                        <p className="text-[9px] font-black uppercase tracking-widest text-white/60 mb-2">Biaya Final</p>
+                                        <p className="text-xl font-black tracking-tighter tabular-nums">{formatRupiah(selectedReq.final_charge)}</p>
                                     </div>
                                 </div>
 
-                                {/* Summary Charge Card */}
-                                <div className="flex-1 p-5 rounded-2xl bg-orange-600 text-white flex flex-col justify-center relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-2 opacity-10">
-                                        <Calculator size={32} />
-                                    </div>
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-orange-200 relative z-10">Total Biaya</p>
-                                    <p className="text-lg font-black tracking-tighter relative z-10">{formatRupiah(selectedReq.final_charge)}</p>
-                                </div>
-                            </div>
-
-                            {/* Fee Breakdown Detail (Compact) */}
-                            {(selectedReq.price_diff > 0 || selectedReq.admin_fee > 0 || selectedReq.penalty_fee > 0) && (
-                                <div className="px-6 py-4 rounded-2xl bg-admin-bg border border-admin-border flex flex-wrap gap-x-8 gap-y-2">
-                                    {selectedReq.price_diff > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
-                                            <span className="text-[10px] font-bold text-admin-text-muted">Selisih: <span className="text-admin-text-main">{formatRupiah(selectedReq.price_diff)}</span></span>
-                                        </div>
-                                    )}
-                                    {selectedReq.admin_fee > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
-                                            <span className="text-[10px] font-bold text-admin-text-muted">Admin: <span className="text-admin-text-main">{formatRupiah(selectedReq.admin_fee)}</span></span>
-                                        </div>
-                                    )}
-                                    {selectedReq.penalty_fee > 0 && (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-1 h-1 rounded-full bg-orange-400" />
-                                            <span className="text-[10px] font-bold text-admin-text-muted">Denda: <span className="text-admin-text-main">{formatRupiah(selectedReq.penalty_fee)}</span></span>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Info Grid */}
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
-                                        <User size={10} className="text-admin-primary" /> Customer
-                                    </label>
-                                    <p className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedReq.transaction?.user?.name || 'Guest User'}</p>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
-                                        <Hash size={10} className="text-admin-primary" /> Booking ID
-                                    </label>
-                                    <p className="text-sm font-black text-admin-primary font-mono tracking-widest">#{selectedReq.transaction_id}</p>
-                                </div>
-                                <div className="col-span-2 space-y-2.5">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
-                                        <MessageSquare size={10} className="text-admin-primary" /> Alasan Tamu
-                                    </label>
-                                    <div className="p-5 rounded-2xl bg-admin-bg border border-admin-border italic text-xs font-bold text-admin-text-muted leading-relaxed flex items-start gap-4 shadow-sm">
-                                        <AlertCircle size={16} className="text-admin-primary/40 mt-0.5 flex-shrink-0" />
-                                        "{selectedReq.reason || 'Tidak ada alasan khusus.'}"
-                                    </div>
-                                </div>
-                                <div className="col-span-2 space-y-2.5">
-                                    <label className="text-[9px] font-black uppercase tracking-[0.2em] text-admin-text-muted flex items-center gap-1.5">
-                                        <Save size={10} className="text-admin-primary" /> Balasan Admin (Catatan)
-                                    </label>
-                                    <textarea 
-                                        className="w-full p-4 rounded-2xl bg-white border border-admin-border text-xs font-bold text-admin-text-main outline-none focus:ring-2 focus:ring-admin-primary/20 transition-all font-serif"
-                                        rows="2"
-                                        placeholder="Berikan alasan jika ditolak, atau instruksi pembayaran jika diterima..."
-                                        value={selectedReq.admin_notes || ''}
-                                        onChange={(e) => setSelectedReq({ ...selectedReq, admin_notes: e.target.value })}
-                                        disabled={selectedReq.status !== 'pending'}
-                                    ></textarea>
-                                </div>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex gap-4 pt-2">
-                                {selectedReq.status === 'pending' ? (
-                                    <>
-                                        <button
-                                            onClick={() => handleAction(selectedReq.id, 'rejected')}
-                                            className="flex-1 py-4 rounded-2xl border border-danger/20 text-danger font-black text-xs uppercase tracking-widest hover:bg-danger/5 transition-all active:scale-95"
-                                        >
-                                            Tolak Request
-                                        </button>
-                                        <button
-                                            onClick={() => handleAction(selectedReq.id, 'approved_awaiting_payment')}
-                                            className="flex-[2] py-4 rounded-2xl bg-admin-primary text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-admin-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            <Check size={18} /> Setujui & Simpan Hold
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="w-full space-y-4">
-                                        <div className="p-4 bg-admin-bg rounded-2xl border border-admin-border text-center text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em]">
-                                            Status: {selectedReq.status.replace(/_/g, ' ')}
-                                        </div>
-                                        <button
-                                            onClick={() => setSelectedReq(null)}
-                                            className="w-full py-4 rounded-2xl border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-admin-bg transition-all"
-                                        >
-                                            Tutup Modal
-                                        </button>
+                                {/* Breakdown Details */}
+                                {(selectedReq.price_diff > 0 || selectedReq.admin_fee > 0 || selectedReq.penalty_fee > 0) && (
+                                    <div className="p-6 rounded-2xl bg-admin-bg/40 border border-admin-border flex flex-wrap gap-x-10 gap-y-4">
+                                        {selectedReq.price_diff > 0 && (
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-admin-text-muted uppercase tracking-widest mb-1">Selisih Tarif</span>
+                                                <span className="text-xs font-black text-admin-text-main">{formatRupiah(selectedReq.price_diff)}</span>
+                                            </div>
+                                        )}
+                                        {selectedReq.admin_fee > 0 && (
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-admin-text-muted uppercase tracking-widest mb-1">Biaya Admin</span>
+                                                <span className="text-xs font-black text-admin-text-main">{formatRupiah(selectedReq.admin_fee)}</span>
+                                            </div>
+                                        )}
+                                        {selectedReq.penalty_fee > 0 && (
+                                            <div className="flex flex-col">
+                                                <span className="text-[8px] font-black text-admin-text-muted uppercase tracking-widest mb-1">Denda/Penalty</span>
+                                                <span className="text-xs font-black text-admin-text-main">{formatRupiah(selectedReq.penalty_fee)}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
+
+                                {/* User & Ref Info */}
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted flex items-center gap-2">
+                                            <User size={12} className="text-admin-primary" /> Nama Pelanggan
+                                        </label>
+                                        <p className="text-sm font-black text-admin-text-main uppercase tracking-tight">{selectedReq.transaction?.user?.name || 'Guest User'}</p>
+                                    </div>
+                                    <div className="space-y-2 text-right">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted flex items-center gap-2 justify-end">
+                                            <Hash size={12} className="text-admin-primary" /> Booking ID
+                                        </label>
+                                        <p className="text-sm font-black text-admin-primary font-mono tracking-widest">#{selectedReq.transaction_id}</p>
+                                    </div>
+                                    
+                                    <div className="col-span-2 space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted flex items-center gap-2">
+                                            <MessageSquare size={12} className="text-admin-primary" /> Alasan Pengajuan
+                                        </label>
+                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border text-xs font-bold text-admin-text-main leading-relaxed flex items-start gap-4">
+                                            <AlertCircle size={18} className="text-admin-primary/30 shrink-0 mt-0.5" />
+                                            <span>"{selectedReq.reason || 'Tidak ada alasan khusus.'}"</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="col-span-2 space-y-3">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-admin-text-muted flex items-center gap-2">
+                                            <Save size={12} className="text-admin-primary" /> Catatan Admin (Respons)
+                                        </label>
+                                        <textarea 
+                                            className="w-full p-5 rounded-2xl bg-white border-2 border-admin-border text-xs font-bold text-admin-text-main outline-none focus:border-admin-primary transition-all placeholder:text-admin-text-light/50"
+                                            rows="3"
+                                            placeholder="Informasikan alasan jika ditolak, atau berikan detail instruksi lainnya..."
+                                            value={selectedReq.admin_notes || ''}
+                                            onChange={(e) => setSelectedReq({ ...selectedReq, admin_notes: e.target.value })}
+                                            disabled={selectedReq.status !== 'pending'}
+                                        ></textarea>
+                                    </div>
+                                </div>
+
+                                {/* Footer Actions */}
+                                <div className="flex flex-col sm:flex-row gap-4 pt-4 pb-2">
+                                    {selectedReq.status === 'pending' ? (
+                                        <>
+                                            <button
+                                                onClick={() => handleAction(selectedReq.id, 'rejected')}
+                                                className="flex-1 py-5 rounded-2xl bg-admin-bg border-2 border-admin-border text-rose-500 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-50 hover:border-rose-200 transition-all active:scale-95 shadow-sm"
+                                            >
+                                                Tolak Pengajuan
+                                            </button>
+                                            <button
+                                                onClick={() => handleAction(selectedReq.id, 'approved_awaiting_payment')}
+                                                className="flex-[2] py-5 rounded-2xl bg-admin-primary text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-admin-primary/30 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
+                                            >
+                                                <Check size={18} strokeWidth={3} />
+                                                Terima & Simpan
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <button
+                                            onClick={() => setSelectedReq(null)}
+                                            className="w-full py-5 rounded-2xl bg-admin-bg border-2 border-admin-border text-admin-text-muted font-black text-[10px] uppercase tracking-[0.2em] hover:bg-white hover:text-admin-text-main transition-all"
+                                        >
+                                            Tutup Detail
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div>,
+                document.body
             )}
         </div>
     );

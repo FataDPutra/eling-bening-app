@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import {
     Plus, Edit, Trash2, Search, ConciergeBell, LayoutGrid, X,
@@ -350,101 +351,138 @@ export default function Facilities() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in group/modal">
-                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
-                        <div className="fixed inset-0" onClick={closeModal} />
-                        <div className="bg-white w-full max-w-xl rounded-[2.5rem] md:rounded-[3rem] relative z-[10002] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col border border-white/20 animate-scale-up">
-                        <div className="p-6 md:p-10 border-b border-admin-border flex items-center justify-between bg-admin-bg/50 rounded-t-[2.5rem] md:rounded-t-[3rem] flex-shrink-0">
-                            <div className="flex items-center gap-4 md:gap-5">
-                                <div className="w-12 h-12 md:w-16 md:h-16 rounded-[1.2rem] md:rounded-[1.5rem] bg-admin-primary text-white flex items-center justify-center shadow-2xl shadow-admin-primary/30 shrink-0">
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 md:p-8">
+                    {/* Dark & Blurred Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500"
+                        style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                        onClick={closeModal}
+                    ></div>
+
+                    {/* Modal Card */}
+                    <div className="bg-white w-full max-w-xl rounded-[2.5rem] md:rounded-[3rem] relative z-10 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] flex flex-col border border-white/20 animate-scale-up max-h-[90vh] overflow-hidden">
+                        
+                        {/* Premium Close Button */}
+                        <button 
+                            onClick={closeModal} 
+                            className="absolute top-6 right-6 z-30 w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white/90 backdrop-blur-sm border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 hover:rotate-90 transition-all duration-500 flex items-center justify-center shadow-lg active:scale-90 group"
+                        >
+                            <X size={20} className="group-hover:scale-110 transition-transform" />
+                        </button>
+
+                        {/* Modal Header */}
+                        <div className="p-8 md:p-10 border-b border-admin-border bg-admin-bg/50 flex-shrink-0">
+                            <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 md:w-16 md:h-16 rounded-[1.2rem] md:rounded-[1.5rem] bg-admin-primary text-white flex items-center justify-center shadow-2xl shadow-admin-primary/30 ring-4 ring-admin-primary/10">
                                     <IconRenderer icon={form.icon} size={28} className="md:w-9 md:h-9" />
                                 </div>
-                                <div className="flex-1">
+                                <div className="text-left">
                                     <h3 className="text-sm md:text-xl font-black text-admin-text-main uppercase tracking-tight leading-tight">
-                                        {editingFacility ? 'Edit Detail Fasilitas' : 'Konfigurasi Fasilitas Baru'}
+                                        {editingFacility ? 'Edit Master Fasilitas' : 'Fasilitas Kolaborasi Baru'}
                                     </h3>
-                                    <p className="text-[8px] md:text-[10px] font-bold text-admin-text-muted uppercase tracking-[0.3em] mt-1 md:mt-2">Master Eling Bening</p>
+                                    <p className="text-[9px] md:text-[10px] font-bold text-admin-text-light uppercase tracking-[0.3em] mt-1 opacity-60">Konfigurasi Aset Premium Eling Bening</p>
                                 </div>
                             </div>
-                            <button onClick={closeModal} className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-white border border-admin-border text-admin-text-muted hover:text-rose-600 hover:border-rose-600 hover:rotate-90 transition-all duration-500 flex items-center justify-center shrink-0">
-                                <X size={20} />
-                            </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="p-6 md:p-10 space-y-6 md:space-y-8 no-scrollbar">
-                            <div className="space-y-2 md:space-y-3">
-                                <label className="block text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] ml-1">Nama Fasilitas Resmi *</label>
-                                <input type="text" value={form.name} onChange={e => setForm(f => ({...f, name: e.target.value}))}
-                                    required placeholder="Tuliskan nama fasilitas premium..."
-                                    className="w-full border-2 border-admin-border rounded-[1.2rem] md:rounded-[1.5rem] px-5 md:px-6 py-3 md:py-4 text-xs md:text-sm font-black text-admin-text-main focus:outline-none focus:border-admin-primary bg-admin-bg/30 transition-all" />
-                            </div>
+                        {/* Modal Body (Scrollable) */}
+                        <div className="flex-1 overflow-y-auto no-scrollbar">
+                            <form onSubmit={handleSubmit} className="p-8 md:p-10 space-y-8 text-left">
+                                <div className="space-y-3">
+                                    <label className="block text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] ml-1">Identitas Fasilitas *</label>
+                                    <input 
+                                        type="text" 
+                                        value={form.name} 
+                                        onChange={e => setForm(f => ({...f, name: e.target.value}))}
+                                        required 
+                                        placeholder="Contoh: Kolam Renang Infinity, Wifi High-Speed..."
+                                        className="w-full border-2 border-admin-border rounded-2xl px-6 py-4 text-xs md:text-sm font-black text-admin-text-main focus:outline-none focus:border-admin-primary bg-admin-bg/40 transition-all placeholder:text-admin-text-light/50 shadow-inner" 
+                                    />
+                                </div>
 
-                            <IconPicker value={form.icon} onChange={val => setForm(f => ({...f, icon: val}))} />
+                                <IconPicker value={form.icon} onChange={val => setForm(f => ({...f, icon: val}))} />
 
-                            <div className="space-y-2 md:space-y-3">
-                                <label className="block text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] ml-1">Deskripsi Tambahan (Opsional)</label>
-                                <textarea value={form.description} onChange={e => setForm(f => ({...f, description: e.target.value}))}
-                                    rows={3} placeholder="Berikan informasi detail untuk kenyamanan tamu..."
-                                    className="w-full border-2 border-admin-border rounded-[1.2rem] md:rounded-[1.5rem] px-5 md:px-6 py-3 md:py-4 text-xs md:text-sm font-bold text-admin-text-main focus:outline-none focus:border-admin-primary bg-admin-bg/30 resize-none transition-all" />
-                            </div>
+                                <div className="space-y-3">
+                                    <label className="block text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.3em] ml-1">Narasi Fasilitas (Metadata)</label>
+                                    <textarea 
+                                        value={form.description} 
+                                        onChange={e => setForm(f => ({...f, description: e.target.value}))}
+                                        rows={3} 
+                                        placeholder="Jelaskan keunggulan fasilitas ini secara mendalam..."
+                                        className="w-full border-2 border-admin-border rounded-2xl px-6 py-4 text-xs md:text-sm font-bold text-admin-text-main focus:outline-none focus:border-admin-primary bg-admin-bg/40 resize-none transition-all shadow-inner placeholder:text-admin-text-light/50" 
+                                    />
+                                </div>
 
-                            <div className="p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] bg-admin-bg/50 border-2 border-admin-border space-y-4 md:space-y-6">
-                                <div className="flex items-center justify-between gap-4 md:gap-6 cursor-pointer select-none group/toggle" 
-                                    onClick={() => setForm(f => ({...f, is_addon: !f.is_addon}))}>
-                                    <div className="flex-1">
-                                        <p className="text-xs md:text-sm font-black text-admin-text-main uppercase tracking-tight group-hover:text-admin-primary transition-colors">Layanan Add-on?</p>
-                                        <p className="text-[9px] md:text-[10px] text-admin-text-muted font-bold mt-1 tracking-wide">Dapat dipesan tamu secara terpisah (Berbayar).</p>
-                                    </div>
-                                    <div className={`relative flex-shrink-0 w-12 md:w-14 h-6 md:h-7 rounded-full transition-all duration-500 shadow-inner ${form.is_addon ? 'bg-orange-500' : 'bg-slate-200'}`}>
-                                        <div className={`absolute top-0.5 md:top-1 left-0.5 md:left-1 w-5 h-5 bg-white rounded-full shadow-xl transition-all duration-500 flex items-center justify-center ${form.is_addon ? 'translate-x-6 md:translate-x-7' : 'translate-x-0'}`}>
-                                            {form.is_addon && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div 
+                                        className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer select-none group/toggle ${form.is_addon ? 'border-orange-500 bg-orange-50/20 shadow-lg shadow-orange-500/10' : 'border-admin-border bg-admin-bg/40 shadow-inner'}`} 
+                                        onClick={() => setForm(f => ({...f, is_addon: !f.is_addon}))}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className={`text-xs font-black uppercase tracking-tight ${form.is_addon ? 'text-orange-600' : 'text-admin-text-main'}`}>Layanan Add-on</p>
+                                            <div className={`relative w-10 h-5 rounded-full transition-all duration-500 ${form.is_addon ? 'bg-orange-500' : 'bg-slate-300'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-500 ${form.is_addon ? 'translate-x-5' : 'translate-x-0'}`} />
+                                            </div>
                                         </div>
+                                        <p className="text-[9px] text-admin-text-muted font-bold leading-relaxed opacity-70">Ditagih manual sebagai layanan tambahan opsional.</p>
+                                    </div>
+
+                                    <div 
+                                        className={`p-6 rounded-[2rem] border-2 transition-all cursor-pointer select-none group/status ${form.is_active ? 'border-emerald-500 bg-emerald-50/20 shadow-lg shadow-emerald-500/10' : 'border-admin-border bg-admin-bg/40 shadow-inner'}`}
+                                        onClick={() => setForm(f => ({...f, is_active: !f.is_active}))}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className={`text-xs font-black uppercase tracking-tight ${form.is_active ? 'text-emerald-600' : 'text-admin-text-main'}`}>Status Aktif</p>
+                                            <div className={`relative w-10 h-5 rounded-full transition-all duration-500 ${form.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow-md transition-all duration-500 ${form.is_active ? 'translate-x-5' : 'translate-x-0'}`} />
+                                            </div>
+                                        </div>
+                                        <p className="text-[9px] text-admin-text-muted font-bold leading-relaxed opacity-70">Muncul dalam katalog reservasi pusat.</p>
                                     </div>
                                 </div>
 
                                 {form.is_addon && (
-                                    <div className="pt-4 md:pt-6 border-t-2 border-admin-border border-dashed animate-fade-in">
-                                        <label className="block text-[9px] md:text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-2 md:mb-3 ml-1">Tarif Layanan (IDR/Malam)</label>
-                                        <div className="relative group/price">
-                                            <span className="absolute left-5 md:left-6 top-1/2 -translate-y-1/2 text-[10px] md:text-xs font-black text-admin-text-muted group-focus-within/price:text-admin-primary transition-colors">Rp</span>
-                                            <input type="number" value={form.price} min="0"
+                                    <div className="p-6 rounded-[2rem] bg-orange-500 text-white shadow-xl shadow-orange-500/20 animate-fade-in relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full translate-x-8 -translate-y-8 group-hover:scale-110 transition-transform duration-1000" />
+                                        <label className="block text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-white/70">Valuasi Tarif Layanan (IDR)</label>
+                                        <div className="relative">
+                                            <span className="absolute left-0 top-1/2 -translate-y-1/2 text-xl font-black opacity-30">Rp</span>
+                                            <input 
+                                                type="number" 
+                                                value={form.price} 
+                                                min="0"
                                                 onClick={(e) => e.stopPropagation()}
                                                 onChange={e => setForm(f => ({...f, price: e.target.value}))}
-                                                className="w-full border-2 border-admin-border rounded-[1rem] md:rounded-[1.2rem] pl-12 md:pl-16 pr-5 md:pr-6 py-3 md:py-4 text-xs md:text-sm font-black text-admin-text-main focus:outline-none focus:border-admin-primary bg-white transition-all shadow-sm" />
+                                                className="w-full bg-transparent border-b-2 border-white/30 focus:border-white outline-none pl-12 py-2 text-2xl font-black tracking-tighter tabular-nums placeholder:text-white/20 transition-all" 
+                                            />
+                                            <p className="text-[9px] font-bold mt-2 text-white/50 tracking-widest uppercase">Per Item / Unit Satuan</p>
                                         </div>
                                     </div>
                                 )}
-                            </div>
 
-                            <div className="flex items-center justify-between p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] bg-admin-bg/50 border-2 border-admin-border cursor-pointer select-none group/status"
-                                onClick={() => setForm(f => ({...f, is_active: !f.is_active}))}>
-                                <div className="flex-1">
-                                    <p className="text-xs md:text-sm font-black text-admin-text-main uppercase tracking-tight group-hover:text-admin-primary transition-colors">Status Ketersediaan</p>
-                                    <p className="text-[9px] md:text-[10px] text-admin-text-muted font-bold mt-1 tracking-wide">Tandai apakah sedang aktif atau libur.</p>
+                                <div className="flex flex-col sm:flex-row gap-4 pt-6 pb-2">
+                                    <button 
+                                        type="button" 
+                                        onClick={closeModal}
+                                        className="flex-1 py-5 rounded-2xl bg-admin-bg border-2 border-admin-border text-admin-text-muted font-black text-[10px] uppercase tracking-[0.3em] hover:bg-white hover:text-admin-text-main transition-all active:scale-95 shadow-sm"
+                                    >
+                                        Batalkan
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        disabled={isSaving}
+                                        className="flex-[2] flex items-center justify-center gap-3 bg-admin-primary text-white py-5 rounded-2xl shadow-2xl shadow-admin-primary/30 disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-xl"
+                                    >
+                                        {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} strokeWidth={3} />}
+                                        <span className="font-black text-[10px] uppercase tracking-[0.3em]">{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
+                                    </button>
                                 </div>
-                                <div className={`relative flex-shrink-0 w-12 md:w-14 h-6 md:h-7 rounded-full transition-all duration-500 shadow-inner ${form.is_active ? 'bg-emerald-500' : 'bg-slate-200'}`}>
-                                    <div className={`absolute top-0.5 md:top-1 left-0.5 md:left-1 w-5 h-5 bg-white rounded-full shadow-xl transition-all duration-500 flex items-center justify-center ${form.is_active ? 'translate-x-6 md:translate-x-7' : 'translate-x-0'}`}>
-                                        {form.is_active && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 pt-4 pb-2">
-                                <button type="button" onClick={closeModal}
-                                    className="flex-1 py-4 md:py-5 rounded-[1.2rem] md:rounded-[1.5rem] bg-admin-bg border-2 border-admin-border text-admin-text-muted font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-white hover:text-admin-text-main transition-all active:scale-95 shadow-sm">
-                                    Batalkan
-                                </button>
-                                <button type="submit" disabled={isSaving}
-                                    className="flex-[2] flex items-center justify-center gap-2 md:gap-3 bg-admin-primary text-white py-4 md:py-5 rounded-[1.2rem] md:rounded-[1.5rem] shadow-2xl shadow-admin-primary/30 disabled:opacity-50 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} strokeWidth={3} />}
-                                    <span className="font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em]">{isSaving ? 'Memproses...' : 'Simpan Fasilitas'}</span>
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            </div>
+                </div>,
+                document.body
             )}
         </div>
     );

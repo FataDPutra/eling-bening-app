@@ -619,8 +619,8 @@ export default function RoomDetails() {
 
             {/* Lightbox / Sidebar Overlays */}
             {lightboxMedia && (
-                <div className="fixed inset-0 z-[2000] bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxMedia(null)}>
-                    <button className="absolute top-8 right-10 text-white hover:text-eling-green transition-colors z-[2100]" onClick={() => setLightboxMedia(null)}>
+                <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 md:p-12 animate-fade-in" onClick={() => setLightboxMedia(null)}>
+                    <button className="absolute top-8 right-10 text-white hover:text-eling-green transition-colors z-[60]" onClick={() => setLightboxMedia(null)}>
                         <X size={40} strokeWidth={1} />
                     </button>
                     <div className="w-full h-full max-w-7xl max-h-[85vh] flex items-center justify-center relative shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -633,7 +633,7 @@ export default function RoomDetails() {
 
             {/* Full Gallery Overlay */}
             {showFullGallery && (
-                <div className="fixed inset-0 z-[1500] bg-white overflow-y-auto animate-fade-in-up">
+                <div className="fixed inset-0 z-50 bg-white overflow-y-auto animate-fade-in-up">
                     <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 px-6 py-6 flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <button onClick={() => setShowFullGallery(false)} className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-900 hover:bg-gray-100 transition shadow-sm">

@@ -441,7 +441,7 @@ export default function EventBooking() {
 
             {/* Success Modal */}
             {showSuccess && (
-                <div className="fixed inset-0 z-[1000] bg-eling-green overflow-y-auto font-sans text-center">
+                <div className="fixed inset-0 z-50 bg-eling-green overflow-y-auto font-sans text-center">
                     <div className="min-h-full flex flex-col items-center p-6 sm:p-12">
                         <div className="max-w-4xl w-full mx-auto my-auto py-10">
                             <div className="text-center text-white mb-6">

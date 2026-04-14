@@ -96,3 +96,8 @@ input[type="number"] {
 .react-datepicker__triangle {
     @apply !hidden;
 }
+
+/* Ensure SweetAlert2 is ALWAYS on the topmost layer */
+.swal2-container {
+    z-index: 999999 !important;
+}

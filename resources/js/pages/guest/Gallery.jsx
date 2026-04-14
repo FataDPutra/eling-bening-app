@@ -116,7 +116,7 @@ export default function Gallery() {
             {/* Modal via Portal */}
             {selectedImage && createPortal(
                 <div 
-                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" 
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-md" 
                     style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh' }}
                     onClick={() => setSelectedImage(null)}
                 >

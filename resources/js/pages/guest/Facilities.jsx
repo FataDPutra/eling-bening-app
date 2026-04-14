@@ -91,7 +91,7 @@ export default function Facilities() {
 
             {/* Map Modal */}
             {showMap && (
-                <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 lg:p-10 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setShowMap(false)}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 lg:p-10 bg-black/90 backdrop-blur-md animate-fade-in" onClick={() => setShowMap(false)}>
                     <div className="bg-white rounded-3xl overflow-hidden w-full h-full max-h-[90vh] max-w-6xl shadow-2xl relative flex flex-col animate-scale-up" onClick={e => e.stopPropagation()}>
                         <div className="p-4 bg-white flex justify-between items-center border-b border-gray-100 shrink-0">
                             <div>

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../utils/AuthContext';
 import { formatRupiah, calculateTotalStayPrice } from '../../utils/data';
+import IconRenderer from '../../components/IconRenderer';
 
 export default function Booking() {
     const navigate = useNavigate();
@@ -442,7 +443,7 @@ export default function Booking() {
                                                 />
                                                 <div>
                                                     <span className="text-sm font-black text-gray-700 group-hover:text-gray-900 flex items-center gap-2">
-                                                        <span>{facility.icon}</span> {facility.name}
+                                                        <IconRenderer icon={facility.icon} size={18} className="text-eling-green" /> {facility.name}
                                                     </span>
                                                     {facility.price > 0 && (
                                                         <p className="text-[10px] font-bold text-eling-green mt-0.5">+{formatRupiah(facility.price)} /malam</p>

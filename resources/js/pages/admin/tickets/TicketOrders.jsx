@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -254,36 +255,36 @@ export default function TicketOrders() {
 
             {/* Quick Intelligence Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="admin-card group hover:scale-[1.02] transition-all">
+                <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-emerald-500">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-admin-primary/10 text-admin-primary flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner border border-emerald-100">
                             <ShoppingBag size={28} />
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Pesanan Tiket</p>
-                            <p className="text-3xl font-black text-admin-text-main leading-none tabular-nums">{stats.total}</p>
+                            <p className="text-3xl font-black text-emerald-600 leading-none tabular-nums">{stats.total}</p>
                         </div>
                     </div>
                 </div>
-                <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-success">
+                <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-indigo-500">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner border border-indigo-100">
                             <DollarSign size={28} />
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Total Pendapatan Tiket</p>
-                            <p className="text-3xl font-black text-success leading-none tabular-nums">{formatRupiah(stats.revenue)}</p>
+                            <p className="text-3xl font-black text-indigo-600 leading-none tabular-nums">{formatRupiah(stats.revenue)}</p>
                         </div>
                     </div>
                 </div>
-                <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-warning">
+                <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-amber-500">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shadow-inner">
+                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner border border-amber-100">
                             <Clock size={28} />
                         </div>
                         <div>
                             <p className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] mb-1">Menunggu Pembayaran</p>
-                            <p className="text-3xl font-black text-warning leading-none tabular-nums">{stats.pending}</p>
+                            <p className="text-3xl font-black text-amber-600 leading-none tabular-nums">{stats.pending}</p>
                         </div>
                     </div>
                 </div>
@@ -439,76 +440,142 @@ export default function TicketOrders() {
                 </div>
             </div>
 
-            {/* Order Detail Modal */}
-            {selectedOrder && (
-                <div className="fixed inset-0 z-[1000] overflow-y-auto p-4 sm:p-6 md:p-12 flex justify-center items-start md:items-center animate-fade-in">
-                    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl" onClick={() => setSelectedOrder(null)}></div>
-                    <div className="bg-white w-full max-w-4xl rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden flex flex-col md:flex-row relative z-[1001] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20 my-auto">
-                        <button
-                            onClick={() => setSelectedOrder(null)}
-                            className="absolute top-4 right-4 md:top-8 md:right-8 z-30 w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
+            {/* Order Detail Modal (High-Fidelity) via Portal */}
+            {selectedOrder && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 md:p-8">
+                    {/* Dark & Blurred Backdrop - Full Viewport */}
+                    <div 
+                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500"
+                        style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                        onClick={() => setSelectedOrder(null)}
+                    ></div>
+
+                    {/* Modal Card - Premium Shadow & Glassmorphism border */}
+                    <div className="bg-white w-full max-w-5xl rounded-3xl lg:rounded-[2.5rem] overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row relative z-10 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20 max-h-[90vh]">
+                        
+                        {/* Close Button - Consistent mobile access */}
+                        <button 
+                            onClick={() => setSelectedOrder(null)} 
+                            className="absolute top-4 right-4 lg:top-8 lg:right-8 z-[30] w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/90 backdrop-blur-sm hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
                         >
-                            <X size={20} className="md:w-6 md:h-6 group-hover:rotate-90 transition-transform duration-300" />
+                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
                         </button>
 
-                        <div className="md:w-[35%] bg-admin-bg p-8 md:p-12 border-r border-admin-border flex flex-col">
-                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-[1.5rem] md:rounded-[2rem] bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-6 md:mb-10 shadow-inner">
+                        {/* Status Sidebar (Left) */}
+                        <div className="lg:w-[32%] bg-admin-bg p-6 sm:p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-admin-border flex flex-col">
+                            <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-admin-primary/10 text-admin-primary flex items-center justify-center mb-6 lg:mb-8 shadow-inner ring-1 ring-admin-primary/20">
                                 <Ticket size={32} />
                             </div>
-                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.4em] mb-2 md:mb-3">Kode Pesanan</span>
-                            <h2 className="text-3xl md:text-4xl font-black text-admin-text-main tracking-tighter mb-6 md:mb-10 leading-none tabular-nums italic">#{selectedOrder.id}</h2>
+                            
+                            <div className="mb-6 lg:mb-8 font-black">
+                                <span className="text-[10px] text-admin-text-muted uppercase tracking-[0.3em] mb-2 block leading-none text-left">ID Pesanan</span>
+                                <h2 className="text-xl lg:text-2xl text-admin-text-main tracking-tighter uppercase drop-shadow-sm text-left">#{selectedOrder.id}</h2>
+                            </div>
 
-                            <div className={`mt-auto p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border-2 border-dashed ${getStatusStyles(selectedOrder.status)}`}>
-                                <div className="flex items-center gap-3 mb-3 md:mb-4">
-                                    <ShieldCheck size={18} />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Keamanan Data</span>
+                            <div className="space-y-4 lg:space-y-6 flex-1">
+                                <div className="p-4 lg:p-5 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-admin-primary/30 transition-all">
+                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 block">Status Transaksi</span>
+                                    <div className={`px-4 py-3 rounded-xl border-2 border-dashed font-black uppercase text-center text-xs tracking-widest transition-all ${getStatusStyles(selectedOrder.status)}`}>
+                                        {selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'BERHASIL' : 'TERTUNDA'}
+                                    </div>
                                 </div>
-                                <div className="text-base md:text-lg font-black uppercase tracking-tight">{selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'Terverifikasi' : 'Audit Tertunda'}</div>
+
+                                <div className="p-4 lg:p-5 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-admin-primary/30 transition-all">
+                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 block leading-none">Metode Pembayaran</span>
+                                    <div className="flex items-center gap-3 text-admin-text-main font-bold">
+                                        <div className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center border border-admin-border shadow-inner">
+                                            <DollarSign size={16} />
+                                        </div>
+                                        <span className="uppercase text-[10px] lg:text-xs tracking-tight">{selectedOrder.payment_method || 'Midtrans Gateway'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-8 pt-8 border-t border-dashed border-admin-border space-y-4">
+                                {selectedOrder.status === 'pending' ? (
+                                    <>
+                                        <button 
+                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'success')}
+                                            className="group relative w-full h-20 lg:h-24 rounded-2xl lg:rounded-[2rem] bg-eling-green hover:bg-green-700 transition-all duration-500 shadow-xl overflow-hidden active:scale-95"
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
+                                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                                            
+                                            <div className="relative flex flex-col items-center justify-center h-full text-white">
+                                                <div className="p-1.5 rounded-full bg-white/20 mb-1 lg:mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                                    <CheckCircle2 size={24} />
+                                                </div>
+                                                <div className="flex flex-col items-center leading-none">
+                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Konfirmasi</span>
+                                                    <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest mt-1">Pembayaran</span>
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        <button 
+                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'failed')}
+                                            className="w-full py-3 lg:py-4 rounded-xl lg:rounded-2xl bg-rose-50 border-2 border-rose-200 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                                        >
+                                            <X size={16} /> Batalkan Transaksi
+                                        </button>
+                                    </>
+                                ) : (
+                                    <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                                        <button
+                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'pending')}
+                                            className="py-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 hover:bg-amber-100 hover:border-amber-300 transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 shadow-sm"
+                                        >
+                                            <RotateCcw size={16} className="group-hover:rotate-[-45deg] transition-transform duration-300" />
+                                            <span className="text-[9px] font-black uppercase tracking-tighter">Setel Tertunda</span>
+                                        </button>
+                                        <button
+                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled')}
+                                            className="py-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 hover:border-rose-300 transition-all flex flex-col items-center justify-center gap-1 group active:scale-95 shadow-sm"
+                                        >
+                                            <X size={16} />
+                                            <span className="text-[9px] font-black uppercase tracking-tighter">Batalkan Pesanan</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        <div className="md:w-[65%] p-8 md:p-14 overflow-y-auto max-h-[90vh] no-scrollbar">
+                        {/* Content Area (Right) */}
+                        <div className="lg:w-[68%] p-6 sm:p-8 lg:p-14 lg:overflow-y-auto bg-white custom-scrollbar relative">
                             <div className="flex items-center gap-4 mb-10">
-                                <div className="w-1 h-12 bg-admin-primary rounded-full" />
-                                <div>
-                                    <h3 className="text-2xl font-black text-admin-text-main uppercase tracking-tight">Rincian Data Tiket</h3>
-                                    <p className="text-xs text-admin-text-muted font-bold uppercase tracking-widest mt-1 italic">Diverifikasi pada {new Date(selectedOrder.created_at).toLocaleString('id-ID')}</p>
+                                <div className="w-1.5 h-12 bg-admin-primary rounded-full" />
+                                <div className="text-left">
+                                    <h3 className="text-xl lg:text-2xl font-black text-admin-text-main uppercase tracking-tight">Rincian Data Tiket</h3>
+                                    <p className="text-[10px] text-admin-text-muted font-bold uppercase tracking-widest mt-1">Diverifikasi pada {new Date(selectedOrder.created_at).toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-10 mb-12">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 mb-12 text-left">
                                 <div className="space-y-8">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><User size={12}/> Info Pelanggan</h4>
-                                        <div className="p-6 rounded-[2rem] bg-admin-bg border border-admin-border shadow-inner">
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2 leading-none"><User size={12}/> Info Pelanggan</h4>
+                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border shadow-inner">
                                             <p className="text-sm font-black text-admin-text-main uppercase mb-1">{selectedOrder.booker_name}</p>
                                             <p className="text-[10px] text-admin-text-light font-bold uppercase tracking-widest">{selectedOrder.user?.email || 'Pelanggan Tamu'}</p>
                                             {selectedOrder.booker_phone && (
-                                                <div className="mt-3 pt-3 border-t border-admin-border flex items-center gap-2">
-                                                    <span className="text-[10px] font-black text-admin-primary uppercase tracking-widest">Telp: {selectedOrder.booker_phone}</span>
+                                                <div className="mt-3 pt-3 border-t border-admin-border flex items-center gap-2 leading-none uppercase underline decoration-admin-primary/30">
+                                                    <span className="text-[10px] font-black text-admin-primary tracking-widest">Telp: {selectedOrder.booker_phone}</span>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><MapPin size={12}/> Jadwal Kunjungan</h4>
-                                        <div className="p-6 rounded-[2rem] bg-admin-bg border border-admin-border shadow-inner">
-                                            <p className="text-sm font-black text-admin-text-main uppercase">{new Date(selectedOrder.check_in_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2 leading-none"><MapPin size={12}/> Jadwal Kunjungan</h4>
+                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border shadow-inner">
+                                            <p className="text-sm font-black text-admin-text-main uppercase tracking-tighter leading-none">{new Date(selectedOrder.check_in_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                                         </div>
                                     </div>
-                                    {selectedOrder.note && (
-                                        <div>
-                                            <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><FileText size={12}/> Catatan Khusus</h4>
-                                            <div className="p-6 rounded-[2rem] bg-warning/5 border border-warning/10 shadow-inner">
-                                                <p className="text-[11px] font-bold text-admin-text-main italic">"{selectedOrder.note}"</p>
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
+
                                 <div className="space-y-8">
                                     <div>
-                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2"><DollarSign size={12}/> Ringkasan Pembayaran</h4>
-                                        <div className="p-8 rounded-[2.5rem] bg-admin-primary text-white shadow-2xl shadow-admin-primary/30 relative overflow-hidden group">
+                                        <h4 className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-4 flex items-center gap-2 leading-none"><DollarSign size={12}/> Ringkasan Biaya</h4>
+                                        <div className="p-8 rounded-[2rem] bg-admin-primary text-white shadow-2xl shadow-admin-primary/30 relative overflow-hidden group">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-110 transition-transform duration-700" />
                                             
                                             <div className="space-y-2 mb-6 opacity-70">
@@ -517,163 +584,80 @@ export default function TicketOrders() {
                                                     <span>{formatRupiah(Number(selectedOrder.total_price || 0) + Number(selectedOrder.discount_amount || 0) - (Number(selectedOrder.total_price || 0) * 0.1))}</span>
                                                 </div>
                                                 <div className="flex justify-between text-[8px] font-black uppercase tracking-widest">
-                                                    <span>Pajak (10%)</span>
+                                                    <span>Pajak (Tax) 10%</span>
                                                     <span>{formatRupiah(Number(selectedOrder.total_price || 0) * 0.1)}</span>
                                                 </div>
                                                 {selectedOrder.discount_amount > 0 && (
-                                                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-eling-red">
-                                                        <span>Potongan Promo</span>
+                                                    <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-eling-red font-bold">
+                                                        <span className="text-white/80">PROMO</span>
                                                         <span>-{formatRupiah(selectedOrder.discount_amount)}</span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1 block font-serif leading-none">Net Valuasi</span>
-                                            <div className="text-3xl font-black tracking-tighter tabular-nums mb-1">{formatRupiah(selectedOrder.total_price)}</div>
-                                            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest">Total Akhir Pesanan</div>
+                                            <span className="text-[10px] font-black opacity-60 uppercase tracking-widest mb-1 block leading-none">Net Valuasi</span>
+                                            <div className="text-3xl font-black tracking-tighter tabular-nums mb-1 leading-none">{formatRupiah(selectedOrder.total_price)}</div>
+                                            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-2">{selectedOrder.payment_method || 'Midtrans'}</div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>                            <section className="mb-12">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-[0.2em]">Daftar Pengunjung ({selectedOrder.total_qty})</h4>
-                                    <div className="h-px flex-1 mx-6 bg-admin-border opacity-50" />
-                                </div>
-                                <div className="space-y-4">
-                                    {(selectedOrder.tickets || []).map((ticket, idx) => (
-                                        <div key={idx} className="bg-admin-bg border border-admin-border rounded-2xl p-5 flex items-center justify-between group hover:bg-admin-primary/5 transition-all shadow-sm">
-                                            <div className="flex items-center gap-4 group/v">
-                                                <div className="relative">
-                                                    <div className="w-14 h-14 rounded-2xl bg-white border border-admin-border flex items-center justify-center overflow-hidden transition-all group-hover/v:border-admin-primary/30 group-hover/v:shadow-lg shadow-inner">
-                                                        <QRCodeCanvas 
-                                                            value={ticket.ticket_id} 
-                                                            size={48}
-                                                            level="L"
-                                                            includeMargin={false}
-                                                            className="opacity-40 group-hover/v:opacity-100 transition-all grayscale group-hover/v:grayscale-0 p-1"
-                                                        />
-                                                    </div>
-                                                    <div className="absolute -bottom-2 -right-2 w-6 h-6 rounded-full bg-white border border-admin-border flex items-center justify-center shadow-md animate-in fade-in zoom-in duration-300">
-                                                        <QrCode size={12} className="text-admin-primary" />
-                                                    </div>
+                                    
+                                    {selectedOrder.promo && (
+                                        <div className="p-6 bg-admin-primary/5 border-2 border-dashed border-admin-primary/20 rounded-2xl flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-xl bg-white border border-admin-primary/20 flex items-center justify-center text-admin-primary shadow-sm">
+                                                    <Tag size={20} />
                                                 </div>
                                                 <div>
-                                                    <span className="text-sm font-black text-admin-text-main uppercase tracking-tight">{ticket.guest_name}</span>
-                                                    <div className="flex flex-wrap items-center gap-2 mt-2">
-                                                        <span className="text-[9px] font-black bg-admin-primary/10 text-admin-primary px-2 py-0.5 rounded uppercase tracking-widest leading-none shadow-sm border border-admin-primary/10">
-                                                            {ticket.transaction_item?.item?.name || 'Item Tiket'}
-                                                        </span>
-                                                        <span className="text-[9px] font-bold text-admin-text-light font-mono bg-admin-bg px-2 py-0.5 rounded flex items-center gap-1 border border-admin-border/30 group-hover/v:border-admin-primary/30 group-hover/v:text-admin-text-main transition-all">
-                                                            {ticket.ticket_id}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-[8px] font-black text-admin-text-muted uppercase tracking-[0.2em] block mb-0.5">Voucher Aktif</span>
+                                                    <span className="text-sm font-black text-admin-primary uppercase tracking-widest leading-none">
+                                                        {selectedOrder.promo.promo_code}
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <button
-                                                    onClick={(e) => { e.stopPropagation(); handleTicketCheckIn(ticket.ticket_id); }}
-                                                    className={`badge-status transition-all active:scale-95 flex items-center gap-2 group/check ${ticket.is_used 
-                                                        ? 'bg-success/10 text-success border-success/20 hover:bg-danger hover:text-white hover:border-danger' 
-                                                        : 'bg-admin-bg text-admin-text-light border-admin-border hover:bg-admin-primary hover:text-white hover:border-admin-primary'}`}
-                                                    title={ticket.is_used ? 'Batalkan Check-in' : 'Proses Masuk'}
-                                                >
-                                                    {ticket.is_used ? (
-                                                        <CheckCircle2 size={12} className="group-hover/check:hidden" />
-                                                    ) : (
-                                                        <div className="w-1.5 h-1.5 rounded-full bg-admin-text-light/30 group-hover/check:bg-white" />
-                                                    )}
-                                                    {ticket.is_used && <X size={12} className="hidden group-hover/check:block animate-in fade-in" />}
-                                                    <span className="text-[9px] uppercase font-black">{ticket.is_used ? 'Otorisasi' : 'Validasi'}</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {(!selectedOrder.tickets || selectedOrder.tickets.length === 0) && (
-                                        <div className="py-10 text-center border-2 border-dashed border-admin-border rounded-[2rem] bg-admin-bg/50">
-                                            <div className="w-10 h-10 border-2 border-admin-primary/20 border-t-admin-primary rounded-full animate-spin mx-auto mb-4" />
-                                            <p className="text-xs font-bold text-admin-text-muted uppercase tracking-widest italic">Sinkronisasi rincian pengunjung...</p>
                                         </div>
                                     )}
                                 </div>
-                            </section>
+                            </div>
 
-                            {selectedOrder.promo && (
-                                <section className="mb-10 p-8 bg-admin-primary/5 border-2 border-dashed border-admin-primary/20 rounded-[2.5rem] flex items-center justify-between animate-pulse-subtle">
-                                    <div className="flex items-center gap-6">
-                                        <div className="w-16 h-16 rounded-[2rem] bg-white border border-admin-primary/20 flex items-center justify-center text-admin-primary shadow-xl group-hover:scale-110 transition-all">
-                                            <Tag size={32} />
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-[0.2em] block mb-1">Promo Terverifikasi</span>
-                                            <span className="text-xl font-black text-admin-primary uppercase tracking-widest leading-none italic shadow-sm">
-                                                {selectedOrder.promo.promo_code}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest block mb-2 font-serif">Potongan Harga</span>
-                                        <div className="text-2xl font-black text-admin-primary tabular-nums">-{formatRupiah(selectedOrder.discount_amount)}</div>
-                                    </div>
-                                </section>
-                            )}
-
-                            <div className="flex flex-col gap-4 pt-6 border-t border-admin-border">
-                                {selectedOrder.status === 'pending' ? (
-                                    <div className="space-y-4">
-                                        <button 
-                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'success')}
-                                            className="group relative w-full h-24 rounded-[2rem] bg-eling-green hover:bg-green-700 transition-all duration-500 shadow-xl overflow-hidden active:scale-95"
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
-                                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                                            
-                                            <div className="relative flex flex-col items-center justify-center h-full text-white">
-                                                <div className="p-2 rounded-full bg-white/20 mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner border border-white/10">
-                                                    <CheckCircle2 size={24} />
+                            <section className="mb-4 text-left">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h4 className="text-[10px] font-black text-admin-text-main uppercase tracking-[0.3em] leading-none underline decoration-admin-primary/20">Daftar Pengunjung ({selectedOrder.total_qty})</h4>
+                                    <div className="h-px flex-1 ml-6 bg-admin-border opacity-50" />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {(selectedOrder.tickets || []).map((ticket, idx) => (
+                                        <div key={idx} className={`relative overflow-hidden group p-5 rounded-2xl border transition-all ${ticket.is_used ? 'bg-success/5 border-success/20' : 'bg-white border-admin-border hover:border-admin-primary/40'}`}>
+                                            {ticket.is_used && (
+                                                <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 animate-in fade-in zoom-in">
+                                                    <CheckCircle2 size={10} /> Scanned
                                                 </div>
-                                                <div className="flex flex-col items-center leading-none">
-                                                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Konfirmasi</span>
-                                                    <span className="text-[8px] font-bold opacity-60 uppercase tracking-widest mt-1">Pembayaran Tiket</span>
+                                            )}
+                                            <div className="flex items-center gap-5">
+                                                <div className="w-16 h-16 rounded-xl bg-white border border-admin-border flex items-center justify-center overflow-hidden p-1 shadow-inner">
+                                                    <QRCodeCanvas value={ticket.ticket_id} size={56} className="opacity-40 group-hover:opacity-100 transition-all" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-black text-admin-text-main uppercase truncate tracking-tight">{ticket.guest_name}</h4>
+                                                    <p className="text-[9px] font-black text-admin-primary mt-1 tracking-widest uppercase truncate">
+                                                        {ticket.transaction_item?.item?.name || 'Tiket Wisata'}
+                                                    </p>
+                                                    
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); handleTicketCheckIn(ticket.ticket_id); }}
+                                                        className={`mt-4 w-full py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${ticket.is_used ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary'}`}
+                                                    >
+                                                        {ticket.is_used ? 'Batal Check-in' : 'Proses Masuk'}
+                                                    </button>
                                                 </div>
                                             </div>
-                                        </button>
-
-                                        <button 
-                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'failed')}
-                                            className="w-full py-4 rounded-2xl border-2 border-eling-red/20 text-eling-red font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-800 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-sm"
-                                        >
-                                            <X size={16} /> Batalkan Transaksi
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <button
-                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'pending')}
-                                            className="py-3 rounded-xl bg-admin-bg border border-admin-border text-admin-text-light hover:text-warning hover:border-warning/30 transition-all flex flex-col items-center justify-center gap-1 group"
-                                        >
-                                            <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">Setel Tertunda</span>
-                                        </button>
-                                        <button
-                                            onClick={() => handleUpdateStatus(selectedOrder.id, 'cancelled')}
-                                            className="py-3 rounded-xl bg-admin-bg border border-admin-border text-admin-text-light hover:text-danger hover:border-danger/30 transition-all flex flex-col items-center justify-center gap-1 group"
-                                        >
-                                            <X size={14} />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">Batalkan Pesanan</span>
-                                        </button>
-                                        <button
-                                            onClick={() => setSelectedOrder(null)}
-                                            className="py-3 rounded-xl bg-admin-primary/10 text-admin-primary border border-admin-primary/20 hover:bg-admin-primary hover:text-white transition-all flex flex-col items-center justify-center gap-1"
-                                        >
-                                            <CheckCircle2 size={14} />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">Tutup Audit</span>
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

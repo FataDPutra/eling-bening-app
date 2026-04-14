@@ -721,12 +721,12 @@ export default function Home() {
             {/* Lightbox Modal rendered via Portal */}
             {selectedImage && createPortal(
                 <div 
-                    className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-10"
+                    className="fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-4 md:p-10"
                     style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh' }}
                     onClick={() => setSelectedImage(null)}
                 >
                     <button 
-                        className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all duration-300 z-[10000] group"
+                        className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all duration-300 z-[60] group"
                         onClick={() => setSelectedImage(null)}
                     >
                         <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />

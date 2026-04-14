@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { Search, Calendar, Hash, User, ArrowLeft, CheckCircle2, Clock, Ticket, FileText, ShoppingBag, X, Info, ShieldCheck, MapPin, DollarSign, ChevronRight, QrCode, RotateCcw, Tag, Download } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -165,27 +164,27 @@ export default function EventOrders() {
 
     return (
         <div className="animate-fade-in space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                <div className="flex-1">
+            <div className="admin-page-header">
+                <div>
                     <button onClick={() => navigate('/admin/events')} className="flex items-center text-admin-text-muted hover:text-admin-primary mb-3 transition-colors font-black text-[10px] uppercase tracking-[0.2em]">
-                        <ArrowLeft size={14} className="mr-2" /> Kembali ke Manajemen Event
+                        <ArrowLeft size={14} className="mr-2" /> Back to Event Management
                     </button>
-                    <h1 className="text-2xl md:text-3xl font-black text-admin-text-main tracking-tight">Registry Pesanan Event</h1>
-                    <p className="text-xs md:text-sm text-admin-text-muted font-bold">Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
+                    <h1>Registry Pesanan Event</h1>
+                    <p>Audit rincian transaksi tiket event, verifikasi peserta, dan kelola status pembayaran.</p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center md:justify-end gap-3 w-full md:w-auto shrink-0">
-                    <div className="relative w-full sm:w-auto">
+                <div className="flex gap-3">
+                    <div className="relative">
                         <button 
                             onClick={() => setShowMonthPicker(!showMonthPicker)}
-                            className="flex items-center gap-3 px-6 py-2.5 rounded-xl border border-admin-border bg-white text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm w-full sm:min-w-[200px] h-[45px]"
+                            className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white border border-admin-border text-admin-text-main font-black text-[10px] uppercase tracking-widest hover:bg-admin-bg transition-all shadow-sm min-w-[200px]"
                         >
                             <Calendar size={16} className="text-admin-primary" /> {isAllTime ? 'Total Semua' : `${months.find(m => m.value === selectedMonth).name} ${selectedYear}`}
                         </button>
 
                         {showMonthPicker && (
                             <>
-                                <div className="fixed inset-0 z-[1000]" onClick={() => setShowMonthPicker(false)}></div>
-                                <div className="absolute right-0 sm:right-0 mt-2 w-full sm:w-80 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-[1001] animate-scale-up">
+                                <div className="fixed inset-0 z-40" onClick={() => setShowMonthPicker(false)}></div>
+                                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-admin-border p-5 z-50 animate-scale-up">
                                     <button 
                                         onClick={() => {
                                             setIsAllTime(true);
@@ -228,8 +227,8 @@ export default function EventOrders() {
                             </>
                         )}
                     </div>
-                    <button onClick={handleExport} className="btn-primary py-2.5 shadow-lg shadow-admin-primary/20 h-[45px] w-full sm:w-auto">
-                        <Download size={18} /> Export Data
+                    <button onClick={handleExport} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-admin-bg border border-admin-border text-admin-text-main font-black text-xs uppercase tracking-widest hover:bg-white transition-all shadow-sm h-full">
+                        <Download size={18} className="text-admin-primary" /> Export Data
                     </button>
                 </div>
             </div>
@@ -238,7 +237,7 @@ export default function EventOrders() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="admin-card group hover:scale-[1.02] transition-all">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-inner border border-rose-100">
+                        <div className="w-14 h-14 rounded-2xl bg-eling-red/10 text-eling-red flex items-center justify-center shadow-inner">
                             <Ticket size={28} />
                         </div>
                         <div>
@@ -249,7 +248,7 @@ export default function EventOrders() {
                 </div>
                 <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-success">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner border border-emerald-100">
+                        <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shadow-inner">
                             <DollarSign size={28} />
                         </div>
                         <div>
@@ -260,7 +259,7 @@ export default function EventOrders() {
                 </div>
                 <div className="admin-card group hover:scale-[1.02] transition-all border-l-4 border-l-warning">
                     <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner border border-amber-100">
+                        <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shadow-inner">
                             <Clock size={28} />
                         </div>
                         <div>
@@ -409,53 +408,38 @@ export default function EventOrders() {
                 </div>
             </div>
 
-            {/* Modal Detail Pesanan Event (High-Fidelity) via Portal for Full Screen Coverage */}
-            {selectedOrder && createPortal(
-                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 md:p-8">
-                    {/* Dark & Blurred Backdrop - Full Viewport */}
-                    <div 
-                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500"
-                        style={{ WebkitBackdropFilter: 'blur(20px)' }}
-                        onClick={() => setSelectedOrder(null)}
-                    ></div>
-
-                    {/* Modal Card - Premium Shadow & Glassmorphism border */}
-                    <div className="bg-white w-full max-w-5xl rounded-3xl lg:rounded-[2.5rem] overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row relative z-10 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20 max-h-[90vh]">
+            {/* Modal Detail Pesanan Event (High-Fidelity) */}
+            {selectedOrder && (
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+                    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md" onClick={() => setSelectedOrder(null)}></div>
+                    <div className="bg-white w-full max-w-5xl rounded-[2.5rem] overflow-hidden flex flex-col lg:flex-row relative z-[1001] shadow-2xl animate-scale-up border border-white/20 max-h-[90vh]">
                         
-                        {/* Close Button - Moved to be absolute to the card for consistent mobile access */}
-                        <button 
-                            onClick={() => setSelectedOrder(null)} 
-                            className="absolute top-4 right-4 lg:top-8 lg:right-8 z-[30] w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-white/90 backdrop-blur-sm hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
-                        >
-                            <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
-                        </button>
-
-                        {/* Status Sidebar (Left) */}
-                        <div className="lg:w-[32%] bg-admin-bg p-6 sm:p-8 lg:p-12 border-b lg:border-b-0 lg:border-r border-admin-border flex flex-col">
-                            <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-2xl bg-eling-red/10 text-eling-red flex items-center justify-center mb-6 lg:mb-8 shadow-inner ring-1 ring-eling-red/20">
+                        {/* Status Sidebar */}
+                        <div className="lg:w-[32%] bg-admin-bg p-8 lg:p-12 border-r border-admin-border flex flex-col">
+                            <div className="w-16 h-16 rounded-2xl bg-eling-red/10 text-eling-red flex items-center justify-center mb-8 shadow-inner ring-1 ring-eling-red/20">
                                 <Ticket size={32} />
                             </div>
                             
-                            <div className="mb-6 lg:mb-8 font-black">
-                                <span className="text-[10px] text-admin-text-muted uppercase tracking-[0.3em] mb-2 block leading-none">ID Pemesanan</span>
-                                <h2 className="text-xl lg:text-2xl text-admin-text-main tracking-tighter uppercase drop-shadow-sm">{selectedOrder.id}</h2>
+                            <div className="mb-8 font-black">
+                                <span className="text-[10px] text-admin-text-muted uppercase tracking-[0.3em] mb-2 block">ID Pemesanan</span>
+                                <h2 className="text-2xl text-admin-text-main tracking-tighter italic uppercase">{selectedOrder.id}</h2>
                             </div>
 
-                            <div className="space-y-4 lg:space-y-6 flex-1">
-                                <div className="p-4 lg:p-5 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-admin-primary/30 transition-all">
-                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 lg:mb-3 block">Status Transaksi</span>
-                                    <div className={`px-4 py-3 rounded-xl border-2 border-dashed font-black uppercase text-center text-xs tracking-widest transition-all ${getStatusStyles(selectedOrder.status)}`}>
+                            <div className="space-y-6 flex-1">
+                                <div className="p-5 rounded-2xl bg-white border border-admin-border shadow-sm">
+                                    <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-3 block">Status Transaksi</span>
+                                    <div className={`px-4 py-3 rounded-xl border-2 border-dashed font-black uppercase text-center text-xs tracking-widest ${getStatusStyles(selectedOrder.status)}`}>
                                         {selectedOrder.status === 'success' || selectedOrder.status === 'paid' ? 'BERHASIL' : 'TERTUNDA'}
                                     </div>
                                 </div>
 
-                                <div className="p-4 lg:p-5 rounded-2xl bg-white border border-admin-border shadow-sm group hover:border-admin-primary/30 transition-all">
+                                <div className="p-5 rounded-2xl bg-white border border-admin-border shadow-sm">
                                     <span className="text-[9px] font-black text-admin-text-muted uppercase tracking-widest mb-2 block">Metode Pembayaran</span>
                                     <div className="flex items-center gap-3 text-admin-text-main font-bold">
-                                        <div className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center border border-admin-border shadow-inner">
+                                        <div className="w-8 h-8 rounded-lg bg-admin-bg flex items-center justify-center border border-admin-border">
                                             <DollarSign size={16} />
                                         </div>
-                                        <span className="uppercase text-[10px] lg:text-xs tracking-tight">{selectedOrder.payment_method || 'Midtrans Gateway'}</span>
+                                        <span className="uppercase text-xs">{selectedOrder.payment_method || 'Midtrans Gateway'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -463,13 +447,14 @@ export default function EventOrders() {
                             <div className="mt-8 pt-8 border-t border-dashed border-admin-border space-y-4">
                                 <button 
                                     onClick={() => handleUpdateStatus(selectedOrder.id, selectedOrder.status === 'pending' ? 'success' : 'pending')}
-                                    className={`group relative w-full h-20 lg:h-24 rounded-2xl lg:rounded-[2rem] transition-all duration-500 shadow-xl overflow-hidden active:scale-95 ${selectedOrder.status === 'pending' ? 'bg-eling-green hover:bg-green-700' : 'bg-amber-500 hover:bg-amber-600'}`}
+                                    className={`group relative w-full h-24 rounded-[2rem] transition-all duration-500 shadow-xl overflow-hidden active:scale-95 ${selectedOrder.status === 'pending' ? 'bg-eling-green hover:bg-green-700' : 'bg-amber-500 hover:bg-amber-600'}`}
                                 >
+                                    {/* Glass reflection effect */}
                                     <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
                                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                                     
                                     <div className="relative flex flex-col items-center justify-center h-full text-white">
-                                        <div className="p-1.5 rounded-full bg-white/20 mb-1 lg:mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                                        <div className="p-2 rounded-full bg-white/20 mb-2 group-hover:scale-110 transition-transform duration-300 shadow-inner">
                                             {selectedOrder.status === 'pending' ? <CheckCircle2 size={24} /> : <RotateCcw size={24} />}
                                         </div>
                                         <div className="flex flex-col items-center leading-none">
@@ -481,15 +466,22 @@ export default function EventOrders() {
 
                                 <button 
                                     onClick={() => handleUpdateStatus(selectedOrder.id, 'failed')}
-                                    className="w-full py-3 lg:py-4 rounded-xl lg:rounded-2xl bg-rose-50 border-2 border-rose-200 text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] hover:bg-rose-600 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-sm"
+                                    className="w-full py-4 rounded-2xl border-2 border-eling-red/20 text-eling-red font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-800 hover:text-white transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shadow-sm"
                                 >
                                     <X size={16} /> Batalkan Transaksi
                                 </button>
                             </div>
                         </div>
 
-                        {/* Content Area (Right) */}
-                        <div className="lg:w-[68%] p-6 sm:p-8 lg:p-14 lg:overflow-y-auto bg-white custom-scrollbar relative">
+                        {/* Order Details Content */}
+                        <div className="lg:w-[68%] p-8 lg:p-14 overflow-y-auto bg-white custom-scrollbar">
+                            <button 
+                                onClick={() => setSelectedOrder(null)} 
+                                className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-white hover:bg-red-800 hover:text-white text-admin-text-muted flex items-center justify-center transition-all shadow-lg border border-admin-border active:scale-90 group"
+                            >
+                                <X size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                            </button>
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
                                 <div>
                                     <div className="flex items-center gap-3 mb-6">
@@ -498,15 +490,15 @@ export default function EventOrders() {
                                     </div>
                                     <div className="space-y-4">
                                         <div className="flex justify-between items-center py-2 border-b border-admin-border border-dashed">
-                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-tighter">Nama Lengkap</span>
+                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase">Nama Lengkap</span>
                                             <span className="text-xs font-black text-admin-text-main uppercase">{selectedOrder.booker_name || '-'}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2 border-b border-admin-border border-dashed">
-                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-tighter">Phone / WA</span>
+                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase">Phone / WA</span>
                                             <span className="text-xs font-black text-admin-text-main uppercase">{selectedOrder.booker_phone || '-'}</span>
                                         </div>
                                         <div className="flex justify-between items-center py-2 border-b border-admin-border border-dashed">
-                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase tracking-tighter">Alamat Email</span>
+                                            <span className="text-[10px] font-bold text-admin-text-muted uppercase">Alamat Email</span>
                                             <span className="text-xs font-black text-admin-text-main">{selectedOrder.user?.email || 'Guest Member'}</span>
                                         </div>
                                     </div>
@@ -516,14 +508,14 @@ export default function EventOrders() {
                                             <div className="w-1 h-6 bg-warning rounded-full" />
                                             <h3 className="text-base font-black text-admin-text-main uppercase tracking-tight">Ringkasan Biaya</h3>
                                         </div>
-                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border space-y-4 overflow-hidden relative shadow-inner">
+                                        <div className="p-6 rounded-2xl bg-admin-bg border border-admin-border space-y-4">
                                             {selectedOrder.items?.map((item, idx) => {
                                                 const displayPrice = Number(item.price) || Number(item.item?.price) || 0;
                                                 const displayQty = Number(item.quantity) || 1;
                                                 return (
                                                     <div key={idx} className="flex justify-between text-xs font-medium">
                                                         <span className="text-admin-text-muted">{displayQty}x {item.item?.name}</span>
-                                                        <span className="text-admin-text-main tabular-nums font-bold">{formatRupiah(displayPrice * displayQty)}</span>
+                                                        <span className="text-admin-text-main tabular-nums">{formatRupiah(displayPrice * displayQty)}</span>
                                                     </div>
                                                 );
                                             })}
@@ -547,7 +539,7 @@ export default function EventOrders() {
 
                                             <div className="pt-3 border-t border-admin-border flex justify-between items-center">
                                                 <span className="text-[10px] font-black text-admin-text-main uppercase tracking-widest">Total Bayar</span>
-                                                <span className="text-xl font-black text-admin-primary tabular-nums">
+                                                <span className="text-xl font-black text-admin-primary tabular-nums italic">
                                                     {formatRupiah(Number(selectedOrder.total_price || 0))}
                                                 </span>
                                             </div>
@@ -564,9 +556,9 @@ export default function EventOrders() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {(selectedOrder.tickets || []).map((t, idx) => (
-                                    <div key={idx} className={`relative overflow-hidden group p-5 rounded-2xl border transition-all ${t.is_used ? 'bg-success/5 border-success/20' : 'bg-white border-admin-border hover:border-admin-primary/40 hover:shadow-md'}`}>
+                                    <div key={idx} className={`relative overflow-hidden group p-5 rounded-2xl border transition-all ${t.is_used ? 'bg-success/5 border-success/20' : 'bg-white border-admin-border hover:border-admin-primary/40'}`}>
                                         {t.is_used && (
-                                            <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500 text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 animate-in fade-in zoom-in">
+                                            <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 bg-success text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow-lg shadow-success/20">
                                                 <CheckCircle2 size={10} /> Scanned
                                             </div>
                                         )}
@@ -581,11 +573,11 @@ export default function EventOrders() {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-sm font-black text-admin-text-main uppercase truncate tracking-tight">{t.guest_name}</h4>
-                                                <p className="text-[10px] font-bold text-admin-text-light mt-1 tracking-tighter uppercase truncate font-mono">{t.ticket_id}</p>
+                                                <p className="text-[10px] font-bold text-admin-text-light mt-1 tracking-tighter italic uppercase truncate">{t.ticket_id}</p>
                                                 
                                                 <button 
                                                     onClick={(e) => { e.stopPropagation(); handleTicketCheckIn(t.ticket_id); }}
-                                                    className={`mt-3 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${t.is_used ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary hover:shadow-lg hover:shadow-admin-primary/20 hover:scale-[1.02] active:scale-95'}`}
+                                                    className={`mt-3 w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${t.is_used ? 'bg-success text-white shadow-lg shadow-success/20' : 'bg-admin-bg border border-admin-border text-admin-text-muted hover:bg-admin-primary hover:text-white hover:border-admin-primary hover:shadow-lg hover:shadow-admin-primary/20'}`}
                                                 >
                                                     {t.is_used ? 'Batal Check-in' : 'Validasi Kedatangan'}
                                                 </button>
@@ -603,8 +595,7 @@ export default function EventOrders() {
 
                         </div>
                     </div>
-                </div>,
-                document.body
+                </div>
             )}
         </div>
     );

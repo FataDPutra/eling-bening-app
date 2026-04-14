@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Edit, Trash2, Eye, X, Check, Building, Maximize, BedDouble, Info, Search, Users, ShieldCheck, ChevronRight, Play, Film } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -205,28 +206,33 @@ export default function Rooms() {
                     </div>
                 )}
             </div>
+            {/* Room Detail Modal via Portal */}
+            {selectedRoom && createPortal(
+                <div className="fixed inset-0 z-[100001] flex items-center justify-center p-4 sm:p-6 md:p-12">
+                    {/* Immersive Glassmorphism Backdrop */}
+                    <div 
+                        className="fixed inset-0 bg-slate-950/80 backdrop-blur-xl transition-all duration-500 animate-fade-in"
+                        style={{ WebkitBackdropFilter: 'blur(20px)' }}
+                        onClick={() => setSelectedRoom(null)}
+                    ></div>
 
-            {/* Room Detail Modal */}
-            {selectedRoom && (
-                <div className="fixed inset-0 z-[10001] overflow-y-auto bg-slate-950/60 backdrop-blur-md animate-fade-in">
-                    <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 sm:p-6 md:p-12">
-                        <div className="fixed inset-0" onClick={() => setSelectedRoom(null)}></div>
-                        <div className="bg-white w-full max-w-5xl rounded-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col lg:flex-row relative z-[10002] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20">
+                    {/* Modal Card */}
+                    <div className="bg-white w-full max-w-5xl rounded-[2.5rem] md:rounded-[3rem] overflow-hidden flex flex-col lg:flex-row relative z-10 shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] animate-scale-up border border-white/20 max-h-[95vh]">
                         <button
                             onClick={() => setSelectedRoom(null)}
-                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-slate-900/10 text-slate-900 hover:bg-rose-500 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all shadow-sm border border-black/5"
+                            className="absolute top-8 right-8 z-20 w-12 h-12 rounded-2xl bg-slate-950/10 text-slate-900 hover:bg-rose-500 hover:text-white flex items-center justify-center backdrop-blur-xl transition-all shadow-sm border border-black/5"
                         >
                             <X size={24} />
                         </button>
 
-                        <div className="lg:w-1/2 h-80 lg:h-auto relative bg-black flex items-center justify-center">
+                        <div className="lg:w-1/2 h-80 lg:h-auto relative bg-slate-950 flex items-center justify-center overflow-hidden">
                             {activeMedia && (activeMedia.startsWith('data:video/') || activeMedia.endsWith('.mp4')) ? (
                                 <video 
                                     src={activeMedia} 
                                     controls 
                                     autoPlay 
                                     loop 
-                                    className="max-w-full max-h-full"
+                                    className="w-full h-full object-cover"
                                 />
                             ) : (
                                 <img
@@ -235,7 +241,7 @@ export default function Rooms() {
                                     className="w-full h-full object-cover transition-all duration-700"
                                 />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent pointer-events-none" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
 
                             {Array.isArray(selectedRoom.gallery) && selectedRoom.gallery.length > 1 && (
                                 <div className="absolute bottom-8 left-8 right-8 flex gap-3 overflow-x-auto pb-4 no-scrollbar">
@@ -267,7 +273,7 @@ export default function Rooms() {
                             )}
                         </div>
 
-                        <div className="lg:w-1/2 p-12 lg:p-16 overflow-y-auto max-h-[90vh]">
+                        <div className="lg:w-1/2 p-10 lg:p-14 overflow-y-auto custom-scrollbar">
                             <div className="flex items-center gap-3 mb-8">
                                 <div className="p-2 rounded-lg bg-admin-primary/10 text-admin-primary">
                                     <ShieldCheck size={16} />
@@ -276,10 +282,10 @@ export default function Rooms() {
                             </div>
 
                             <div className="flex justify-between items-start mb-10">
-                                <h2 className="text-4xl font-black text-admin-text-main tracking-tighter leading-none uppercase">{selectedRoom.name}</h2>
+                                <h2 className="text-4xl font-black text-admin-text-main tracking-tighter leading-tight uppercase">{selectedRoom.name}</h2>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6 mb-12">
+                            <div className="grid grid-cols-2 gap-5 mb-10">
                                 <div className="p-6 rounded-3xl bg-admin-bg border border-admin-border flex flex-col">
                                     <span className="text-[10px] font-black text-admin-text-muted uppercase tracking-widest mb-3">Konfigurasi</span>
                                     <div className="flex flex-col gap-2">
@@ -315,7 +321,7 @@ export default function Rooms() {
                                     </h4>
                                     <div className="flex flex-wrap gap-3">
                                         {(selectedRoom.facilities || []).map((f, i) => (
-                                            <span key={i} className="px-5 py-2.5 bg-admin-bg border border-admin-border text-admin-text-main rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all">
+                                            <span key={i} className="px-5 py-2.5 bg-admin-bg border border-admin-border text-admin-text-main rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-admin-primary hover:text-white hover:border-admin-primary transition-all shadow-sm">
                                                 <IconRenderer icon={f.icon} size={14} />
                                                 <span>{f.name || f}</span>
                                             </span>
@@ -340,7 +346,7 @@ export default function Rooms() {
                                     </button>
                                     <button
                                         onClick={() => setSelectedRoom(null)}
-                                        className="flex-1 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-admin-text-main transition-all"
+                                        className="flex-1 rounded-[2rem] bg-admin-bg border border-admin-border text-admin-text-muted text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-admin-text-main transition-all flex items-center justify-center"
                                     >
                                         Kembali
                                     </button>
@@ -348,8 +354,8 @@ export default function Rooms() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div>,
+                document.body
             )}
         </div>
     );
