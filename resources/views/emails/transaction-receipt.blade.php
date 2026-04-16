@@ -29,17 +29,14 @@
                     <td style="background:linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); padding:40px 48px; text-align:center;">
                         @if($logoUrl)
                             @php
-                                $finalLogoUrl = $logoUrl;
-                                if (str_starts_with($logoUrl, 'data:')) {
+                                $finalLogoUrl = trim($logoUrl);
+                                if (str_starts_with($finalLogoUrl, 'data:')) {
                                     // Handle Base64 Data URL (common in CMS)
-                                    if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $logoUrl, $matches)) {
+                                    if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $finalLogoUrl, $matches)) {
                                         $type = $matches[1];
                                         $data = base64_decode($matches[2]);
                                         $finalLogoUrl = $message->embedData($data, 'logo.' . $type, 'image/' . $type);
                                     }
-                                } elseif (!str_starts_with($logoUrl, 'http')) {
-                                    // Handle absolute filesystem paths
-                                    $finalLogoUrl = $message->embed($logoUrl);
                                 }
                             @endphp
                             <img src="{{ $finalLogoUrl }}" alt="{{ $siteName }} Logo" style="height:80px; width:auto; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;" />

@@ -57,6 +57,8 @@ class TransactionReceipt extends Mailable
             }
         }
 
+        \Illuminate\Support\Facades\Log::info('Email Logo URL resolved: ' . $this->logoUrl);
+
         $this->siteName = Content::getByKey('layout_site_title', 'Eling Bening');
         $this->contactEmail = Content::getByKey('contact_email', 'info@elingbening.com');
     }
