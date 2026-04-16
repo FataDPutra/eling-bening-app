@@ -321,7 +321,7 @@
                                         <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:right;">Rp {{ number_format($res->final_charge, 0, ',', '.') }}</td>
                                     </tr>
                                 @endforeach
-                            @endifif
+                            @endif
 
                             <!-- Promo Discount -->
                             @if($transaction->promo && $transaction->discount_amount > 0)
