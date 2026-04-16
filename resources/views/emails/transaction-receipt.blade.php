@@ -111,7 +111,9 @@
                                         </tr>
                                         <tr style="border-bottom:1px solid #f3f4f6;">
                                             <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Tipe Pemesanan</td>
-                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111;">{{ $transaction->booking_type ?? '-' }}</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111;">
+                                                @if($transaction->parent_id) FASILITAS TAMBAHAN @else {{ $transaction->booking_type ?? '-' }} @endif
+                                            </td>
                                         </tr>
                                         <tr>
                                             <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Status Pembayaran</td>

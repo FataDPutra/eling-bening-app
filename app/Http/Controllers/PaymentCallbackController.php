@@ -45,7 +45,19 @@ class PaymentCallbackController extends Controller
                             'payment_method' => $type
                         ]);
                         app(RescheduleController::class)->finalizeReschedule($reschedule);
-                    }
+                        
+                        try {
+                            $reschedule->load('transaction');
+                            $txn = $reschedule->transaction;
+                            if ($txn) {
+                                $email = $txn->booker_email ?? $txn->user->email;
+                                if ($email) {
+                                    \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\TransactionReceipt($txn));
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('Failed sending receipt for reschedule ' . $reschedule->id . ': ' . $e->getMessage());
+                        }
                 }
             } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
                 $reschedule->update(['status' => 'rejected']);
