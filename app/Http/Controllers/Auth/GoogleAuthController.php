@@ -25,14 +25,14 @@ class GoogleAuthController extends Controller
     public function redirect()
     {
         $this->setGoogleConfig();
-        return Socialite::driver('google')->redirect();
+        return Socialite::driver('google')->stateless()->redirect();
     }
 
     public function callback()
     {
         $this->setGoogleConfig();
         try {
-            $googleUser = Socialite::driver('google')->user();
+            $googleUser = Socialite::driver('google')->stateless()->user();
             
             $user = User::where('email', $googleUser->getEmail())->first();
 
