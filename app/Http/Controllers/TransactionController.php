@@ -208,16 +208,54 @@ class TransactionController extends Controller
                 $this->generateTickets($transaction, $validated['items']);
             } else {
                 $this->configureMidtrans();
+
+                // Build Item Details for Midtrans Receipt
+                $item_details = [];
+                $calculated_sum = 0;
+
+                $transaction->load('items.item');
+                foreach ($transaction->items as $item) {
+                    $itemPrice = (int) $item->price;
+                    $itemQty = (int) $item->quantity;
+                    $item_details[] = [
+                        'id' => (string) $item->item_id,
+                        'price' => $itemPrice,
+                        'quantity' => $itemQty,
+                        'name' => substr($item->item->name ?? ('Item ' . $transaction->booking_type), 0, 50),
+                    ];
+                    $calculated_sum += ($itemPrice * $itemQty);
+                }
+
+                $gross_amount = (int) $transaction->total_price;
+                $difference = $gross_amount - $calculated_sum;
+
+                if ($difference > 0) {
+                    $item_details[] = [
+                        'id' => 'FEE-TAX',
+                        'price' => $difference,
+                        'quantity' => 1,
+                        'name' => 'Biaya Layanan & Pajak',
+                    ];
+                } elseif ($difference < 0) {
+                    $item_details[] = [
+                        'id' => 'DISC-PROMO',
+                        'price' => $difference, // negative
+                        'quantity' => 1,
+                        'name' => 'Diskon Promo',
+                    ];
+                }
+
                 $params = [
                     'transaction_details' => [
                         'order_id' => $transaction->id,
-                        'gross_amount' => (int) $transaction->total_price,
+                        'gross_amount' => $gross_amount,
                     ],
                     'customer_details' => [
                         'first_name' => $transaction->booker_name,
                         'email' => $transaction->booker_email,
                         'phone' => $transaction->booker_phone,
                     ],
+                    'item_details' => $item_details,
                 ];
                 $snapToken = \Midtrans\Snap::getSnapToken($params);
                 $transaction->update(['snap_token' => $snapToken]);
@@ -762,16 +800,45 @@ class TransactionController extends Controller
             if ($addonOrder->payment_method === 'Midtrans' || $addonOrder->payment_method === 'automated' || $addonOrder->payment_method === 'Midtrans/Automated') {
                 try {
                     $this->configureMidtrans();
+                    $addon_item_details = [];
+                    $addon_sum = 0;
+                    
+                    $addonOrder->load('items.item');
+                    foreach ($addonOrder->items as $item) {
+                        $itemPrice = (int) $item->price;
+                        $itemQty = (int) $item->quantity;
+                        $addon_item_details[] = [
+                            'id' => (string) $item->item_id,
+                            'price' => $itemPrice,
+                            'quantity' => $itemQty,
+                            'name' => substr($item->item->name ?? 'Fasilitas Tambahan', 0, 50),
+                        ];
+                        $addon_sum += ($itemPrice * $itemQty);
+                    }
+
+                    $gross_amount = (int) $addonOrder->total_price;
+                    $difference = $gross_amount - $addon_sum;
+
+                    if ($difference > 0) {
+                        $addon_item_details[] = [
+                            'id' => 'FEE-TAX',
+                            'price' => $difference,
+                            'quantity' => 1,
+                            'name' => 'Biaya Layanan & Pajak',
+                        ];
+                    }
+
                     $params = [
                         'transaction_details' => [
                             'order_id' => $addonOrder->id,
-                            'gross_amount' => (int) $addonOrder->total_price,
+                            'gross_amount' => $gross_amount,
                         ],
                         'customer_details' => [
                             'first_name' => $addonOrder->booker_name,
                             'email' => $addonOrder->booker_email,
                             'phone' => $addonOrder->booker_phone,
                         ],
+                        'item_details' => $addon_item_details,
                     ];
                     $snapToken = \Midtrans\Snap::getSnapToken($params);
                     $addonOrder->update(['snap_token' => $snapToken]);

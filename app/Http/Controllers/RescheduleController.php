@@ -90,6 +90,14 @@ class RescheduleController extends Controller
                         'first_name' => collect($reschedule->transaction->items)->first()?->guest_names[0] ?? $reschedule->transaction->user->name,
                         'email' => $reschedule->transaction->user->email,
                     ],
+                    'item_details' => [
+                        [
+                            'id' => 'RSCH-FEE',
+                            'price' => (int) $reschedule->final_charge,
+                            'quantity' => 1,
+                            'name' => 'Biaya Perubahan Jadwal (' . ucfirst(strtolower($reschedule->transaction->booking_type)) . ')',
+                        ]
+                    ]
                 ];
                 $snapToken = \Midtrans\Snap::getSnapToken($params);
                 $reschedule->update(['snap_token' => $snapToken]);
