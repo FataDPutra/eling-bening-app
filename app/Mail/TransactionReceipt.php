@@ -31,7 +31,23 @@ class TransactionReceipt extends Mailable
         $this->logoUrl = null;
 
         if ($logoPath) {
-            if (str_starts_with($logoPath, 'http') || str_starts_with($logoPath, 'data:')) {
+            if (str_starts_with($logoPath, 'data:')) {
+                // Prevent CID attachment issues by dumping base64 visually as a public disk file
+                if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $logoPath, $matches)) {
+                    $type = $matches[1];
+                    $data = base64_decode($matches[2]);
+                    $ext = $type === 'jpeg' ? 'jpg' : $type;
+                    $filename = 'images/cached_logo.' . $ext;
+                    $destPath = public_path($filename);
+                    
+                    if (!file_exists(public_path('images'))) {
+                        @mkdir(public_path('images'), 0755, true);
+                    }
+                    @file_put_contents($destPath, $data);
+                    
+                    $this->logoUrl = asset($filename);
+                }
+            } elseif (str_starts_with($logoPath, 'http')) {
                 $this->logoUrl = $logoPath;
             } else {
                 // Clean path (remove leading slash if present)
