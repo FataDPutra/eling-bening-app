@@ -32,10 +32,12 @@ class TransactionReceipt extends Mailable
             if (str_starts_with($logoPath, 'http') || str_starts_with($logoPath, 'data:')) {
                 $this->logoUrl = $logoPath;
             } else {
-                $this->logoUrl = asset('storage/' . $logoPath);
+                // Use absolute path for local files so they can be embedded
+                $fullPath = public_path('storage/' . $logoPath);
+                $this->logoUrl = file_exists($fullPath) ? $fullPath : public_path('images/logo.png');
             }
         } else {
-            $this->logoUrl = asset('images/logo.png');
+            $this->logoUrl = public_path('images/logo.png');
         }
 
         $this->siteName = Content::getByKey('layout_site_title', 'Eling Bening');

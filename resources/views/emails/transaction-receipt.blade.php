@@ -19,7 +19,7 @@
                 <tr>
                     <td style="background:linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); padding:40px 48px; text-align:center;">
                         @if($logoUrl)
-                            <img src="{{ $logoUrl }}" alt="{{ $siteName }} Logo" style="height:80px; width:auto; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;" />
+                            <img src="{{ (str_starts_with($logoUrl, 'http') || str_starts_with($logoUrl, 'data:')) ? $logoUrl : $message->embed($logoUrl) }}" alt="{{ $siteName }} Logo" style="height:80px; width:auto; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;" />
                         @endif
                         <p style="margin:0; color:rgba(255,255,255,0.75); font-size:13px; font-weight:500; text-transform: uppercase; letter-spacing: 2px;">Bukti Pemesanan Resmi</p>
                     </td>
