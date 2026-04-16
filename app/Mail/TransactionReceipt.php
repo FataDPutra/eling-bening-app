@@ -37,26 +37,24 @@ class TransactionReceipt extends Mailable
                 // Clean path (remove leading slash if present)
                 $cleanPath = ltrim($logoPath, '/');
                 
-                // Try several common locations
-                $searchPaths = [
-                    public_path($cleanPath),
-                    public_path('storage/' . $cleanPath),
-                    storage_path('app/public/' . $cleanPath),
-                ];
-                
-                foreach ($searchPaths as $p) {
-                    if (file_exists($p) && !is_dir($p)) {
-                        $this->logoUrl = $p;
-                        break;
-                    }
+                // Try several common locations but store the public URL
+                if (file_exists(public_path($cleanPath))) {
+                    $this->logoUrl = asset($cleanPath);
+                } elseif (file_exists(public_path('storage/' . $cleanPath))) {
+                    $this->logoUrl = asset('storage/' . $cleanPath);
+                } elseif (file_exists(storage_path('app/public/' . $cleanPath))) {
+                    $this->logoUrl = asset('storage/' . $cleanPath);
+                } else {
+                    $this->logoUrl = asset($cleanPath); // fallback
                 }
             }
         }
 
         // Final fallback to default logo
         if (!$this->logoUrl) {
-            $defaultLogo = public_path('images/logo.png');
-            $this->logoUrl = file_exists($defaultLogo) ? $defaultLogo : null;
+            if (file_exists(public_path('images/logo.png'))) {
+                $this->logoUrl = asset('images/logo.png');
+            }
         }
 
         $this->siteName = Content::getByKey('layout_site_title', 'Eling Bening');
