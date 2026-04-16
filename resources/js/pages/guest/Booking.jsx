@@ -151,7 +151,7 @@ export default function Booking() {
                     item_id: bookingData.room?.id,
                     item_type: 'App\\Models\\Resort',
                     quantity: roomsNeeded,
-                    price: bookingData.room?.price
+                    price: basePrice / roomsNeeded / nights
                 }
             ]
         };

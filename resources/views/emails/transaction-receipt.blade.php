@@ -237,17 +237,30 @@
                             <tr style="border-bottom:1px solid #f3f4f6;">
                                 <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600;">
                                     {{ $item->item->name ?? 'Item' }}
+                                    @if($isResort) <span style="font-size:11px; color:#9ca3af; font-weight:400;">(Termasuk Penyesuaian Harga Weekend/Weekday)</span> @endif
                                     @if($item->guest_names && count($item->guest_names) > 0)
                                         <br><span style="font-size:11px; color:#9ca3af; font-weight:400;">Tamu: {{ implode(', ', $item->guest_names) }}</span>
                                     @endif
                                 </td>
-                                <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">{{ $item->quantity }}</td>
+                                <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">
+                                    @if($isResort) {{ $nights }} Malam @else {{ $item->quantity }} @endif
+                                </td>
                                 <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600; text-align:right;">
                                     @php
                                         $itemTotal = $item->subtotal;
-                                        // Mirroring logic from handlePrint: multiply by nights for resort items
+                                        
+                                        // Reverse-engineer the accurate Resort subtotal using db net_total, which gracefully covers legacy weekend discrepancies
                                         if ($isResort && str_contains(strtolower($item->item_type ?? ''), 'resort')) {
-                                            $itemTotal = $item->subtotal * $nights;
+                                            $hasTax = true;
+                                            $dbNetTotal = $transaction->net_total ?? round($transaction->total_price * (100/110));
+                                            
+                                            $facSum = 0;
+                                            if (!empty($transaction->additional_facilities)) {
+                                                foreach($transaction->additional_facilities as $f) {
+                                                    $facSum += ($f['price'] ?? $f['amount'] ?? 0) * $nights;
+                                                }
+                                            }
+                                            $itemTotal = $dbNetTotal + ($transaction->discount_amount ?? 0) - $facSum;
                                         }
                                     @endphp
                                     Rp {{ number_format($itemTotal, 0, ',', '.') }}
@@ -362,25 +375,26 @@
                                             <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Subtotal Pesanan</td>
                                             <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">
                                                 @php
-                                                    $mainSubtotal = collect($transaction->items)->reduce(function($acc, $item) use ($isResort, $nights) {
-                                                        $val = $item->subtotal;
-                                                        if ($isResort && str_contains(strtolower($item->item_type ?? ''), 'resort')) {
-                                                            $val *= $nights;
-                                                        }
-                                                        return $acc + $val;
-                                                    }, 0);
-                                                    
-                                                    if (!empty($transaction->additional_facilities)) {
-                                                        foreach($transaction->additional_facilities as $fac) {
-                                                            $p = $fac['price'] ?? ($fac['amount'] ?? 0);
-                                                            if ($isResort) $p *= $nights;
-                                                            $mainSubtotal += $p;
-                                                        }
-                                                    }
+                                                    $hasTax = $isResort || $transaction->booking_type === 'TICKET';
+                                                    $dbNetTotal = $transaction->net_total ?? ($hasTax ? round($transaction->total_price * (100/110)) : $transaction->total_price);
+                                                    $mainSubtotal = $dbNetTotal + ($transaction->discount_amount ?? 0);
                                                 @endphp
                                                 Rp {{ number_format($mainSubtotal, 0, ',', '.') }}
                                             </td>
                                         </tr>
+                                        
+                                        @if($isResort || $transaction->booking_type === 'TICKET')
+                                        <tr style="border-bottom:1px solid #f3f4f6;">
+                                            <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Pajak Pemerintah & Layanan (10%)</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">
+                                                @php
+                                                    $taxTotal = $transaction->tax_total ?? round($transaction->total_price * (10/110));
+                                                @endphp
+                                                Rp {{ number_format($taxTotal, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                        @endif
+                                        
                                         @php
                                             $addonsTotal = $transaction->addons ? $transaction->addons->whereIn('status', ['success', 'paid'])->sum('total_price') : 0;
                                             $rescTotal = $completedReschedules->sum('final_charge');
@@ -408,7 +422,7 @@
                                             <td style="padding:16px 20px; font-size:15px; font-weight:800; color:#ffffff;">TOTAL AKHIR</td>
                                             <td style="padding:16px 20px; font-size:18px; font-weight:800; color:#ffffff; text-align:right;">
                                                 @php
-                                                    $grandTotal = $mainSubtotal + $addonsTotal + $rescTotal - ($transaction->discount_amount ?? 0);
+                                                    $grandTotal = $transaction->total_price + $addonsTotal + $rescTotal;
                                                 @endphp
                                                 Rp {{ number_format($grandTotal, 0, ',', '.') }}
                                             </td>

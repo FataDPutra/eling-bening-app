@@ -1171,22 +1171,27 @@ export default function Profile() {
                                         const nights = Math.ceil(Math.abs(new Date(selectedOrderDetail.check_out_date) - new Date(selectedOrderDetail.check_in_date)) / (1000 * 60 * 60 * 24)) || 1;
                                         const isResort = selectedOrderDetail.booking_type === 'RESORT';
 
-                                        // Calculate explicit sums
-                                        const resortPriceSum = (selectedOrderDetail.items?.reduce((acc, curr) => acc + ( (isResort && curr.item_type?.includes('Resort')) ? Number(curr.subtotal) * nights : Number(curr.subtotal) ), 0) || 0);
-                                        
                                         let f = selectedOrderDetail.additional_facilities || selectedOrderDetail.facilities || [];
                                         if (typeof f === 'string') try { f = JSON.parse(f); } catch(e) { f = []; }
                                         const facilitiesSum = (Array.isArray(f) ? f : []).reduce((acc, curr) => acc + ( (isResort) ? Number(curr.price || curr.amount || 0) * nights : Number(curr.price || curr.amount || 0) ), 0);
 
-                                        // The rest is Tax (Total - (Resort + Fac - Discount))
-                                        const netBeforeTax = resortPriceSum + facilitiesSum - discountAmount;
-                                        const taxAmount = totalPrice - netBeforeTax;
+                                        // Use database sums to guarantee accuracy despite past DB item pricing inaccuracies (weekend rates)
+                                        const hasTax = isResort || selectedOrderDetail.booking_type === 'TICKET';
+                                        const dbNetTotal = Number(selectedOrderDetail.net_total || (hasTax ? Math.round(totalPrice * (100 / 110)) : totalPrice));
+                                        const taxAmount = Number(selectedOrderDetail.tax_total || (hasTax ? Math.round(totalPrice * (10 / 110)) : 0));
+                                        
+                                        // Deduct known components from net_total to accurately reverse-engineer the base price
+                                        const itemPriceSum = (isResort || selectedOrderDetail.booking_type === 'TICKET')
+                                            ? (dbNetTotal + discountAmount - facilitiesSum) 
+                                            : (selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0);
 
                                         return (
                                             <>
                                                 <div className="flex justify-between text-xs font-bold text-gray-600 mb-2">
-                                                    <span className="opacity-70 font-medium tracking-tight">Harga Unit Resort ({nights} Malam)</span>
-                                                    <span className="text-gray-900">{formatRupiah(resortPriceSum)}</span>
+                                                    <span className="opacity-70 font-medium tracking-tight">
+                                                        {isResort ? `Harga Unit Resort (${nights} Malam)` : 'Subtotal Item'}
+                                                    </span>
+                                                    <span className="text-gray-900">{formatRupiah(itemPriceSum)}</span>
                                                 </div>
 
                                                 {facilitiesSum > 0 && (

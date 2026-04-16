@@ -134,7 +134,7 @@ export default function Ticketing() {
     });
 
     const hasItems = orderItems.length > 0;
-    const adminFee = hasItems ? 2500 : 0;
+    const tax = hasItems ? (subtotal * 0.1) : 0;
     let promoDiscountAmt = 0;
     let minPurchaseError = false;
 
@@ -150,7 +150,7 @@ export default function Ticketing() {
         }
     }
 
-    const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
+    const total = Math.max(0, subtotal + tax - promoDiscountAmt);
 
     const processPayment = async () => {
         if (!hasItems) return;
@@ -330,8 +330,8 @@ export default function Ticketing() {
                                         </div>
                                     )}
                                     <div className="flex justify-between text-gray-500">
-                                        <span>Biaya Admin (Payment)</span>
-                                        <span>{formatRupiah(adminFee)}</span>
+                                        <span>Pajak Pemerintah & Layanan (10%)</span>
+                                        <span>{formatRupiah(tax)}</span>
                                     </div>
                                     <div className="flex flex-col pt-4 border-t border-gray-100 mt-4">
                                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1 text-center font-sans">Total Tagihan</span>
