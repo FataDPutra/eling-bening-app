@@ -1051,7 +1051,8 @@ export default function Bookings() {
                                                     const nights = (hasDates && selectedBooking.booking_type === 'RESORT')
                                                         ? Math.ceil(Math.abs(new Date(selectedBooking.check_out_date) - new Date(selectedBooking.check_in_date)) / (1000 * 60 * 60 * 24)) 
                                                         : 1;
-                                                    const isResort = selectedBooking.booking_type === 'RESORT';
+                                                    const isAddon = !!selectedBooking.parent_id;
+                                                    const isResort = selectedBooking.booking_type === 'RESORT' && !isAddon;
 
                                                     let f = selectedBooking.additional_facilities || selectedBooking.facilities || [];
                                                     if (typeof f === 'string') try { f = JSON.parse(f); } catch(e) { f = []; }
@@ -1063,7 +1064,7 @@ export default function Bookings() {
                                                     const taxAmount = Number(selectedBooking.tax_total || (hasTax ? Math.round(totalPrice * (10 / 110)) : 0));
                                                     
                                                     // Deduct known components from net_total to accurately reverse-engineer the base price
-                                                    const itemPriceSum = (isResort || selectedBooking.booking_type === 'TICKET') 
+                                                    const itemPriceSum = (isResort || selectedBooking.booking_type === 'TICKET' || isAddon) 
                                                         ? (dbNetTotal + discountAmount - facilitiesSum) 
                                                         : (selectedBooking.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0);
 
@@ -1071,7 +1072,7 @@ export default function Bookings() {
                                                         <>
                                                             <div className="flex justify-between text-xs font-bold text-admin-text-main">
                                                                 <span className="opacity-60 font-medium tracking-tight">
-                                                                    {isResort ? `Harga Unit Resort (${nights} Malam)` : 'Subtotal Item'}
+                                                                    {isResort ? `Harga Unit Resort (${nights} Malam)` : (isAddon ? 'Tagihan Fasilitas Tambahan' : 'Subtotal Item')}
                                                                 </span>
                                                                 <span className="tabular-nums">{formatRupiah(itemPriceSum)}</span>
                                                             </div>

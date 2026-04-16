@@ -58,6 +58,7 @@ class PaymentCallbackController extends Controller
                         } catch (\Exception $e) {
                             \Illuminate\Support\Facades\Log::error('Failed sending receipt for reschedule ' . $reschedule->id . ': ' . $e->getMessage());
                         }
+                    }
                 }
             } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
                 $reschedule->update(['status' => 'rejected']);

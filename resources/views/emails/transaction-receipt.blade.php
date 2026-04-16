@@ -240,7 +240,7 @@
                                 <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600;">
                                     {{ $item->item->name ?? 'Item' }}
                                     @if($isResort) <span style="font-size:11px; color:#9ca3af; font-weight:400;">(Termasuk Penyesuaian Harga Weekend/Weekday)</span> @endif
-                                    @if($item->guest_names && count($item->guest_names) > 0)
+                                    @if(is_array($item->guest_names) && count($item->guest_names) > 0 && !empty(array_filter($item->guest_names)))
                                         <br><span style="font-size:11px; color:#9ca3af; font-weight:400;">Tamu: {{ implode(', ', $item->guest_names) }}</span>
                                     @endif
                                 </td>

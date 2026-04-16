@@ -1168,8 +1168,11 @@ export default function Profile() {
                                     {(() => {
                                         const totalPrice = Number(selectedOrderDetail.total_price || 0);
                                         const discountAmount = Number(selectedOrderDetail.discount_amount || 0);
-                                        const nights = Math.ceil(Math.abs(new Date(selectedOrderDetail.check_out_date) - new Date(selectedOrderDetail.check_in_date)) / (1000 * 60 * 60 * 24)) || 1;
-                                        const isResort = selectedOrderDetail.booking_type === 'RESORT';
+                                        const nights = (selectedOrderDetail.check_in_date && selectedOrderDetail.check_out_date) 
+                                            ? Math.ceil(Math.abs(new Date(selectedOrderDetail.check_out_date) - new Date(selectedOrderDetail.check_in_date)) / (1000 * 60 * 60 * 24)) || 1 
+                                            : 1;
+                                        const isAddon = !!selectedOrderDetail.parent_id;
+                                        const isResort = selectedOrderDetail.booking_type === 'RESORT' && !isAddon;
 
                                         let f = selectedOrderDetail.additional_facilities || selectedOrderDetail.facilities || [];
                                         if (typeof f === 'string') try { f = JSON.parse(f); } catch(e) { f = []; }
@@ -1181,7 +1184,7 @@ export default function Profile() {
                                         const taxAmount = Number(selectedOrderDetail.tax_total || (hasTax ? Math.round(totalPrice * (10 / 110)) : 0));
                                         
                                         // Deduct known components from net_total to accurately reverse-engineer the base price
-                                        const itemPriceSum = (isResort || selectedOrderDetail.booking_type === 'TICKET')
+                                        const itemPriceSum = (isResort || selectedOrderDetail.booking_type === 'TICKET' || isAddon)
                                             ? (dbNetTotal + discountAmount - facilitiesSum) 
                                             : (selectedOrderDetail.items?.reduce((acc, curr) => acc + Number(curr.subtotal), 0) || 0);
 
@@ -1189,7 +1192,7 @@ export default function Profile() {
                                             <>
                                                 <div className="flex justify-between text-xs font-bold text-gray-600 mb-2">
                                                     <span className="opacity-70 font-medium tracking-tight">
-                                                        {isResort ? `Harga Unit Resort (${nights} Malam)` : 'Subtotal Item'}
+                                                        {isResort ? `Harga Unit Resort (${nights} Malam)` : (isAddon ? 'Tagihan Fasilitas Tambahan' : 'Subtotal Item')}
                                                     </span>
                                                     <span className="text-gray-900">{formatRupiah(itemPriceSum)}</span>
                                                 </div>
