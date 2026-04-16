@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { Calendar, MapPin, ArrowRight, Tag, Loader2, X, Phone, Mail, Clock, Star, ChevronLeft, ChevronRight, Users, CheckCircle, CreditCard } from 'lucide-react';
 import { useContent } from '../../context/ContentContext';
@@ -195,16 +196,16 @@ export default function Events() {
             {/* ─── EVENT DETAIL MODAL ─── */}
             {selectedEvent && (() => {
                 const images = getImages(selectedEvent);
-                return (
-                    <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center p-0 md:p-6">
+                return createPortal(
+                    <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center p-0 md:p-6" style={{ isolation: 'isolate' }}>
                         {/* Backdrop */}
                         <div
-                            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                            className="absolute inset-0 bg-black/70 backdrop-blur-sm -z-10"
                             onClick={closeDetail}
                         />
 
                         {/* Modal Panel */}
-                        <div className="relative bg-white w-full md:max-w-4xl max-h-[92vh] md:max-h-[88vh] rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-slide-up">
+                        <div className="relative z-10 bg-white w-full md:max-w-4xl max-h-[92vh] md:max-h-[88vh] rounded-t-[2.5rem] md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl animate-slide-up">
                             {/* Close button */}
                             <button
                                 onClick={closeDetail}
@@ -358,7 +359,8 @@ export default function Events() {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div>,
+                    document.body
                 );
             })()}
         </div>
