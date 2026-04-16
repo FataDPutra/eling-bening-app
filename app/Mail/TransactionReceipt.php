@@ -28,16 +28,35 @@ class TransactionReceipt extends Mailable
 
         // Load branding from CMS
         $logoPath = Content::getByKey('layout_logo');
+        $this->logoUrl = null;
+
         if ($logoPath) {
             if (str_starts_with($logoPath, 'http') || str_starts_with($logoPath, 'data:')) {
                 $this->logoUrl = $logoPath;
             } else {
-                // Use absolute path for local files so they can be embedded
-                $fullPath = public_path('storage/' . $logoPath);
-                $this->logoUrl = file_exists($fullPath) ? $fullPath : public_path('images/logo.png');
+                // Clean path (remove leading slash if present)
+                $cleanPath = ltrim($logoPath, '/');
+                
+                // Try several common locations
+                $searchPaths = [
+                    public_path($cleanPath),
+                    public_path('storage/' . $cleanPath),
+                    storage_path('app/public/' . $cleanPath),
+                ];
+                
+                foreach ($searchPaths as $p) {
+                    if (file_exists($p) && !is_dir($p)) {
+                        $this->logoUrl = $p;
+                        break;
+                    }
+                }
             }
-        } else {
-            $this->logoUrl = public_path('images/logo.png');
+        }
+
+        // Final fallback to default logo
+        if (!$this->logoUrl) {
+            $defaultLogo = public_path('images/logo.png');
+            $this->logoUrl = file_exists($defaultLogo) ? $defaultLogo : null;
         }
 
         $this->siteName = Content::getByKey('layout_site_title', 'Eling Bening');

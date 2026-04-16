@@ -44,7 +44,7 @@ class ContentController extends Controller
         $content = Content::updateOrCreate(
             ['key' => $request->key],
             [
-                'content' => $request->content,
+                'content' => $request->input('content'),
                 'data' => $request->data,
                 'type' => $request->type,
                 'page' => $request->page,

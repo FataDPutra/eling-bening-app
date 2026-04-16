@@ -86,7 +86,8 @@ class PromoController extends Controller
         }
 
         if (today()->lt($promo->start_date)) {
-            return response()->json(['message' => 'Promo ini baru bisa digunakan mulai tanggal ' . $promo->start_date->format('d M Y')], 400);
+            $startDate = \Carbon\Carbon::parse($promo->start_date);
+            return response()->json(['message' => 'Promo ini baru bisa digunakan mulai tanggal ' . $startDate->format('d M Y')], 400);
         }
 
         if (today()->gt($promo->end_date)) {

@@ -11,6 +11,15 @@
 <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f5f5;">
     <tr>
         <td align="center" style="padding: 40px 20px;">
+            @php
+                // Calculate nights for resort bookings
+                $nights = 1;
+                if ($transaction->check_in_date && $transaction->check_out_date) {
+                    $nights = $transaction->check_in_date->diffInDays($transaction->check_out_date);
+                    $nights = $nights > 0 ? $nights : 1;
+                }
+                $isResort = $transaction->booking_type === 'RESORT';
+            @endphp
             
             <!-- Main Container -->
             <table width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow:0 4px 24px rgba(0,0,0,0.08);">
@@ -19,7 +28,21 @@
                 <tr>
                     <td style="background:linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%); padding:40px 48px; text-align:center;">
                         @if($logoUrl)
-                            <img src="{{ (str_starts_with($logoUrl, 'http') || str_starts_with($logoUrl, 'data:')) ? $logoUrl : $message->embed($logoUrl) }}" alt="{{ $siteName }} Logo" style="height:80px; width:auto; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;" />
+                            @php
+                                $finalLogoUrl = $logoUrl;
+                                if (str_starts_with($logoUrl, 'data:')) {
+                                    // Handle Base64 Data URL (common in CMS)
+                                    if (preg_match('/^data:image\/(\w+);base64,(.+)$/', $logoUrl, $matches)) {
+                                        $type = $matches[1];
+                                        $data = base64_decode($matches[2]);
+                                        $finalLogoUrl = $message->embedData($data, 'logo.' . $type, 'image/' . $type);
+                                    }
+                                } elseif (!str_starts_with($logoUrl, 'http')) {
+                                    // Handle absolute filesystem paths
+                                    $finalLogoUrl = $message->embed($logoUrl);
+                                }
+                            @endphp
+                            <img src="{{ $finalLogoUrl }}" alt="{{ $siteName }} Logo" style="height:80px; width:auto; object-fit:contain; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto;" />
                         @endif
                         <p style="margin:0; color:rgba(255,255,255,0.75); font-size:13px; font-weight:500; text-transform: uppercase; letter-spacing: 2px;">Bukti Pemesanan Resmi</p>
                     </td>
@@ -184,7 +207,7 @@
                                         @if($transaction->check_out_date)
                                         <tr style="border-bottom:1px solid #f3f4f6;">
                                             <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Check-Out</td>
-                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111;">{{ $transaction->check_out_date->format('d M Y') }}</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111;">{{ $transaction->check_out_date->format('d M Y') }} ({{ $nights }} Malam)</td>
                                         </tr>
                                         @endif
                                         @if($transaction->special_requests)
@@ -229,44 +252,76 @@
                                 <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600;">
                                     {{ $item->item->name ?? 'Item' }}
                                     @if($item->guest_names && count($item->guest_names) > 0)
-                                        <br><span style="font-size:11px; color:#9ca3af; font-weight:400;">{{ implode(', ', $item->guest_names) }}</span>
+                                        <br><span style="font-size:11px; color:#9ca3af; font-weight:400;">Tamu: {{ implode(', ', $item->guest_names) }}</span>
                                     @endif
                                 </td>
                                 <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">{{ $item->quantity }}</td>
-                                <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600; text-align:right;">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600; text-align:right;">
+                                    @php
+                                        $itemTotal = $item->subtotal;
+                                        // Mirroring logic from handlePrint: multiply by nights for resort items
+                                        if ($isResort && str_contains(strtolower($item->item_type ?? ''), 'resort')) {
+                                            $itemTotal = $item->subtotal * $nights;
+                                        }
+                                    @endphp
+                                    Rp {{ number_format($itemTotal, 0, ',', '.') }}
+                                </td>
                             </tr>
                             @endforeach
+
+                            <!-- Additional Facilities (JSON Array in main transaction) -->
+                            @if(!empty($transaction->additional_facilities))
+                                @foreach($transaction->additional_facilities as $fac)
+                                <tr style="border-bottom:1px solid #f3f4f6;">
+                                    <td style="padding:12px 20px; font-size:13px; color:#374151;">{{ $fac['name'] ?? ($fac['label'] ?? 'Fasilitas') }}</td>
+                                    <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">1</td>
+                                    <td style="padding:12px 20px; font-size:13px; color:#111; font-weight:600; text-align:right;">
+                                        @php
+                                            $facPrice = $fac['price'] ?? ($fac['amount'] ?? 0);
+                                            if ($isResort) $facPrice *= $nights;
+                                        @endphp
+                                        Rp {{ number_format($facPrice, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                                @endforeach
+                            @endif
 
                             <!-- Add-Ons (child transactions) -->
                             @if($transaction->addons && $transaction->addons->count() > 0)
                                 <tr>
-                                    <td colspan="3" style="padding:8px 20px; font-size:11px; font-weight:700; color:#6b7280; background:#f9fafb; text-transform:uppercase; letter-spacing:1px; border-top:1px solid #e5e7eb;">ADD-ONS / Fasilitas Tambahan</td>
+                                    <td colspan="3" style="padding:8px 20px; font-size:11px; font-weight:700; color:#2e7d32; background:#f0f9f0; text-transform:uppercase; letter-spacing:1px; border-top:1px solid #e5e7eb;">Layanan & Fasilitas Tambahan (Add-ons)</td>
                                 </tr>
                                 @foreach($transaction->addons as $addonOrder)
-                                    @foreach($addonOrder->items as $addonItem)
-                                    <tr style="border-bottom:1px solid #f3f4f6;">
-                                        <td style="padding:12px 20px; font-size:13px; color:#374151;">{{ $addonItem->item->name ?? 'Fasilitas' }}</td>
-                                        <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">{{ $addonItem->quantity }}</td>
-                                        <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:right;">Rp {{ number_format($addonItem->subtotal, 0, ',', '.') }}</td>
-                                    </tr>
-                                    @endforeach
+                                    @if(in_array($addonOrder->status, ['success', 'paid']))
+                                        @foreach($addonOrder->items as $addonItem)
+                                        <tr style="border-bottom:1px solid #f3f4f6;">
+                                            <td style="padding:12px 20px; font-size:13px; color:#374151;">{{ $addonItem->item->name ?? 'Fasilitas' }} <span style="font-size:10px; color:#9ca3af; font-style:italic;">(Add-on)</span></td>
+                                            <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:center;">{{ $addonItem->quantity }}</td>
+                                            <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:right;">Rp {{ number_format($addonItem->subtotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                        @endforeach
+                                    @endif
                                 @endforeach
                             @endif
 
                             <!-- Reschedule Fees -->
-                            @if($transaction->reschedules && $transaction->reschedules->where('reschedule_fee', '>', 0)->count() > 0)
+                            @php
+                                $completedReschedules = $transaction->reschedules ? $transaction->reschedules->where('status', 'completed') : collect();
+                            @endphp
+                            @if($completedReschedules->count() > 0)
                                 <tr>
-                                    <td colspan="3" style="padding:8px 20px; font-size:11px; font-weight:700; color:#6b7280; background:#f9fafb; text-transform:uppercase; letter-spacing:1px; border-top:1px solid #e5e7eb;">Biaya Reschedule</td>
+                                    <td colspan="3" style="padding:8px 20px; font-size:11px; font-weight:700; color:#c2410c; background:#fff7ed; text-transform:uppercase; letter-spacing:1px; border-top:1px solid #e5e7eb;">Penyesuaian Jadwal (Reschedule)</td>
                                 </tr>
-                                @foreach($transaction->reschedules as $res)
-                                    @if($res->reschedule_fee > 0)
+                                @foreach($completedReschedules as $res)
                                     <tr style="border-bottom:1px solid #f3f4f6;">
-                                        <td style="padding:12px 20px; font-size:13px; color:#374151;" colspan="2">Biaya Perubahan Jadwal{{ $res->new_check_in_date ? ' → ' . \Carbon\Carbon::parse($res->new_check_in_date)->format('d M Y') : '' }}</td>
-                                        <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:right;">Rp {{ number_format($res->reschedule_fee, 0, ',', '.') }}</td>
+                                        <td style="padding:12px 20px; font-size:13px; color:#374151;" colspan="2">
+                                            Biaya Perubahan Jadwal<br>
+                                            <span style="font-size:11px; color:#9ca3af;">{{ \Carbon\Carbon::parse($res->old_date)->format('d/m/y') }} → {{ \Carbon\Carbon::parse($res->new_date)->format('d/m/y') }}</span>
+                                        </td>
+                                        <td style="padding:12px 20px; font-size:13px; color:#374151; text-align:right;">Rp {{ number_format($res->final_charge, 0, ',', '.') }}</td>
                                     </tr>
-                                    @endif
                                 @endforeach
-                            @endif
+                            @endifif
 
                             <!-- Promo Discount -->
                             @if($transaction->promo && $transaction->discount_amount > 0)
@@ -318,9 +373,44 @@
                                         </tr>
                                         @endif
                                         <tr style="border-bottom:1px solid #f3f4f6;">
-                                            <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Subtotal Item</td>
-                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">Rp {{ number_format($transaction->total_price, 0, ',', '.') }}</td>
+                                            <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Subtotal Pesanan</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">
+                                                @php
+                                                    $mainSubtotal = collect($transaction->items)->reduce(function($acc, $item) use ($isResort, $nights) {
+                                                        $val = $item->subtotal;
+                                                        if ($isResort && str_contains(strtolower($item->item_type ?? ''), 'resort')) {
+                                                            $val *= $nights;
+                                                        }
+                                                        return $acc + $val;
+                                                    }, 0);
+                                                    
+                                                    if (!empty($transaction->additional_facilities)) {
+                                                        foreach($transaction->additional_facilities as $fac) {
+                                                            $p = $fac['price'] ?? ($fac['amount'] ?? 0);
+                                                            if ($isResort) $p *= $nights;
+                                                            $mainSubtotal += $p;
+                                                        }
+                                                    }
+                                                @endphp
+                                                Rp {{ number_format($mainSubtotal, 0, ',', '.') }}
+                                            </td>
                                         </tr>
+                                        @php
+                                            $addonsTotal = $transaction->addons ? $transaction->addons->whereIn('status', ['success', 'paid'])->sum('total_price') : 0;
+                                            $rescTotal = $completedReschedules->sum('final_charge');
+                                        @endphp
+                                        @if($addonsTotal > 0)
+                                        <tr style="border-bottom:1px solid #f3f4f6;">
+                                            <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Layanan Tambahan (Add-ons)</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">Rp {{ number_format($addonsTotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                        @endif
+                                        @if($rescTotal > 0)
+                                        <tr style="border-bottom:1px solid #f3f4f6;">
+                                            <td style="padding:12px 20px; font-size:13px; color:#6b7280;">Total Biaya Reschedule</td>
+                                            <td style="padding:12px 20px; font-size:13px; font-weight:600; color:#111; text-align:right;">Rp {{ number_format($rescTotal, 0, ',', '.') }}</td>
+                                        </tr>
+                                        @endif
                                         @if(($transaction->discount_amount ?? 0) > 0)
                                         <tr style="border-bottom:1px solid #f3f4f6;">
                                             <td style="padding:12px 20px; font-size:13px; color:#16a34a;">Diskon Promo</td>
@@ -329,8 +419,13 @@
                                         @endif
                                         <!-- Grand Total -->
                                         <tr style="background:#2e7d32;">
-                                            <td style="padding:16px 20px; font-size:15px; font-weight:800; color:#ffffff;">TOTAL PEMBAYARAN</td>
-                                            <td style="padding:16px 20px; font-size:18px; font-weight:800; color:#ffffff; text-align:right;">Rp {{ number_format($transaction->total_amount ?? $transaction->total_price, 0, ',', '.') }}</td>
+                                            <td style="padding:16px 20px; font-size:15px; font-weight:800; color:#ffffff;">TOTAL AKHIR</td>
+                                            <td style="padding:16px 20px; font-size:18px; font-weight:800; color:#ffffff; text-align:right;">
+                                                @php
+                                                    $grandTotal = $mainSubtotal + $addonsTotal + $rescTotal - ($transaction->discount_amount ?? 0);
+                                                @endphp
+                                                Rp {{ number_format($grandTotal, 0, ',', '.') }}
+                                            </td>
                                         </tr>
                                     </table>
                                 </td>

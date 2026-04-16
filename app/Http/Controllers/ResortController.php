@@ -89,7 +89,7 @@ class ResortController extends Controller
                 
                 if ($resort->is_on_hold) {
                     $minExpiry = $overlappingReschedules->whereNotNull('expires_at')->min('expires_at');
-                    $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
+                    $resort->hold_expiry = $minExpiry ? Carbon::parse($minExpiry)->toISOString() : null;
                 } else {
                     $resort->hold_expiry = null;
                 }
@@ -206,7 +206,7 @@ class ResortController extends Controller
             
             if ($resort->is_on_hold) {
                 $minExpiry = $overlappingReschedules->whereNotNull('expires_at')->min('expires_at');
-                $resort->hold_expiry = $minExpiry ? \Carbon\Carbon::parse($minExpiry)->toISOString() : null;
+                $resort->hold_expiry = $minExpiry ? Carbon::parse($minExpiry)->toISOString() : null;
             } else {
                 $resort->hold_expiry = null;
             }

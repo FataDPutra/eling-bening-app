@@ -268,7 +268,7 @@ class TransactionController extends Controller
         // Forcefully ensure addon items are loaded with details
         if ($transaction->addons) {
             foreach ($transaction->addons as $addon) {
-                $items = \App\Models\TransactionItem::with('item')->where('transaction_id', $addon->id)->get();
+                $items = TransactionItem::with('item')->where('transaction_id', $addon->id)->get();
                 if ($items->isEmpty() && !empty($addon->additional_facilities)) {
                     $items = collect($addon->additional_facilities)->map(function($f) {
                         $facility = \App\Models\Facility::find($f['item_id'] ?? ($f['id'] ?? null));

@@ -12,9 +12,9 @@ class StatController extends Controller
 {
     public function getStats(Request $request)
     {
-        $isAllTime = $request->get('month') === 'all';
-        $month = $request->get('month', date('m'));
-        $year = $request->get('year', date('Y'));
+        $isAllTime = $request->input('month') === 'all';
+        $month = $request->input('month', date('m'));
+        $year = $request->input('year', date('Y'));
         
         $selectedDate = Carbon::create($year, $isAllTime ? 1 : $month, 1);
         $startOfPeriod = $isAllTime ? Carbon::create(2023, 1, 1) : $selectedDate->copy()->startOfMonth();
