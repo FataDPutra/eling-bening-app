@@ -29,6 +29,7 @@ export default function EventBooking() {
     const [isLoading, setIsLoading] = useState(true);
     const [qty, setQty] = useState(1);
     const [bookerName, setBookerName] = useState('');
+    const [bookerPhone, setBookerPhone] = useState('');
     const [guestNames, setGuestNames] = useState(['']);
     const [promoInput, setPromoInput] = useState('');
     const [activePromo, setActivePromo] = useState(null);
@@ -39,7 +40,10 @@ export default function EventBooking() {
     const [successData, setSuccessData] = useState(null);
 
     useEffect(() => {
-        if (user) setBookerName(user.name);
+        if (user) {
+            setBookerName(user.name);
+            if (user.phone) setBookerPhone(user.phone);
+        }
     }, [user]);
 
     useEffect(() => {
@@ -129,6 +133,7 @@ export default function EventBooking() {
             id: txId,
             booking_type: 'EVENT',
             booker_name: bookerName || user.name,
+            booker_phone: bookerPhone,
             payment_method: 'MIDTRANS',
             promo_id: activePromo?.id,
             check_in_date: event.event_date || new Date().toISOString().split('T')[0],
@@ -312,6 +317,24 @@ export default function EventBooking() {
                                         value={bookerName}
                                         onChange={e => setBookerName(e.target.value)}
                                         placeholder={user?.name || 'Nama Pemesan'}
+                                        className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-eling-green/20 focus:bg-white transition-all outline-none"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mb-6">
+                                <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-[0.2em] truncate">
+                                    No. WhatsApp
+                                </label>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-300">
+                                        <i className="fas fa-phone-alt"></i>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={bookerPhone}
+                                        onChange={e => setBookerPhone(e.target.value)}
+                                        placeholder={user?.phone || '0812xxxxxx'}
                                         className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-eling-green/20 focus:bg-white transition-all outline-none"
                                     />
                                 </div>

@@ -21,6 +21,7 @@ export default function EventTicketing() {
     const [activePromo, setActivePromo] = useState(null);
     const [promoMsg, setPromoMsg] = useState({ show: false, success: false, text: '' });
     const [bookerName, setBookerName] = useState('');
+    const [bookerPhone, setBookerPhone] = useState('');
     const [guestNamesData, setGuestNamesData] = useState({});
 
     // For payment modal
@@ -32,6 +33,7 @@ export default function EventTicketing() {
     useEffect(() => {
         if (user) {
             setBookerName(user.name);
+            if (user.phone) setBookerPhone(user.phone);
         }
     }, [user]);
 
@@ -172,6 +174,7 @@ export default function EventTicketing() {
             id: transId,
             booking_type: 'EVENT',
             booker_name: bookerName || user.name,
+            booker_phone: bookerPhone,
             payment_method: 'MIDTRANS',
             promo_id: activePromo?.id,
             check_in_date: orderItems[0]?.event_date || new Date().toISOString().split('T')[0],
@@ -364,6 +367,43 @@ export default function EventTicketing() {
                                 </div>
 
                                 <div className="space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8 pb-8 border-b border-gray-100">
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-[0.2em]">
+                                                Nama Pemesan Utama
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-300">
+                                                    <Tag size={16} />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={bookerName}
+                                                    onChange={e => setBookerName(e.target.value)}
+                                                    placeholder={user?.name || 'Nama Pemesan'}
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-eling-green/20 focus:bg-white transition-all outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-[10px] font-black uppercase text-gray-400 mb-2 tracking-[0.2em] truncate">
+                                                No. WhatsApp
+                                            </label>
+                                            <div className="relative">
+                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-300">
+                                                    <i className="fas fa-phone-alt"></i>
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={bookerPhone}
+                                                    onChange={e => setBookerPhone(e.target.value)}
+                                                    placeholder={user?.phone || '0812xxxxxx'}
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-12 pr-4 py-4 text-sm font-bold text-gray-700 focus:ring-2 focus:ring-eling-green/20 focus:bg-white transition-all outline-none"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {orderItems.map((item) => (
                                         <div key={item.id} className="space-y-4">
                                             <div className="flex items-center gap-3">

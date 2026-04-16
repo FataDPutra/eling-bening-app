@@ -15,7 +15,7 @@ export default function Profile() {
     const navigate = useNavigate();
 
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [editForm, setEditForm] = useState({ name: user?.name || '', email: user?.email || '' });
+    const [editForm, setEditForm] = useState({ name: user?.name || '', email: user?.email || '', phone: user?.phone || '' });
     const [bookings, setBookings] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [rescheduleData, setRescheduleData] = useState(null); 
@@ -432,7 +432,7 @@ export default function Profile() {
 
                             <button 
                                 onClick={() => {
-                                    setEditForm({ name: user?.name, email: user?.email });
+                                    setEditForm({ name: user?.name, email: user?.email, phone: user?.phone || '' });
                                     setIsEditingProfile(true);
                                 }}
                                 className="w-full py-3 mb-3 text-eling-green font-bold rounded-xl bg-green-50 hover:bg-green-100 transition flex items-center justify-center gap-2"
@@ -1438,7 +1438,7 @@ export default function Profile() {
                                     <h4 className="text-sm font-black uppercase tracking-widest text-gray-900">Informasi Dasar</h4>
                                 </div>
                                 <form onSubmit={handleUpdateProfile} className="space-y-4">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nama Lengkap</label>
                                             <input 
@@ -1459,6 +1459,16 @@ export default function Profile() {
                                                 className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-green/20 outline-none transition-all font-bold text-sm"
                                                 placeholder="email@anda.com"
                                                 required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 block truncate">No. WhatsApp</label>
+                                            <input 
+                                                type="text" 
+                                                value={editForm.phone} 
+                                                onChange={e => setEditForm({...editForm, phone: e.target.value})}
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 focus:bg-white focus:ring-2 focus:ring-eling-green/20 outline-none transition-all font-bold text-sm"
+                                                placeholder="0812xxxxxx"
                                             />
                                         </div>
                                     </div>

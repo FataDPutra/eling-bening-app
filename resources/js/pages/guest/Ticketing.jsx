@@ -23,6 +23,7 @@ export default function Ticketing() {
     const [promoMsg, setPromoMsg] = useState({ show: false, success: false, text: '' });
     const [bookDate, setBookDate] = useState(new Date().toISOString().split('T')[0]);
     const [bookerName, setBookerName] = useState('');
+    const [bookerPhone, setBookerPhone] = useState('');
 
     // For payment modal
     const [showPayment, setShowPayment] = useState(false);
@@ -34,6 +35,7 @@ export default function Ticketing() {
     useEffect(() => {
         if (user) {
             setBookerName(user.name);
+            if (user.phone) setBookerPhone(user.phone);
         }
     }, [user]);
 
@@ -177,6 +179,7 @@ export default function Ticketing() {
             id: transId,
             booking_type: 'TICKET',
             booker_name: bookerName,
+            booker_phone: bookerPhone,
             payment_method: 'midtrans',
             promo_id: activePromo?.id,
             check_in_date: bookDate,
@@ -367,10 +370,41 @@ export default function Ticketing() {
                                             />
                                             <p className="text-[10px] text-gray-400 italic mt-1.5 opacity-70">*Biarkan kosong untuk menggunakan nama akun Anda.</p>
                                         </div>
+                                        <div>
+                                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2 tracking-wide truncate">
+                                                No. WhatsApp
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={bookerPhone}
+                                                onChange={(e) => setBookerPhone(e.target.value)}
+                                                placeholder={user?.phone || '0812xxxxxx'}
+                                                className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:bg-white focus:ring-4 focus:ring-eling-green/10 focus:border-eling-green outline-none transition-all"
+                                            />
+                                        </div>
 
                                         {/* Manifest Header */}
                                         <div className="pt-4 border-t border-gray-50">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg inline-block">Manifest Pengunjung & QR Code</p>
+                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1.5 rounded-lg inline-block mb-4">Manifest Pengunjung & QR Code</p>
+                                            <div className="space-y-4">
+                                                {orderItems.map(item => (
+                                                    <div key={item.id} className="space-y-3">
+                                                        <div className="text-xs font-bold text-gray-700">{item.name}</div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                            {Array.from({ length: item.qty }).map((_, idx) => (
+                                                                <input
+                                                                    key={`${item.id}-${idx}`}
+                                                                    type="text"
+                                                                    placeholder={`Nama Pengunjung #${idx + 1}`}
+                                                                    value={guestNamesData[item.id]?.[idx] || ''}
+                                                                    onChange={(e) => updateGuestName(item.id, idx, e.target.value)}
+                                                                    className="w-full border border-gray-100 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:bg-white focus:ring-4 focus:ring-eling-green/10 focus:border-eling-green outline-none transition-all"
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 )}

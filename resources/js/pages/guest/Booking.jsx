@@ -35,7 +35,7 @@ export default function Booking() {
     const [firstName, setFirstName] = useState(user?.name?.split(' ')[0] || '');
     const [lastName, setLastName] = useState(user?.name?.split(' ').slice(1).join(' ') || '');
     const [email, setEmail] = useState(user?.email || '');
-    const [phone, setPhone] = useState('');
+    const [phone, setPhone] = useState(user?.phone || '');
     const [guestFirstName, setGuestFirstName] = useState('');
     const [guestLastName, setGuestLastName] = useState('');
     const [arrivalTime, setArrivalTime] = useState('Pilih waktu kedatangan');
