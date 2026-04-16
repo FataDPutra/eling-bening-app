@@ -94,7 +94,6 @@ export default function EventBooking() {
     // ── Calculations ──────────────────────────────────────────────
     const price = parseFloat(event?.price || 0);
     const subtotal = price * qty;
-    const adminFee = (price > 0) ? 2500 : 0; 
 
     let promoDiscountAmt = 0;
     if (activePromo && subtotal >= parseFloat(activePromo.min_purchase || 0)) {
@@ -104,8 +103,8 @@ export default function EventBooking() {
             : dv;
     }
 
-
-    const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
+    const tax = subtotal > 0 ? subtotal * 0.1 : 0;
+    const total = Math.max(0, subtotal + tax - promoDiscountAmt);
 
     const applyPromo = async () => {
         const code = promoInput.trim().toUpperCase();
@@ -381,9 +380,9 @@ export default function EventBooking() {
 
                                 {/* Breakdown */}
                                 <div className="pt-6 border-t border-dashed border-gray-200 space-y-4 text-sm mb-6">
-                                    <div className="flex justify-between text-gray-400 font-bold uppercase tracking-widest text-[9px]">
-                                        <span>Biaya Layanan</span>
-                                        <span className="text-gray-900">{formatRupiah(adminFee)}</span>
+                                    <div className="flex justify-between text-gray-500 font-bold uppercase tracking-widest text-[9px]">
+                                        <span className="whitespace-nowrap">Pajak & Layanan (10%)</span>
+                                        <span className="text-gray-900 whitespace-nowrap">{formatRupiah(tax)}</span>
                                     </div>
                                     {activePromo && (
                                         <div className="flex justify-between text-eling-red font-bold uppercase tracking-widest text-[9px]">

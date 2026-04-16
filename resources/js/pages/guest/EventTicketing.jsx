@@ -142,7 +142,6 @@ export default function EventTicketing() {
     });
 
     const hasItems = orderItems.length > 0;
-    const adminFee = (hasItems && subtotal > 0) ? 2500 : 0; 
     let promoDiscountAmt = 0;
 
     if (activePromo && hasItems) {
@@ -156,7 +155,8 @@ export default function EventTicketing() {
         }
     }
 
-    const total = Math.max(0, subtotal + adminFee - promoDiscountAmt);
+    const tax = subtotal > 0 ? subtotal * 0.1 : 0;
+    const total = Math.max(0, subtotal + tax - promoDiscountAmt);
 
     const processPayment = async () => {
         if (!hasItems) return;
@@ -474,8 +474,8 @@ export default function EventTicketing() {
                                         </div>
                                     )}
                                     <div className="flex justify-between text-gray-400 font-black uppercase tracking-widest text-[9px]">
-                                        <span>Biaya Layanan</span>
-                                        <span className="text-gray-900">{formatRupiah(adminFee)}</span>
+                                        <span className="whitespace-nowrap">Pajak & Layanan (10%)</span>
+                                        <span className="text-gray-900 whitespace-nowrap">{formatRupiah(tax)}</span>
                                     </div>
                                     <div className="flex flex-col pt-6 border-t border-gray-100">
                                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1 text-center">Total Tagihan</span>
