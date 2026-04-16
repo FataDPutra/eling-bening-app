@@ -172,7 +172,7 @@ export default function EventTicketing() {
             id: transId,
             booking_type: 'EVENT',
             booker_name: bookerName || user.name,
-            payment_method: method,
+            payment_method: 'MIDTRANS',
             promo_id: activePromo?.id,
             check_in_date: orderItems[0]?.event_date || new Date().toISOString().split('T')[0],
             total_price: total,

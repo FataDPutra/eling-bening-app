@@ -36,7 +36,10 @@ class AppServiceProvider extends ServiceProvider
                 config(['services.google.redirect' => url('/api/auth/google/callback')]);
 
                 // Mail / SMTP
-                if (isset($settings['mail_host'])) config(['mail.mailers.smtp.host' => $settings['mail_host']]);
+                if (isset($settings['mail_host']) && !empty($settings['mail_host'])) {
+                    config(['mail.default' => 'smtp']);
+                    config(['mail.mailers.smtp.host' => $settings['mail_host']]);
+                }
                 if (isset($settings['mail_port'])) config(['mail.mailers.smtp.port' => $settings['mail_port']]);
                 if (isset($settings['mail_username'])) config(['mail.mailers.smtp.username' => $settings['mail_username']]);
                 if (isset($settings['mail_password'])) config(['mail.mailers.smtp.password' => $settings['mail_password']]);
