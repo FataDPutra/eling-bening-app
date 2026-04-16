@@ -22,7 +22,7 @@ class PromoController extends Controller
             'min_purchase' => 'numeric',
             'start_date' => 'required|date',
             'end_date' => 'required|date',
-            'applicable_to' => 'required|in:TICKET,RESORT,ALL',
+            'applicable_to' => 'required|in:TICKET,RESORT,EVENT,ALL',
             'is_active' => 'boolean',
             'usage_limit' => 'nullable|integer',
             'used_count' => 'nullable|integer',
@@ -50,7 +50,7 @@ class PromoController extends Controller
             'min_purchase' => 'numeric',
             'start_date' => 'sometimes|date',
             'end_date' => 'sometimes|date',
-            'applicable_to' => 'sometimes|in:TICKET,RESORT,ALL',
+            'applicable_to' => 'sometimes|in:TICKET,RESORT,EVENT,ALL',
             'is_active' => 'boolean',
             'usage_limit' => 'nullable|integer',
             'used_count' => 'nullable|integer',
@@ -71,7 +71,7 @@ class PromoController extends Controller
     {
         $request->validate([
             'promo_code' => 'required|string',
-            'booking_type' => 'nullable|in:TICKET,RESORT',
+            'booking_type' => 'nullable|in:TICKET,RESORT,EVENT',
             'total_amount' => 'nullable|numeric'
         ]);
 
@@ -95,7 +95,12 @@ class PromoController extends Controller
         }
 
         if ($request->booking_type && $promo->applicable_to !== 'ALL' && $promo->applicable_to !== $request->booking_type) {
-            $target = $promo->applicable_to === 'TICKET' ? 'Tiket Wisata' : 'Reservasi Resort';
+            $target = match($promo->applicable_to) {
+                'TICKET' => 'Tiket Wisata',
+                'RESORT' => 'Reservasi Resort',
+                'EVENT'  => 'Tiket Event',
+                default  => $promo->applicable_to,
+            };
             return response()->json(['message' => "Kode promo ini hanya berlaku untuk kategori {$target}."], 400);
         }
 

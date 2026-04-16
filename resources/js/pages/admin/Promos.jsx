@@ -159,12 +159,13 @@ export default function Promos() {
                                         <div className={`w-7 h-7 rounded-lg bg-admin-bg border border-admin-border flex items-center justify-center text-[10px] font-black ${
                                             promo.applicable_to === 'ALL' ? 'text-indigo-500' : 
                                             promo.applicable_to === 'RESORT' ? 'text-amber-500' : 
+                                            promo.applicable_to === 'EVENT' ? 'text-violet-500' :
                                             'text-emerald-500'
                                         }`}>
-                                            {promo.applicable_to === 'ALL' ? 'UNV' : promo.applicable_to === 'RESORT' ? 'RST' : 'TCK'}
+                                            {promo.applicable_to === 'ALL' ? 'UNV' : promo.applicable_to === 'RESORT' ? 'RST' : promo.applicable_to === 'EVENT' ? 'EVT' : 'TCK'}
                                         </div>
                                         <span className="uppercase tracking-wider text-[10px]">
-                                            {promo.applicable_to === 'ALL' ? 'Universal' : promo.applicable_to}
+                                            {promo.applicable_to === 'ALL' ? 'Universal' : promo.applicable_to === 'EVENT' ? 'Event' : promo.applicable_to}
                                         </span>
                                     </div>
                                 </td>

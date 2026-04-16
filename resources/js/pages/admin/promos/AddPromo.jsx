@@ -135,6 +135,7 @@ export default function AddPromo() {
                                             <option value="ALL">Semua Layanan (Universal)</option>
                                             <option value="TICKET">Khusus Tiket Wisata</option>
                                             <option value="RESORT">Khusus Reservasi Resort</option>
+                                            <option value="EVENT">Khusus Tiket Event</option>
                                         </select>
                                     </div>
                                 </div>
