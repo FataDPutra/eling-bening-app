@@ -881,6 +881,26 @@ class TransactionController extends Controller
                 }
             }
 
+            // Send Admin Email Notification
+            try {
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \Illuminate\Support\Facades\Mail::to($admin->email)->send(
+                        new \App\Mail\AdminNotificationMail('Pesanan Tambahan', [
+                            'transaction_id' => $addonOrder->id,
+                            'parent_id'      => $addonOrder->parent_id,
+                            'customer_name'  => $addonOrder->booker_name,
+                            'total'          => $addonOrder->total_price,
+                            'status'         => $addonOrder->status,
+                            'items_count'    => $addonOrder->items->count(),
+                            'date'           => now()->format('Y-m-d H:i:s'),
+                        ])
+                    );
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send admin notification for addon order: ' . $e->getMessage());
+            }
+
             return response()->json([
                 'message' => 'Pesanan tambahan berhasil diproses.',
                 'transaction' => $addonOrder->load('items')
