@@ -145,6 +145,13 @@ class ReviewController extends Controller
         $count = Review::where('rating', $operator, $request->rating)
             ->update(['is_visible' => $request->is_visible]);
 
+        // Jika menampilkan suatu filter, sembunyikan yang tidak masuk dalam filter tersebut
+        if ($request->is_visible) {
+            $hiddenOperator = $operator === '>=' ? '<' : '!=';
+            Review::where('rating', $hiddenOperator, $request->rating)
+                ->update(['is_visible' => false]);
+        }
+
         $ratingText = $operator === '>=' ? "{$request->rating} ke atas" : $request->rating;
 
         return response()->json([
