@@ -50,6 +50,7 @@ import FinanceTickets from './pages/admin/FinanceTickets';
 import FinanceResort from './pages/admin/FinanceResort';
 import FinanceRecap from './pages/admin/FinanceRecap';
 import AdminFacilities from './pages/admin/Facilities';
+import AdminReviews from './pages/admin/Reviews';
 
 // Rooms sub-pages
 import AddRoom from './pages/admin/rooms/AddRoom';
@@ -177,6 +178,7 @@ const App = () => {
                         
                         <Route path="settings" element={<Settings />} />
                         <Route path="facilities" element={<AdminFacilities />} />
+                        <Route path="reviews" element={<AdminReviews />} />
                     </Route>
 
                     {/* Fallback */}

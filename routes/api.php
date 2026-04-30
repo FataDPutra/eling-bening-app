@@ -99,10 +99,15 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function() {
     Route::put('/reschedules/{id}', [RescheduleController::class, 'update']);
 
     // CMS & Event Management
-    Route::apiResource('events', EventController::class)->except(['index']);
+    Route::apiResource('events', EventController::class)->except(['index', 'show']);
     Route::post('/contents/upsert', [ContentController::class, 'upsert']);
     Route::post('/contents/bulk', [ContentController::class, 'bulkUpdate']);
 
     // Facilities CRUD
     Route::apiResource('facilities', FacilityController::class)->except(['index', 'show']);
+
+    // Reviews Management
+    Route::get('/admin/reviews', [ReviewController::class, 'adminIndex']);
+    Route::patch('/admin/reviews/{id}/visibility', [ReviewController::class, 'toggleVisibility']);
+    Route::post('/admin/reviews/bulk-visibility', [ReviewController::class, 'bulkSetVisibility']);
 });

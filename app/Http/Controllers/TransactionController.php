@@ -265,10 +265,24 @@ class TransactionController extends Controller
                 $transaction->promo()->increment('used_count');
             }
 
-            return response()->json($transaction->load(['items', 'tickets']), 201);
-
-            if ($transaction->promo_id) {
-                $transaction->promo()->increment('used_count');
+            try {
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \Illuminate\Support\Facades\Mail::to($admin->email)->send(new \App\Mail\AdminNotificationMail(
+                        'Pesanan Baru: ' . $transaction->booking_type,
+                        [
+                            'transaction_id' => $transaction->id,
+                            'nama_pemesan' => $transaction->booker_name,
+                            'tipe_pemesanan' => $transaction->booking_type,
+                            'total_harga' => 'Rp ' . number_format($transaction->total_price, 0, ',', '.'),
+                            'status' => $transaction->status,
+                            'tanggal_check_in' => \Carbon\Carbon::parse($transaction->check_in_date)->format('d M Y'),
+                            'waktu_dibuat' => now()->format('d M Y H:i:s'),
+                        ]
+                    ));
+                }
+            } catch (\Exception $e) {
+                // Silently fail if email cannot be sent so it doesn't break the transaction flow
             }
 
             return response()->json($transaction->load(['items', 'tickets']), 201);
@@ -621,6 +635,26 @@ class TransactionController extends Controller
             ]);
 
             $transaction->increment('reschedule_count');
+
+            try {
+                $admins = \App\Models\User::where('role', 'admin')->get();
+                foreach ($admins as $admin) {
+                    \Illuminate\Support\Facades\Mail::to($admin->email)->send(new \App\Mail\AdminNotificationMail(
+                        'Permintaan Reschedule',
+                        [
+                            'transaction_id' => $transaction->id,
+                            'nama_pemesan' => $transaction->booker_name,
+                            'tanggal_lama' => \Carbon\Carbon::parse($oldCheckIn)->format('d M Y'),
+                            'tanggal_baru' => \Carbon\Carbon::parse($validated['new_check_in_date'])->format('d M Y'),
+                            'alasan' => $validated['reason'] ?? '-',
+                            'biaya_tambahan' => 'Rp ' . number_format($finalCharge, 0, ',', '.'),
+                            'waktu_pengajuan' => now()->format('d M Y H:i:s'),
+                        ]
+                    ));
+                }
+            } catch (\Exception $e) {
+                // Silently fail
+            }
 
             return response()->json([
                 'message'      => 'Permintaan reschedule telah diajukan.',

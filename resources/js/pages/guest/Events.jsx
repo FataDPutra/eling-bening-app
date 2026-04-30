@@ -66,7 +66,7 @@ export default function Events() {
     return (
         <div className="animate-fade-in pb-20">
             {/* Hero Section */}
-            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
+            <section className="relative md:h-[80vh] min-h-[600px] flex items-center justify-center text-center overflow-hidden pt-48 md:pt-40 pb-32 md:pb-24">
                 <img src={content.eventHeroImage || '/images/hero-bg.png'} alt="Events at Eling Bening" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"></div>
                 <div className="relative z-10 text-white max-w-4xl px-6">
@@ -329,9 +329,9 @@ export default function Events() {
                                             <Link
                                                 to={`/events/${selectedEvent.id}/book`}
                                                 onClick={closeDetail}
-                                                className="flex-1 bg-eling-red text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-red-800 transition-all shadow-lg shadow-eling-red/20 text-center flex items-center justify-center gap-2"
+                                                className="flex-1 bg-eling-red text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-red-900 hover:scale-[1.02] hover:shadow-2xl hover:shadow-eling-red/40 transition-all duration-300 text-center flex items-center justify-center gap-2 active:scale-95 group"
                                             >
-                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                     <CreditCard size={16} />
                                                 </div>
                                                 {selectedEvent.price > 0 ? 'Pesan Tiket Sekarang' : 'Dapatkan Tiket Gratis'}
@@ -340,9 +340,9 @@ export default function Events() {
                                             <Link
                                                 to="/contact"
                                                 onClick={closeDetail}
-                                                className="flex-1 bg-eling-green text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-green-800 transition-all shadow-lg shadow-eling-green/20 text-center flex items-center justify-center gap-2"
+                                                className="flex-1 bg-eling-green text-white font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-green-900 hover:scale-[1.02] hover:shadow-2xl hover:shadow-eling-green/40 transition-all duration-300 text-center flex items-center justify-center gap-2 active:scale-95 group"
                                             >
-                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                                <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                     <Phone size={16} />
                                                 </div>
                                                 Konsultasi Gratis
@@ -351,9 +351,9 @@ export default function Events() {
                                         <Link
                                             to="/contact"
                                             onClick={closeDetail}
-                                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-gray-100 transition-all text-center flex items-center justify-center gap-2"
+                                            className="flex-1 bg-gray-50 border border-gray-200 text-gray-800 font-black text-sm uppercase tracking-widest py-4 px-6 rounded-2xl hover:bg-white hover:border-eling-green hover:text-eling-green hover:scale-[1.02] hover:shadow-xl transition-all duration-300 text-center flex items-center justify-center gap-2 active:scale-95 group"
                                         >
-                                            <Mail size={16} /> Kirim Pertanyaan
+                                            <Mail size={16} className="group-hover:rotate-12 transition-transform" /> Kirim Pertanyaan
                                         </Link>
                                     </div>
                                 </div>

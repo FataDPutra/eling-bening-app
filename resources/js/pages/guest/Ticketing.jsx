@@ -235,7 +235,7 @@ export default function Ticketing() {
     return (
         <div className="bg-gray-50 text-gray-900 min-h-screen">
             {/* Header / Hero */}
-            <header className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <header className="pt-40 md:pt-32 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold mb-4 font-serif">Pesan Tiket Online</h1>
                     <p className="text-gray-500">Pilih paket tiket Anda dan nikmati akses instan via QR Code.</p>

@@ -239,7 +239,7 @@ export default function EventTicketing() {
     return (
         <div className="bg-gray-50 text-gray-900 min-h-screen pb-32">
             {/* Header / Hero */}
-            <header className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <header className="pt-40 md:pt-32 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
                     <span className="px-4 py-1.5 rounded-full bg-eling-green/10 text-eling-green text-[10px] font-black uppercase tracking-widest mb-4 inline-block">Official Event Pass</span>
                     <h1 className="text-4xl md:text-5xl font-black mb-4 font-serif text-gray-900 leading-tight">Tiket Event & Konser</h1>

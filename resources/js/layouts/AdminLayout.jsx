@@ -7,7 +7,7 @@ import {
     PieChart, Megaphone, Layout, ExternalLink,
     ClipboardList, QrCode, Calendar, Menu, X,
     Bell, User, LogOut, ChevronLeft, ChevronRight,
-    CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen, Sparkles
+    CircleDollarSign, TrendingDown, PanelLeftClose, PanelLeftOpen, Sparkles, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useContent } from '../context/ContentContext';
@@ -81,6 +81,7 @@ export default function AdminLayout() {
         { label: 'Kelola Event', to: '/admin/events' },
         { label: 'Promo & Banner', to: '/admin/promos' },
         { label: 'Konten CMS', to: '/admin/content' },
+        { label: 'Ulasan Tamu', to: '/admin/reviews' },
         { label: 'Profil Saya', to: '/admin/profile' },
         { label: 'System Settings', to: '/admin/settings' },
         { label: 'Laporan Keuangan', to: '/admin/finance' },
@@ -201,6 +202,7 @@ export default function AdminLayout() {
                         {!isSidebarCollapsed && <div className="nav-section-title">Marketing & Content</div>}
                         <NavItem to="/admin/promos" icon={Megaphone} label="Promo & Banner" />
                         <NavItem to="/admin/content" icon={Layout} label="Konten CMS" />
+                        <NavItem to="/admin/reviews" icon={MessageSquare} label="Ulasan Tamu" />
 
                         {!isSidebarCollapsed && <div className="nav-section-title">Laporan Keuangan</div>}
                         <NavItem to="/admin/finance" icon={PieChart} label="Dashboard Finance" end />

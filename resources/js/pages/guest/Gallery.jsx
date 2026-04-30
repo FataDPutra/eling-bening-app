@@ -80,7 +80,7 @@ export default function Gallery() {
 
     return (
         <div className="animate-fade-in bg-white pb-24">
-            <section className="relative py-24 md:py-0 md:h-[65vh] min-h-[500px] flex items-center justify-center text-center overflow-hidden pt-28">
+            <section className="relative md:h-[80vh] min-h-[600px] flex items-center justify-center text-center overflow-hidden pt-48 md:pt-40 pb-32 md:pb-24">
                 <img src={content.galleryHeroImage || "/images/hero-bg.png"} alt="Gallery Hero Background" className="absolute inset-0 w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/60"></div>
                 <div className="relative z-10 text-white max-w-4xl px-6">

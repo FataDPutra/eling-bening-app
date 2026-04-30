@@ -764,40 +764,6 @@ export default function AdminContent() {
                             </Field>
                         </SectionCard>
 
-                        <SectionCard icon={Star} title="Ulasan Pengunjung" color="amber" badge={`${(content.home.testimonials || []).length} ulasan`}>
-                            <TwoCol>
-                                <Field label="Label Badge">
-                                    <Inp value={content.home.testimonialBadge} onChange={e => handleChange('testimonialBadge', e.target.value)} placeholder="Testimoni" />
-                                </Field>
-                                <Field label="Filter Rating Minimum" hint="Ulasan di bawah ini tidak ditampilkan">
-                                    <Sel value={content.home.testimonialMinRating} onChange={e => handleChange('testimonialMinRating', e.target.value)} options={[
-                                        { value: '1', label: '⭐ Semua (1+)' }, { value: '2', label: '⭐⭐ Min. 2' },
-                                        { value: '3', label: '⭐⭐⭐ Min. 3' }, { value: '4', label: '⭐⭐⭐⭐ Min. 4' },
-                                        { value: '5', label: '⭐⭐⭐⭐⭐ Hanya 5' },
-                                    ]} />
-                                </Field>
-                            </TwoCol>
-                            <Field label="Judul Seksi">
-                                <Inp value={content.home.testimonialTitle} onChange={e => handleChange('testimonialTitle', e.target.value)} placeholder="Kata Mereka..." />
-                            </Field>
-                            <div className="space-y-3 pt-1">
-                                {(content.home.testimonials || []).map((t, idx) => (
-                                    <ItemCard key={idx} number={idx + 1} title={t.name || 'Ulasan Baru'} onDelete={() => {
-                                        const updated = content.home.testimonials.filter((_, i) => i !== idx);
-                                        handleChange('testimonials', updated);
-                                    }}>
-                                        <TwoCol>
-                                            <Inp value={t.name} onChange={e => { const u = content.home.testimonials.map((it, i) => i === idx ? { ...it, name: e.target.value } : it); handleChange('testimonials', u); }} placeholder="Nama tamu" />
-                                            <Inp type="number" value={t.rating} onChange={e => { const u = content.home.testimonials.map((it, i) => i === idx ? { ...it, rating: parseInt(e.target.value) } : it); handleChange('testimonials', u); }} placeholder="1-5 bintang" />
-                                        </TwoCol>
-                                        <Txt rows={2} value={t.quote} onChange={e => { const u = content.home.testimonials.map((it, i) => i === idx ? { ...it, quote: e.target.value } : it); handleChange('testimonials', u); }} placeholder="Kutipan ulasan..." />
-                                    </ItemCard>
-                                ))}
-                                <AddBtn onClick={() => { const u = [...(content.home.testimonials || []), { name: '', quote: '', rating: 5 }]; handleChange('testimonials', u); }}>
-                                    <Star size={13} /> Tambah Ulasan
-                                </AddBtn>
-                            </div>
-                        </SectionCard>
 
                         <SectionCard icon={ArrowRight} title="Ajakan Akhir (CTA)" color="rose">
                             <ImageUpload label="Foto Latar CTA" value={content.home.finalCtaImage || "/images/hero-bg.png"} onChange={val => handleChange('finalCtaImage', val)} />

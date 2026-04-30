@@ -47,13 +47,11 @@ class ReviewController extends Controller
         ]);
 
         $transaction = Transaction::findOrFail($request->transaction_id);
-        
-        // Ensure user owns the transaction
+
         if ($transaction->user_id !== auth()->id()) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Prevent duplicate review for the same transaction
         if (Review::where('transaction_id', $request->transaction_id)->exists()) {
             return response()->json(['message' => 'Anda sudah memberikan ulasan untuk transaksi ini.'], 422);
         }
@@ -77,6 +75,81 @@ class ReviewController extends Controller
         return response()->json([
             'message' => 'Ulasan berhasil dikirim! Terima kasih.',
             'review' => $review
+        ]);
+    }
+
+    // ── ADMIN METHODS ─────────────────────────────────────────────────────────
+
+    public function adminIndex(Request $request)
+    {
+        $query = Review::with(['user', 'transaction'])->latest();
+
+        if ($request->filled('rating')) {
+            $query->where('rating', $request->rating);
+        }
+
+        if ($request->filled('visible')) {
+            $query->where('is_visible', $request->visible === '1');
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('comment', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('user', fn($u) => $u->where('name', 'like', '%' . $request->search . '%'));
+            });
+        }
+
+        $reviews = $query->get()->map(function ($review) {
+            return [
+                'id'              => $review->id,
+                'user_name'       => $review->user?->name ?? 'Anonymous',
+                'user_email'      => $review->user?->email ?? '-',
+                'rating'          => $review->rating,
+                'comment'         => $review->comment,
+                'is_visible'      => $review->is_visible,
+                'transaction_id'  => $review->transaction_id,
+                'booking_type'    => $review->transaction?->booking_type ?? '-',
+                'media'           => collect($review->media ?? [])->map(function ($path) {
+                    if (str_starts_with($path, 'http')) return $path;
+                    return asset('storage/' . ltrim($path, '/'));
+                })->toArray(),
+                'created_at'      => $review->created_at->format('d M Y, H:i'),
+                'created_at_diff' => $review->created_at->diffForHumans(),
+            ];
+        });
+
+        return response()->json($reviews);
+    }
+
+    public function toggleVisibility(Request $request, $id)
+    {
+        $review = Review::findOrFail($id);
+        $review->update(['is_visible' => !$review->is_visible]);
+
+        return response()->json([
+            'message'    => 'Visibilitas ulasan berhasil diperbarui.',
+            'is_visible' => $review->is_visible,
+        ]);
+    }
+
+    public function bulkSetVisibility(Request $request)
+    {
+        $request->validate([
+            'rating'     => 'required|integer|min:1|max:5',
+            'operator'   => 'nullable|string|in:=,>=',
+            'is_visible' => 'required|boolean',
+        ]);
+
+        $operator = $request->operator ?? '=';
+
+        $count = Review::where('rating', $operator, $request->rating)
+            ->update(['is_visible' => $request->is_visible]);
+
+        $ratingText = $operator === '>=' ? "{$request->rating} ke atas" : $request->rating;
+
+        return response()->json([
+            'message' => "{$count} ulasan bintang {$ratingText} berhasil " . ($request->is_visible ? 'ditampilkan' : 'disembunyikan') . '.',
+            'count'   => $count,
         ]);
     }
 }

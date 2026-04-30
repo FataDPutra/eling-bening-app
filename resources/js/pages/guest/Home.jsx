@@ -305,7 +305,7 @@ export default function Home() {
             `}</style>
 
             {/* 1. Hero Section (Above the Fold) */}
-            <section id="hero" className="relative min-h-screen md:h-screen flex items-center justify-center text-center overflow-hidden pt-24 pb-20 md:pt-20 md:pb-0">
+            <section id="hero" className="relative min-h-screen md:h-screen flex items-center justify-center text-center overflow-hidden pt-40 pb-20 md:pt-32 md:pb-0">
                 <img src={content.home.heroImage || "/images/generated/hero.png"} alt="Eling Bening View" className="absolute inset-0 w-full h-full object-cover scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60"></div>
                 <div className="relative z-10 text-white max-w-5xl px-4 flex flex-col items-center">
@@ -524,7 +524,7 @@ export default function Home() {
                                         </div>
                                         <h3 className="text-3xl font-bold text-white mb-2">{event.name}</h3>
                                         <p className="text-gray-300 font-light mb-6 line-clamp-2">{event.description}</p>
-                                        <Link to="/events" className="text-white font-bold flex items-center gap-2 group/btn">
+                                        <Link to="/events" state={{ openId: event.id }} className="text-white font-bold flex items-center gap-2 group/btn">
                                             Detail Event <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition" />
                                         </Link>
                                     </div>

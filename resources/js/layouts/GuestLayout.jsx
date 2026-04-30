@@ -75,8 +75,9 @@ export default function GuestLayout() {
                     -webkit-backdrop-filter: blur(20px);
                     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                 }
-                .text-eling-green { color: #2E7D32; }
-                .bg-eling-green { background-color: #2E7D32; }
+                .text-eling-green { color: #16a34a; }
+                .bg-eling-green { background-color: #16a34a; }
+                .hover-eling-green:hover { color: #22c55e !important; }
                 .text-eling-red { color: #C62828; }
                 .bg-eling-red { background-color: #C62828; }
                 .group:hover .group-hover\\:visible {
@@ -112,7 +113,7 @@ export default function GuestLayout() {
                             className={`transition-all duration-300 relative py-1 ${
                                 location.pathname === item.path
                                     ? 'text-eling-green font-black underline-offset-8 underline'
-                                    : `hover:text-eling-green ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
+                                    : `hover-eling-green transition-colors ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
                             }`}
                         >
                             {item.name}
@@ -141,7 +142,7 @@ export default function GuestLayout() {
                             className={`transition-all duration-300 relative py-1 ${
                                 location.pathname === item.path
                                     ? 'text-eling-green font-black underline-offset-8 underline'
-                                    : `hover:text-eling-green ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
+                                    : `hover-eling-green transition-colors ${isHeroPage && !scrolled ? 'text-white' : 'text-gray-900'}`
                             }`}
                         >
                             {item.name}
