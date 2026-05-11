@@ -47,5 +47,11 @@
     </head>
     <body class="antialiased">
         <div id="root"></div>
+
+        <!-- AI CS Chatbot Widget -->
+        <script
+            src="https://chatbot.firstudio.id/chatbot.js"
+            data-bot-id="4"
+            defer></script>
     </body>
 </html>
