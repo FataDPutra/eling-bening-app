@@ -305,7 +305,7 @@ export default function Home() {
             `}</style>
 
             {/* 1. Hero Section (Above the Fold) */}
-            <section id="hero" className="relative min-h-screen md:h-screen flex items-center justify-center text-center overflow-hidden pt-40 pb-20 md:pt-32 md:pb-0">
+            <section id="hero" className="relative min-h-screen md:h-screen flex items-center justify-center text-center overflow-hidden pt-40 pb-24 md:pt-32 md:pb-16">
                 <img src={content.home.heroImage || "/images/generated/hero.png"} alt="Eling Bening View" className="absolute inset-0 w-full h-full object-cover scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60"></div>
                 <div className="relative z-10 text-white max-w-5xl px-4 flex flex-col items-center">
@@ -331,7 +331,7 @@ export default function Home() {
                     </div>
 
                     {/* Quick Info Bar */}
-                    <div className="mt-8 md:mt-20 w-full max-w-4xl opacity-0 animate-slide-up" style={{ animationDelay: '0.6s' }}>
+                    <div className="mt-4 md:mt-12 w-full max-w-4xl opacity-0 animate-slide-up" style={{ animationDelay: '0.6s' }}>
                         <div className="grid grid-cols-3 bg-white/10 backdrop-blur-3xl border border-white/10 rounded-2xl md:rounded-full p-2 md:p-4 lg:p-6 gap-0 shadow-2xl">
                             <div className="md:border-r border-white/10 flex flex-col items-center px-2 md:px-8 py-2 md:py-2">
                                 <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center mb-2 md:mb-4">
@@ -582,7 +582,7 @@ export default function Home() {
                                             <div className="relative h-72 overflow-hidden bg-gray-100">
                                                 <img 
                                                     src={["/images/generated/hero.png", "/images/generated/room.png", "/images/generated/restaurant.png"][i % 3]} 
-                                                    className="w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" 
+                                                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" 
                                                     alt="Default review background" 
                                                 />
                                                 <div className="absolute top-6 left-6 flex gap-0.5 bg-white/90 backdrop-blur-md px-3 py-2 rounded-2xl shadow-xl">
