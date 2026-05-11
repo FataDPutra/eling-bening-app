@@ -290,7 +290,6 @@ export default function GuestLayout() {
                     <div className="space-y-6">
                         <div className="flex items-center gap-2">
                             <img src={content.layout.logo || '/images/logo.png'} alt="Logo" className="h-10" />
-                            <span className="text-2xl font-serif font-bold tracking-wider text-white">{content.layout.siteTitle || 'Eling Bening'}</span>
                         </div>
                         <p className="text-green-100 text-sm leading-relaxed">
                             {content.layout.footerDesc || "Destinasi wisata alam terbaik di Ambarawa. Rasakan harmoni keindahan alam dan kemewahan dalam satu tempat."}
@@ -301,11 +300,11 @@ export default function GuestLayout() {
                     <div>
                         <h4 className="font-bold text-xl mb-8">Menu Pintasan</h4>
                         <ul className="space-y-4 text-green-100 text-sm">
-                            <li><Link to="/" className="hover:text-eling-green transition underline-offset-4 hover:underline">Beranda</Link></li>
-                            <li><Link to="/about" className="hover:text-eling-green transition underline-offset-4 hover:underline">Tentang Kami</Link></li>
-                            <li><Link to="/facilities" className="hover:text-eling-green transition underline-offset-4 hover:underline">Fasilitas</Link></li>
-                            <li><Link to="/gallery" className="hover:text-eling-green transition underline-offset-4 hover:underline">Galeri</Link></li>
-                            <li><Link to="/events" className="hover:text-eling-green transition underline-offset-4 hover:underline">Event</Link></li>
+                            <li><Link to="/" className="hover:text-white transition-all duration-200 underline-offset-4 hover:underline hover:pl-1">Beranda</Link></li>
+                            <li><Link to="/about" className="hover:text-white transition-all duration-200 underline-offset-4 hover:underline hover:pl-1">Tentang Kami</Link></li>
+                            <li><Link to="/facilities" className="hover:text-white transition-all duration-200 underline-offset-4 hover:underline hover:pl-1">Fasilitas</Link></li>
+                            <li><Link to="/gallery" className="hover:text-white transition-all duration-200 underline-offset-4 hover:underline hover:pl-1">Galeri</Link></li>
+                            <li><Link to="/events" className="hover:text-white transition-all duration-200 underline-offset-4 hover:underline hover:pl-1">Event</Link></li>
                         </ul>
                     </div>
 
