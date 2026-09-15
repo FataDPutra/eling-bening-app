@@ -13,7 +13,7 @@ class ResortController extends Controller
 {
     public function index(Request $request)
     {
-        $resorts = Resort::with('facilities', 'facilities.resorts')->get();
+        $resorts = Resort::with('facilities')->get();
 
         if ($request->has(['check_in', 'check_out'])) {
             $startDate = $request->check_in;

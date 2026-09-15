@@ -48,10 +48,12 @@
     <body class="antialiased">
         <div id="root"></div>
 
-        <!-- AI CS Chatbot Widget -->
+        {{-- AI CS Chatbot Widget - dinonaktifkan sementara: chatbot.firstudio.id belum mengizinkan CORS untuk origin ini --}}
+        {{--
         <script
             src="https://chatbot.firstudio.id/chatbot.js"
             data-bot-id="4"
             defer></script>
+        --}}
     </body>
 </html>
