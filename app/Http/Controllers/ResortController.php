@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Resort;
 use App\Models\TransactionItem;
 use App\Models\Reschedule;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -124,6 +125,10 @@ class ResortController extends Controller
 
         $facilityIds = $validated['facility_ids'] ?? [];
         unset($validated['facility_ids']);
+
+        if (array_key_exists('gallery', $validated)) {
+            $validated['gallery'] = MediaStorage::storeMany($validated['gallery'], 'resorts');
+        }
 
         $resort = Resort::create($validated);
         $resort->facilities()->sync($facilityIds);
@@ -258,6 +263,10 @@ class ResortController extends Controller
         if (array_key_exists('facility_ids', $validated)) {
             $resort->facilities()->sync($validated['facility_ids'] ?? []);
             unset($validated['facility_ids']);
+        }
+
+        if (array_key_exists('gallery', $validated)) {
+            $validated['gallery'] = MediaStorage::storeMany($validated['gallery'], 'resorts');
         }
 
         $resort->update($validated);

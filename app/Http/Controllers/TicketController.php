@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 
 class TicketController extends Controller
@@ -23,6 +24,10 @@ class TicketController extends Controller
             'is_active' => 'boolean',
             'image' => 'nullable|string',
         ]);
+
+        if (array_key_exists('image', $validated)) {
+            $validated['image'] = MediaStorage::store($validated['image'], 'tickets');
+        }
 
         $ticket = Ticket::create($validated);
         return response()->json($ticket, 201);
@@ -46,6 +51,10 @@ class TicketController extends Controller
             'is_active' => 'boolean',
             'image' => 'nullable|string',
         ]);
+
+        if (array_key_exists('image', $validated)) {
+            $validated['image'] = MediaStorage::store($validated['image'], 'tickets');
+        }
 
         $ticket->update($validated);
         return response()->json($ticket);

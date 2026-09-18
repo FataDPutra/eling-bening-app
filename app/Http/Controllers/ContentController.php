@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Content;
+use App\Support\MediaStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -44,7 +45,8 @@ class ContentController extends Controller
         $content = Content::updateOrCreate(
             ['key' => $request->key],
             [
-                'content' => $request->input('content'),
+                // Base64 uploads are written to disk; only the URL is stored.
+                'content' => MediaStorage::store($request->input('content'), 'content'),
                 'data' => $request->data,
                 'type' => $request->type,
                 'page' => $request->page,
@@ -77,7 +79,8 @@ class ContentController extends Controller
             Content::updateOrCreate(
                 ['key' => $item['key']],
                 [
-                    'content' => $item['content'] ?? null,
+                    // Base64 uploads are written to disk; only the URL is stored.
+                    'content' => MediaStorage::store($item['content'] ?? null, 'content'),
                     'data' => $item['data'] ?? null,
                     'type' => $item['type'],
                     'page' => $item['page'],
