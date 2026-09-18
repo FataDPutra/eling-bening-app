@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Resort;
+use App\Models\Ticket;
+use App\Models\Facility;
 use App\Models\TransactionItem;
 use App\Models\Reschedule;
 use App\Models\SystemSetting;
@@ -16,6 +18,33 @@ use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
+    /**
+     * Trim the polymorphic `item` relation of a transaction-item to a few
+     * light columns instead of the full model. Resort.gallery and
+     * Ticket.image are stored as base64 blobs that can reach hundreds of KB
+     * per row; loading them in full for every transaction item exhausts
+     * PHP's memory limit once there are enough bookings (see /api/transactions
+     * 500 memory-exhaustion incident). Only the first gallery image is kept,
+     * since that's all the admin UI displays in the bookings list/detail.
+     */
+    private function constrainTransactionItem($morphTo)
+    {
+        $morphTo->constrain([
+            Resort::class => function ($query) {
+                $query->select(
+                    'id', 'name', 'bed_type', 'capacity', 'room_size',
+                    DB::raw("JSON_ARRAY(JSON_UNQUOTE(JSON_EXTRACT(gallery, '$[0]'))) as gallery")
+                );
+            },
+            Ticket::class => function ($query) {
+                $query->select('id', 'name', 'validity_day', 'is_active');
+            },
+            Facility::class => function ($query) {
+                $query->select('id', 'name', 'price', 'is_addon', 'is_active');
+            },
+        ]);
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -23,8 +52,17 @@ class TransactionController extends Controller
         $month = $request->query('month');
         $year = $request->query('year');
 
-        // Load full relations including addon items so they are available in the frontend detail modal
-        $query = Transaction::with(['items.item', 'promo', 'addons.items.item', 'reschedules', 'user', 'tickets'])
+        // Load full relations including addon items so they are available in the frontend detail modal.
+        // The polymorphic `item` relation is trimmed (see constrainTransactionItem) because Resort.gallery
+        // and Ticket.image store base64 blobs that previously exhausted PHP's memory limit at this endpoint.
+        $query = Transaction::with([
+                'items.item' => fn ($morphTo) => $this->constrainTransactionItem($morphTo),
+                'promo',
+                'addons.items.item' => fn ($morphTo) => $this->constrainTransactionItem($morphTo),
+                'reschedules',
+                'user',
+                'tickets',
+            ])
             ->orderBy('created_at', 'desc');
 
         if ($user && $user->role !== 'admin' || $isMine) {
